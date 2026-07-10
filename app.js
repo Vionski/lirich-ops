@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v15';
+const APP_VERSION = 'v16';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -95,17 +95,17 @@ const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump'];
    Times come ONLY from the photo capture on the phone — the driver never types a time. */
 const JOB_FLOW = {
   Exchange: { photos:[
-      {k:'do',  label:'📷 DO / PSA', hint:'required', req:true},
       {k:'in',  label:'📷 BIN IN — empty bin dropped at site', hint:'sets Time Start', req:true},
-      {k:'out', label:'📷 BIN OUT — full bin picked up', hint:'sets Time End', req:true}],
+      {k:'out', label:'📷 BIN OUT — full bin picked up', hint:'sets Time End', req:true},
+      {k:'do',  label:'📷 DO / PSA', hint:'required', req:true}],
     bins:['in','out'], start:'in', end:'out' },
   Collect:  { photos:[
-      {k:'do', label:'📷 DO', hint:'required', req:true},
-      {k:'out', label:'📷 BIN OUT — full bin collected', hint:'sets Time Collect', req:true}],
+      {k:'out', label:'📷 BIN OUT — full bin collected', hint:'sets Time Collect', req:true},
+      {k:'do', label:'📷 DO', hint:'required', req:true}],
     bins:['out'], mark:'out', markLabel:'Time Collect' },
   Delivery: { photos:[
-      {k:'do',  label:'📷 DO', hint:'required', req:true},
-      {k:'in', label:'📷 BIN IN — empty bin delivered', hint:'sets Time Delivered', req:true}],
+      {k:'in', label:'📷 BIN IN — empty bin delivered', hint:'sets Time Delivered', req:true},
+      {k:'do',  label:'📷 DO', hint:'required', req:true}],
     bins:['in'], mark:'in', markLabel:'Time Delivered' },
   Sell:     { photos:[
       {k:'bin', label:'📷 BIN ON SITE', hint:'sets Time Finish', req:true}],
@@ -401,7 +401,7 @@ function renderLogin(){
         <div class="item tap" onclick="loginSel='${x.id}'; renderLogin()">
           <span class="avatar lg" style="background:${x.color}">${x.role==='operator'?'OP':initials(x.name)}</span>
           <div class="grow"><div class="title">${esc(x.name)}</div>
-          <div class="sub">${x.role==='operator' ? 'Operator / Office' : 'Driver · Truck '+driver(x.driverId).truck}</div></div>
+          <div class="sub">${x.role==='operator' ? 'Operator / Office' : 'Driver'}</div></div>
           ${loginSel===x.id ? '<span class="tag">SELECTED</span>' : ''}
         </div>`).join('')}
     </div>
@@ -459,6 +459,8 @@ async function resetDemo(){
 
 /* ---------------- render root ---------------- */
 function render(){
+  /* drivers get a bigger UI — sunlight, gloves, one-handed use */
+  document.body.classList.toggle('big-ui', !!(S.auth && S.role && S.role.kind==='driver'));
   if(!S.auth){ renderLogin(); return; }
   /* if the saved tab no longer exists for this role (e.g. driver Bins page removed), fall back */
   if(!NAVS[S.role.kind].some(n=>n.id===curTab())) S.tab[S.role.kind] = NAVS[S.role.kind][0].id;
@@ -492,7 +494,7 @@ function renderHeader(){
     pill = `<span class="avatar" style="background:var(--brand-dark)">OP</span> Operator ▾`;
   }else{
     const d = driver(S.role.driverId);
-    sub = `Driver ${d.id} · Truck ${d.truck} · ${fmtDate(TODAY)}`;
+    sub = `Driver ${d.id} · ${fmtDate(TODAY)}`;
     pill = `${avatarHTML(d)} ${esc(d.name)} ▾`;
   }
   $('#header').innerHTML = `
@@ -699,7 +701,7 @@ function openJobDetail(id){
       <div class="muted" style="margin-top:6px">🛠️ ${esc(ty?ty.label:j.task)} · ${esc(j.binSize)} · ${esc(j.waste)}</div>
       ${j.dumpTo?`<div class="muted">♻️ Dump to: ${esc(j.dumpTo)}</div>`:''}
       ${j.instructions?`<div class="muted" style="margin-top:6px">📝 ${esc(j.instructions)}</div>`:''}
-      <div class="muted" style="margin-top:6px">🚛 ${d?esc(d.name)+' · '+(j.truckId||d.truck):'Unassigned'} · ${fmtDate(j.date)}${j.startedAt?` · ▶️ started ${fmtTime12(j.startedAt)}`:''}</div>
+      <div class="muted" style="margin-top:6px">🚛 ${d?esc(d.name):'Unassigned'} · ${fmtDate(j.date)}${j.startedAt?` · ▶️ started ${fmtTime12(j.startedAt)}`:''}</div>
       <div class="muted" style="margin-top:6px">💵 Base pay: <b>${ty && !ty.perKm ? money(ty.base) : '$1.50 × km'}</b></div>
     </div>
     ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-bottom:8px">💬 WhatsApp ${esc(person.name||c.name)}</button></a>`:''}
@@ -1401,7 +1403,7 @@ function openTripDetail(id){
   openSheet(sheetTitle(`Trip · ${doLabel(t)} <span class="tag ${t.doType==='vessel'?'vessel':''}">${t.doType.toUpperCase()}</span>`) + `
     <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0">
       <div class="title" style="font-weight:800">${esc(c?c.name:'?')}</div>
-      <div class="muted" style="margin-top:4px">${esc(d.name)} · ${d.truck} · ${fmtDate(t.date)}</div>
+      <div class="muted" style="margin-top:4px">${esc(d.name)} · ${fmtDate(t.date)}</div>
       <div class="muted" style="margin-top:6px">🛠️ ${esc(t.jobType||(ty?ty.label:''))}${t.binOut?' · bin out '+esc(t.binOut):''}${t.binIn?' · bin in '+esc(t.binIn):''}</div>
       ${tripTimesHTML(t)}
       ${t.disposeTo || t.tonnage || t.tonnAdj ? `<div class="muted">♻️ ${t.disposeTo?'Dispose to '+esc(t.disposeTo)+' · ':''}tonnage ${t.tonnage||0}${t.tonnAdj?` <b>${t.tonnAdj>0?'+':''}${t.tonnAdj}</b> = <b>${tonnTotal(t)} t</b> <span class="tag">ADJUSTED</span>`:' t'}</div>`:''}

@@ -289,7 +289,7 @@ function autoArchive_(st) {
 
 /* ---------------- Trips: rich report (one row per trip) ---------------- */
 function tripHeader_() {
-  return ['Date', 'Job #', 'Driver', 'Vehicle', 'Customer', 'Service Location', 'Salesperson',
+  return ['Date', 'Job #', 'Driver', 'Customer', 'Service Location', 'Salesperson',
     'Waste Type', 'Trip Type', 'DO Type', 'DO / V No',
     'Bin Out (full)', 'Bin In (empty)', 'Time Start', 'Time End', 'Dispose To', 'Distance (km)',
     'Tonnage (t)', 'Adjustment (t)', 'Final Tonnage (t)',
@@ -318,11 +318,15 @@ function tripRow_(t) {
   });
   var v = t.vessel || {};
   var vol = ['a', 'b', 'c', 'd', 'e', 'f'].map(function (k) { return (v[k] ? k.toUpperCase() + ':' + v[k] : ''); }).filter(String).join('; ');
-  /* durations from the photo timestamps: travel = accept->DO, wait = DO->first bin, job = binIN(start)->binOUT(end) */
+  /* durations from the photo timestamps. Driver flow is bins FIRST, then DO —
+     travel = accept -> first photo taken on site (whichever kind came first),
+     job = binIN (start) -> binOUT (end). Wait is left to office formulas off the raw times. */
   var binTimes = [t.tBinIn, t.tBinOut].filter(Boolean);
   var firstBin = binTimes.length ? Math.min.apply(null, binTimes) : 0;
-  var travel = mins_(t.tAccept, t.tDO);
-  var wait = mins_(t.tDO, firstBin);
+  var onSite = [t.tDO, t.tBinIn, t.tBinOut].filter(Boolean);
+  var firstOnSite = onSite.length ? Math.min.apply(null, onSite) : 0;
+  var travel = mins_(t.tAccept, firstOnSite);
+  var wait = mins_(t.tDO, firstBin); /* legacy col — blank when DO comes after the bins */
   var jobMin = mins_(t.tBinIn, t.tBinOut);
   var totalMin = mins_(t.tAccept, t.tEnd);   /* accept -> finish, works for every job type incl Sell/Dump */
   /* flag if a photo time is in the future vs the server, or the sync gap is huge (offline/clock changed) */
@@ -335,7 +339,7 @@ function tripRow_(t) {
   var noDO = (t.jobType === 'Sell' || t.jobType === 'Dump');
   var doCell = noDO ? '—' : (t.doNo ? ((t.doType === 'vessel' ? 'V ' : 'DO ') + t.doNo) : 'PENDING');
   return [
-    t.date, t.jobId || '', t._driver || '', t._truck || '', t._client || '', t._addr || '', t._sales || '',
+    t.date, t.jobId || '', t._driver || '', t._client || '', t._addr || '', t._sales || '',
     t.waste || '', t._type || '', t.doType || '', doCell,
     t.binOut || '', t.binIn || '', t.timeStart || '', t.timeEnd || '', t.disposeTo || '', t.distance || '',
     t.tonnage || 0, t.tonnAdj || 0, total,
@@ -360,10 +364,10 @@ function mirror_(st) {
 
   var jSheet = ss.getSheetByName('Jobs') || ss.insertSheet('Jobs');
   var jRows = [['Job #', 'Date', 'Status', 'Customer', 'Service Location', 'Contact', 'Task', 'Bin Size',
-    'Waste', 'Dump To', 'Driver', 'Vehicle', 'Started At', 'Instructions']];
+    'Waste', 'Dump To', 'Driver', 'Started At', 'Instructions']];
   st.jobs.forEach(function (j) {
     jRows.push([j.id, j.date, j.status, j._client || '', j._addr || '', j._contact || '', j._task || j.task,
-      j.binSize, j.waste, j.dumpTo || '', j._driver || '', j.truckId || '', j.startedAt || '', j.instructions || '']);
+      j.binSize, j.waste, j.dumpTo || '', j._driver || '', j.startedAt || '', j.instructions || '']);
   });
   jSheet.clearContents();
   jSheet.getRange(1, 1, jRows.length, jRows[0].length).setValues(jRows);
