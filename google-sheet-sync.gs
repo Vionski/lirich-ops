@@ -298,7 +298,7 @@ function tripHeader_() {
     'Vessel Name', 'Vessel Location', 'Waste Volumes (m³)', 'Total (m³)',
     'DO Photos', 'Bin Photos', 'Weight Photos', 'DO Photo Links', 'Bin Photo Links', 'Weight Photo Links', 'Remarks', 'Invoiced',
     /* --- photo-stamped times + tamper cross-check (office does OT formulas off these) --- */
-    'Time Accept', 'Time DO Photo', 'Time Bin OUT', 'Time Bin IN', 'Time Finish', 'Server Received',
+    'Time Accept', 'Time DO Photo', 'Time Bin OUT', 'Time Bin IN', 'Time Finish', 'Time Weigh', 'Server Received',
     'Travel (min)', 'Wait (min)', 'Job (min)', 'Accept→Finish (min)', 'Time Flag'];
 }
 /* ms epoch -> real Date for the sheet (blank if 0/absent). Sheet timezone formats it. */
@@ -343,7 +343,7 @@ function tripRow_(t) {
     t._surch || '', t._pay || 0, (t._charge != null ? t._charge : ''),
     v.name || '', v.location || '', vol, (v.total || ''),
     doP.length, binP.length, wP.length, doP.join('\n'), binP.join('\n'), wP.join('\n'), t.remarks || '', t.invoiced ? 'YES' : '',
-    tsDate_(t.tAccept), tsDate_(t.tDO), tsDate_(t.tBinOut), tsDate_(t.tBinIn), tsDate_(t.tEnd), tsDate_(t.tServer),
+    tsDate_(t.tAccept), tsDate_(t.tDO), tsDate_(t.tBinOut), tsDate_(t.tBinIn), tsDate_(t.tEnd), tsDate_(t.tWeight), tsDate_(t.tServer),
     travel, wait, jobMin, totalMin, flag
   ];
 }

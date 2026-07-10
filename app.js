@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v14';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -676,6 +676,9 @@ async function saveWeigh(id){
     weight: {gross, tare, net: gross-tare, ticket:(t.weight && t.weight.ticket)||''},
     photos: (t.photos||[]).concat(newPhotos),
   };
+  /* Time Weigh = first weight photo's capture time — photo-stamped and locked like every other time */
+  const wts = tripPhotos.filter(p=>(p.kind==='gross'||p.kind==='tare') && p.ts).map(p=>p.ts);
+  if(wts.length && !t.tWeight) patch.tWeight = Math.min.apply(null, wts);
   await api('updateTrip', {id, patch});
   tripPhotos = [];
   render(); toast('⚖️ Weighbridge saved — office updated ✅');
@@ -782,6 +785,7 @@ function refreshJobFormOptions(){
       if([...el.options].some(o=>o.value===v || o.text===v)) el.value = v;
     };
     keep('#jf-driver', driverSelectOptions());
+    keep('#jf-size', binOptions().map(s=>`<option>${esc(s)}</option>`).join(''));
     keep('#jf-waste', selOpts(wasteOptions()));
     keep('#jf-dump', '<option value="">— select at trip time —</option>'+selOpts(dumpOptions()));
     const csel = $('#jf-client');
@@ -1041,6 +1045,8 @@ function updateTimesDisplay(){
   }else if(flow.fixed){ /* Sell / Dump — no DO, bin-on-site photo = finish */
     rows.push(`<div>✅ Finish (bin photo): <b>${t12(firstTs('bin'))}</b> <span class="muted">· fixed price, no wait/OT</span></div>`);
   }
+  const tw = Math.min(firstTs('gross')||Infinity, firstTs('tare')||Infinity);
+  if(tw !== Infinity) rows.push(`<div>⚖️ Weighed: <b>${t12(tw)}</b></div>`);
   box.innerHTML = `<div style="font-weight:700; margin-bottom:4px">⏱️ Logged times (from photos — locked)</div>${rows.join('')}`;
 }
 function photoThumbHTML(p){
@@ -1267,7 +1273,7 @@ async function saveTrip(){
   const doNoInput = Number((($('#tf-dono')||{}).value)) || 0;
 
   let doTypeV, typeId, surcharges, disposeTo, tonnage, distance, remarks;
-  let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0;
+  let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0, tWeight = 0;
   if(isDriver){
     /* driver: photos are the record AND the clock — times can never be typed */
     const flow = jobFlow(job);
@@ -1286,6 +1292,7 @@ async function saveTrip(){
     /* photo-stamped times (the trusted clock) */
     tAccept = (job && job.acceptedAtMs) || 0;
     tDO = firstTs('do'); tBinOut = firstTs('out'); tBinIn = firstTs('in');
+    tWeight = Math.min(firstTs('gross')||Infinity, firstTs('tare')||Infinity); if(tWeight===Infinity) tWeight = 0;
     if(flow.start){              /* Exchange: whichever kind is start/end drives the time */
       timeStart = msToHM(firstTs(flow.start)); timeEnd = msToHM(firstTs(flow.end)); tEnd = firstTs(flow.end);
     }else if(flow.mark){          /* Collect (bin out) / Delivery (bin in) */
@@ -1318,7 +1325,7 @@ async function saveTrip(){
     binIn: ((($('#tf-binin')||{}).value)||'').trim().toUpperCase(),
     timeStart, timeEnd,
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
-    tAccept, tDO, tBinOut, tBinIn, tEnd,
+    tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight,
     disposeTo, tonnage, tonnAdj: 0, distance, surcharges, remarks,
     doType: doTypeV, doNo: doNoInput,
     waste: job ? (job.waste||'') : '',
@@ -1355,7 +1362,10 @@ async function saveTrip(){
       driverId:saved.driverId, date:saved.date, createdAt:Date.now()}).catch(()=>{});
   });
   render();
-  toast(isDriver ? '✅ Sent to office — thanks!' : `Trip saved — ${doLabel(saved)} · pay ${money(tripPay(saved))} ✅`);
+  const noWeightYet = isDriver && !hasWeight;
+  toast(isDriver
+    ? (noWeightYet ? '✅ Sent to office! Back at the yard, tap ⚖️ Add weight on this job.' : '✅ Sent to office — thanks!')
+    : `Trip saved — ${doLabel(saved)} · pay ${money(tripPay(saved))} ✅`);
   /* driver: OCR the DO photo in the BACKGROUND and fill the office's fields — driver never waits */
   if(isDriver){
     const doPhoto = photosToUpload.find(p=>p.kind==='do');
@@ -1377,6 +1387,7 @@ function tripTimesHTML(t){
     if(t.tBinIn)  rows.push(`🟢 Time IN (bin in, empty) <b>${f(t.tBinIn)}</b>`);
     if(t.tBinOut) rows.push(`🔴 Time OUT (bin out, full) <b>${f(t.tBinOut)}</b>`);
   }
+  if(t.tWeight) rows.push(`⚖️ Weighed <b>${f(t.tWeight)}</b>`);
   if(!rows.length){ /* legacy trips with only a typed start/end */
     return (t.timeStart||t.timeEnd)
       ? `<div class="muted" style="margin-top:6px">⏱️ ${esc(t.timeStart||'—')} – ${esc(t.timeEnd||'—')}</div>` : '';
@@ -1641,8 +1652,13 @@ async function fetchSheetDB(){
     return true;
   }catch(e){ return false; }
 }
-/* bin types: from the Lists tab if available, else the built-in sizes */
+/* bin sizes for the job form = the sizes that actually exist in the bin fleet
+   (Bin DB / Bin Inventory "Size" column) — you can't request a size Lirich doesn't own.
+   Falls back to the Lists tab, then built-ins, only while the fleet has no sizes yet. */
 function binOptions(){
+  const fleet = [...new Set(S.bins.map(b=>(b.size||'').trim()).filter(Boolean))]
+    .sort((a,b)=>(parseFloat(a)||0)-(parseFloat(b)||0) || a.localeCompare(b));
+  if(fleet.length) return fleet;
   return (S.sheetDB && S.sheetDB.binTypes && S.sheetDB.binTypes.length) ? S.sheetDB.binTypes : BIN_SIZES;
 }
 /* dropdown builders — Google Sheet lists first, built-in fallbacks otherwise */
