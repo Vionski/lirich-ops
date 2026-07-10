@@ -215,7 +215,7 @@ function apply_(st, q) {
          front of it, so it's verified from the moment it's created (status is never 'unknown' here). */
       var ensureBin_ = function (no) {
         var b = st.bins.filter(function (x) { return x.no === no; })[0];
-        if (!b) { b = { no: no, size: '', status: 'unknown', clientId: null, siteIdx: 0, waste: '', source: 'driver', firstSeen: t.date }; st.bins.push(b); }
+        if (!b) { b = { no: no, size: '', status: 'unknown', clientId: null, siteIdx: 0, source: 'driver', firstSeen: t.date }; st.bins.push(b); }
         if (!b.size && t.jobBinSize) b.size = t.jobBinSize;
         return b;
       };
@@ -380,7 +380,7 @@ function mirror_(st) {
 
 /* ---------------- Bin Inventory: rich report (one row per bin, sortable/filterable) ---------------- */
 function binHeader_() {
-  return ['Bin No.', 'Size', 'Status', 'At Client', 'Site Address', 'Waste Type', 'Location Verified', 'Source', 'First Seen'];
+  return ['Bin No.', 'Size', 'Status', 'At Client', 'Site Address', 'Location Verified', 'Source', 'First Seen'];
 }
 function siteAddr_(st, clientId, siteIdx) {
   var c = st.clients.filter(function (x) { return x.id === clientId; })[0];
@@ -394,6 +394,6 @@ function binRow_(b, st) {
   return [
     b.no, b.size || '', statusLabel,
     c ? c.name : '', b.status === 'client' ? siteAddr_(st, b.clientId, b.siteIdx || 0) : '',
-    b.waste || '', b.status === 'unknown' ? 'No' : 'Yes', b.source || 'seed', b.firstSeen || ''
+    b.status === 'unknown' ? 'No' : 'Yes', b.source || 'seed', b.firstSeen || ''
   ];
 }

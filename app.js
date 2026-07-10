@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v14';
+const APP_VERSION = 'v15';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -1630,7 +1630,7 @@ async function fetchSheetDB(){
       if(!row.no) return;
       let b = S.bins.find(x=>x.no===row.no);
       if(!b){
-        S.bins.push({no:row.no, size:row.size||'', status:'unknown', clientId:null, siteIdx:0, waste:'', source:'seed', firstSeen:TODAY});
+        S.bins.push({no:row.no, size:row.size||'', status:'unknown', clientId:null, siteIdx:0, source:'seed', firstSeen:TODAY});
         binsAdded++;
       }else if(!b.size && row.size){
         b.size = row.size; binsAdded++;
@@ -1874,7 +1874,7 @@ function openBinDetail(no){
   openSheet(sheetTitle(`Bin ${esc(b.no)}${b.size?' · '+esc(b.size):''}`) + `
     <div class="muted" style="margin-bottom:8px">
       Status: <b>${BIN_STATUS.find(s=>s.id===b.status).label}</b>
-      ${c?` — at <b>${esc(c.name)}</b>`:''} ${b.waste?` · ${esc(b.waste)}`:''}
+      ${c?` — at <b>${esc(c.name)}</b>`:''}
       ${b.source==='driver'?` <span class="tag">ADDED FROM DRIVER LOG</span>`:''}
     </div>
     ${isOp?`
@@ -1887,8 +1887,6 @@ function openBinDetail(no){
     </div>
     <label class="f">SIZE <span style="font-weight:600">(from Bin DB or a job — fix if wrong)</span></label>
     <input type="text" id="bd-size" value="${esc(b.size||'')}" placeholder="e.g. 10ft">
-    <label class="f">WASTE TYPE</label>
-    <input type="text" id="bd-waste" value="${esc(b.waste)}" placeholder="General, wood…">
     <div style="margin-top:14px"><button class="btn" onclick="saveBin('${b.no}')">Save bin</button></div>`
     : '<p class="muted">Only the office can edit bin status.</p>'}`);
 }
@@ -1899,7 +1897,6 @@ async function saveBin(no){
     clientId: status==='client' ? $('#bd-client').value : null,
     siteIdx: 0,
     size: $('#bd-size').value.trim(),
-    waste: $('#bd-waste').value.trim(),
   };
   closeSheet();
   await api('updateBin', {no, patch});
