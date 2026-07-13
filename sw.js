@@ -1,4 +1,4 @@
-const CACHE = 'lirich-ops-v17';
+const CACHE = 'lirich-ops-v18';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {

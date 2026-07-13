@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v17';
+const APP_VERSION = 'v18';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -142,6 +142,30 @@ function readWasteChecks(prefix){
   const other=(ocb && ocb.checked) ? ((($('#'+prefix+'-waste-other')||{}).value)||'').trim() : '';
   const display=[...types, other?('Others: '+other):''].filter(Boolean).join('; ');
   return {types, other, display};
+}
+/* vessel SEF waste-volume categories (Cat A–F m³) — driver types them from the green vessel DO */
+function vesselFieldsHTML(prefix, v){
+  v = v || {};
+  return `<div class="grid2">
+      <div><label class="f">VESSEL NAME</label><input type="text" id="${prefix}-name" value="${esc(v.name||'')}" placeholder="e.g. KOTA SETIA"></div>
+      <div><label class="f">LOCATION</label><input type="text" id="${prefix}-loc" value="${esc(v.location||'')}" placeholder="e.g. B05"></div>
+    </div>
+    <label class="f">WASTE VOLUMES (m³) <span style="font-weight:600">(type from the SEF; leave blank if none)</span></label>
+    <div class="grid3">${VESSEL_CATS.map(c=>`
+      <div><label class="f" style="margin-top:2px">${esc(c.label)}</label>
+        <input type="number" step="0.01" min="0" id="${prefix}-${c.k}" value="${v[c.k]!=null?v[c.k]:''}" oninput="vesselTotal('${prefix}')"></div>`).join('')}</div>
+    <div class="muted" style="margin-top:4px">Total: <b id="${prefix}-total">${v.total||0}</b> m³</div>`;
+}
+function vesselTotal(prefix){
+  let t=0; VESSEL_CATS.forEach(c=>{ t += Number(($('#'+prefix+'-'+c.k)||{}).value)||0; });
+  const el=$('#'+prefix+'-total'); if(el) el.textContent = Math.round(t*100)/100;
+}
+function readVesselFields(prefix){
+  if(!$('#'+prefix+'-name') && !$('#'+prefix+'-a')) return null;
+  const v = {name:((($('#'+prefix+'-name')||{}).value)||'').trim(), location:((($('#'+prefix+'-loc')||{}).value)||'').trim()};
+  let tot=0; VESSEL_CATS.forEach(c=>{ const n=Number(($('#'+prefix+'-'+c.k)||{}).value)||0; v[c.k]=n; tot+=n; });
+  v.total = Math.round(tot*100)/100;
+  return v;
 }
 /* earliest capture time (ms) among the tripPhotos of a given kind */
 function firstTs(kind){ const ts = tripPhotos.filter(p=>p.kind===kind && p.ts).map(p=>p.ts); return ts.length ? Math.min.apply(null, ts) : 0; }
@@ -935,6 +959,11 @@ function openTripForm(opts){
       ${(!flow.noDO && cli.type!=='vessel') ? `
       <label class="f">WASTE TYPE COLLECTED <span style="font-weight:600">(tick all that apply)</span></label>
       ${wasteChecksHTML('tf', job ? [job.waste||''] : [], '')}` : ''}
+      ${(!flow.noDO && cli.type==='vessel') ? `
+      <label class="f">🚢 VESSEL SEF — TYPE OF WASTE <span style="font-weight:600">(type volumes from the green DO)</span></label>
+      ${vesselFieldsHTML('tfv', null)}
+      <label class="f">REMARKS <span style="font-weight:600">(if any)</span></label>
+      <input type="text" id="tf-remarks" placeholder="Optional">` : ''}
       <label class="f">WEIGHBRIDGE <span style="font-weight:600">(optional here — you can add it after driving back, from My Jobs ⚖️)</span></label>
       <div class="grid3">
         <div><label class="f" style="margin-top:0">GROSS (kg)</label><input type="number" id="tf-gross" min="0" placeholder="from photo" oninput="tfNet()"></div>
@@ -1316,7 +1345,7 @@ async function saveTrip(){
     disposeTo = job ? (job.dumpTo||'') : '';
     tonnage = 0;
     distance = job ? (Number(job.distance)||0) : 0;
-    remarks = '';
+    remarks = ((($('#tf-remarks')||{}).value)||'').trim(); /* vessel SEF remarks (land form has none) */
     /* photo-stamped times (the trusted clock) */
     tAccept = (job && job.acceptedAtMs) || 0;
     tDO = firstTs('do'); tBinOut = firstTs('out'); tBinIn = firstTs('in');
@@ -1359,7 +1388,8 @@ async function saveTrip(){
     ...(function(){ const w = isDriver ? readWasteChecks('tf') : null;
       return w ? {waste: w.display || (job?(job.waste||''):''), wasteTypes: w.types, wasteOther: w.other}
                : {waste: job ? (job.waste||'') : '', wasteTypes: [], wasteOther: ''}; })(),
-    vessel: null, photos: [],
+    vessel: (isDriver && c && c.type==='vessel') ? readVesselFields('tfv') : null,
+    photos: [],
     weight: hasWeight ? {gross, tare, net: gross-tare, ticket:''} : null,
     weightAdj: 0,
     needTicket: hasWeight,
@@ -1472,8 +1502,8 @@ function openTripDetail(id){
     </div>
     <label class="f">CUSTOMER</label>
     <select id="te-client">${S.clients.map(x=>`<option value="${x.id}" ${x.id===t.clientId?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
-    <label class="f">WASTE TYPE <span style="font-weight:600">(tick all that apply)</span></label>
-    ${wasteChecksHTML('te', t.wasteTypes && t.wasteTypes.length ? t.wasteTypes : (t.waste?[t.waste]:[]), t.wasteOther||'')}
+    ${t.doType==='vessel' ? '' : `<label class="f">WASTE TYPE <span style="font-weight:600">(tick all that apply)</span></label>
+    ${wasteChecksHTML('te', t.wasteTypes && t.wasteTypes.length ? t.wasteTypes : (t.waste?[t.waste]:[]), t.wasteOther||'')}`}
     <label class="f">DISPOSE TO</label>
     <select id="te-dispose"><option value="">—</option>${selOpts(dumpOptions(), t.disposeTo)}</select>
     <label class="f">💵 DRIVER PAY / FEE ($) <span style="font-weight:600">— basic pay for this trip (surcharges add on top)</span></label>
@@ -1486,24 +1516,12 @@ function openTripDetail(id){
         <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>
     ${t.doType==='vessel' ? `
     <label class="f">🚢 VESSEL DETAILS <span style="font-weight:600">(key in from the DO photo)</span></label>
-    <div class="grid2">
-      <div><label class="f">VESSEL NAME</label><input type="text" id="tev-name" value="${esc(t.vessel?t.vessel.name||'':'')}"></div>
-      <div><label class="f">LOCATION</label><input type="text" id="tev-loc" value="${esc(t.vessel?t.vessel.location||'':'')}"></div>
-    </div>
-    <label class="f">WASTE VOLUMES (m³)</label>
-    <div class="grid3">${VESSEL_CATS.map(v=>`
-      <div><label class="f" style="margin-top:2px">${esc(v.label)}</label>
-        <input type="number" step="0.01" min="0" id="tev-${v.k}" value="${t.vessel && t.vessel[v.k]!=null?t.vessel[v.k]:''}" oninput="tevTotal()"></div>`).join('')}</div>
-    <div class="muted" style="margin-top:4px">Total: <b id="tev-total">${t.vessel && t.vessel.total?t.vessel.total:0}</b> m³</div>` : ''}
+    ${vesselFieldsHTML('tev', t.vessel)}` : ''}
     <label class="f">REMARKS</label>
     <input type="text" id="te-remarks" value="${esc(t.remarks||'')}">
     <label class="checkline" style="margin-top:8px"><input type="checkbox" id="te-inv" ${t.invoiced?'checked':''}> Marked as invoiced</label>
     <div style="margin-top:12px"><button class="btn" onclick="saveTripEdit(${t.id})">💾 Save corrections</button></div>` : ''}`);
   if(S.role.kind==='operator'){ setTimeSel('#te-ts', t.timeStart); setTimeSel('#te-te', t.timeEnd); }
-}
-function tevTotal(){
-  let t=0; VESSEL_CATS.forEach(v=>{ t += Number(($('#tev-'+v.k)||{}).value)||0; });
-  const el=$('#tev-total'); if(el) el.textContent = Math.round(t*100)/100;
 }
 async function saveTripEdit(id){
   const t = S.trips.find(x=>x.id===id); if(!t) return;
@@ -1531,12 +1549,7 @@ async function saveTripEdit(id){
     weight: (gross && tare) ? {gross, tare, net: gross-tare, ticket:(t.weight && t.weight.ticket)||''} : t.weight,
   };
   /* vessel details (operator keys them in from the DO photo) */
-  if(t.doType==='vessel' && $('#tev-name')){
-    const v = {name:$('#tev-name').value.trim(), location:$('#tev-loc').value.trim()};
-    let tot=0; VESSEL_CATS.forEach(x=>{ const n=Number($('#tev-'+x.k).value)||0; v[x.k]=n; tot+=n; });
-    v.total = Math.round(tot*100)/100;
-    patch.vessel = v;
-  }
+  if(t.doType==='vessel'){ const v = readVesselFields('tev'); if(v) patch.vessel = v; }
   /* refresh the denormalised fields the Trips sheet reads */
   patch._client = c ? c.name : t._client;
   patch._sales = c ? (c.salesRep||'') : t._sales;
