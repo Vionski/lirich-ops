@@ -295,7 +295,8 @@ function tripHeader_() {
     'Tonnage (t)', 'Adjustment (t)', 'Final Tonnage (t)',
     'Gross (kg)', 'Tare (kg)', 'Adjustment (kg)', 'Net (kg)', 'Weighing Ticket',
     'Surcharges', 'Driver Pay ($)', 'Customer Charge ($)',
-    'Vessel Name', 'Vessel Location', 'Waste Volumes (m³)', 'Total (m³)',
+    'Vessel Name', 'Vessel Location',
+    'Cat A Plastics (m³)', 'Cat B Food (m³)', 'Cat C Domestic (m³)', 'Cat D Cooking Oil (m³)', 'Cat E Ashes (m³)', 'Cat F Operational (m³)', 'Total (m³)',
     'DO Photos', 'Bin Photos', 'Weight Photos', 'DO Photo Links', 'Bin Photo Links', 'Weight Photo Links', 'Remarks', 'Invoiced',
     /* --- photo-stamped times + tamper cross-check (office does OT formulas off these) --- */
     'Time Accept', 'Time DO Photo', 'Time Bin OUT', 'Time Bin IN', 'Time Finish', 'Time Weigh', 'Server Received',
@@ -317,7 +318,6 @@ function tripRow_(t) {
     else binP.push(p.url);
   });
   var v = t.vessel || {};
-  var vol = ['a', 'b', 'c', 'd', 'e', 'f'].map(function (k) { return (v[k] ? k.toUpperCase() + ':' + v[k] : ''); }).filter(String).join('; ');
   /* durations from the photo timestamps. Driver flow is bins FIRST, then DO —
      travel = accept -> first photo taken on site (whichever kind came first),
      job = binIN (start) -> binOUT (end). Wait is left to office formulas off the raw times. */
@@ -345,7 +345,8 @@ function tripRow_(t) {
     t.tonnage || 0, t.tonnAdj || 0, total,
     w.gross || '', w.tare || '', t.weightAdj || 0, wNet, w.ticket || '',
     t._surch || '', t._pay || 0, (t._charge != null ? t._charge : ''),
-    v.name || '', v.location || '', vol, (v.total || ''),
+    v.name || '', v.location || '',
+    (v.a || ''), (v.b || ''), (v.c || ''), (v.d || ''), (v.e || ''), (v.f || ''), (v.total || ''),
     doP.length, binP.length, wP.length, doP.join('\n'), binP.join('\n'), wP.join('\n'), t.remarks || '', t.invoiced ? 'YES' : '',
     tsDate_(t.tAccept), tsDate_(t.tDO), tsDate_(t.tBinOut), tsDate_(t.tBinIn), tsDate_(t.tEnd), tsDate_(t.tWeight), tsDate_(t.tServer),
     travel, wait, jobMin, totalMin, flag
