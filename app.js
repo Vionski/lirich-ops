@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v16';
+const APP_VERSION = 'v17';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -121,6 +121,28 @@ const WEIGHT_PHOTOS = [
 ];
 Object.keys(JOB_FLOW).forEach(k=>{ JOB_FLOW[k].photos = JOB_FLOW[k].photos.concat(WEIGHT_PHOTOS); });
 function jobFlow(job){ return (job && JOB_FLOW[job.jobType]) || JOB_FLOW.Exchange; }
+/* waste types the driver ticks on a land DO (mirrors the paper SEF; multi-select + Others free-text) */
+const WASTE_TYPES = ['General Waste','Wood Waste','Plastic Waste','Metal Waste','Mixed Waste','Food Waste'];
+function wasteChecksHTML(prefix, selected, otherText){
+  const selWords = (selected||[]).map(s=>String(s).toLowerCase().split(' ')[0]);
+  return `<div id="${prefix}-waste">
+    ${WASTE_TYPES.map(w=>`<label class="checkline"><input type="checkbox" value="${esc(w)}" ${selWords.includes(w.toLowerCase().split(' ')[0])?'checked':''}> ${esc(w)}</label>`).join('')}
+    <label class="checkline"><input type="checkbox" id="${prefix}-waste-other-cb" value="__other__" onchange="toggleWasteOther('${prefix}')" ${otherText?'checked':''}> Others</label>
+    <input type="text" id="${prefix}-waste-other" placeholder="Specify other waste" value="${esc(otherText||'')}" style="display:${otherText?'block':'none'}; margin-top:6px">
+  </div>`;
+}
+function toggleWasteOther(prefix){
+  const cb=$('#'+prefix+'-waste-other-cb'), tx=$('#'+prefix+'-waste-other');
+  if(cb&&tx){ tx.style.display=cb.checked?'block':'none'; if(!cb.checked) tx.value=''; }
+}
+function readWasteChecks(prefix){
+  const box=$('#'+prefix+'-waste'); if(!box) return null;
+  const types=$$('#'+prefix+'-waste input[type=checkbox]:checked').map(i=>i.value).filter(v=>v && v!=='__other__');
+  const ocb=$('#'+prefix+'-waste-other-cb');
+  const other=(ocb && ocb.checked) ? ((($('#'+prefix+'-waste-other')||{}).value)||'').trim() : '';
+  const display=[...types, other?('Others: '+other):''].filter(Boolean).join('; ');
+  return {types, other, display};
+}
 /* earliest capture time (ms) among the tripPhotos of a given kind */
 function firstTs(kind){ const ts = tripPhotos.filter(p=>p.kind===kind && p.ts).map(p=>p.ts); return ts.length ? Math.min.apply(null, ts) : 0; }
 function msToHM(ms){ if(!ms) return ''; const d = new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -249,7 +271,8 @@ function migrate(s){
     if(j.siteIdx === undefined) j.siteIdx = 0;
     if(j.contactIdx === undefined) j.contactIdx = 0;
   });
-  (s.trips||[]).forEach(t=>{ if(t.tonnAdj === undefined) t.tonnAdj = 0; if(t.weightAdj === undefined) t.weightAdj = 0; });
+  (s.trips||[]).forEach(t=>{ if(t.tonnAdj === undefined) t.tonnAdj = 0; if(t.weightAdj === undefined) t.weightAdj = 0;
+    if(t.wasteTypes === undefined) t.wasteTypes = t.waste ? [t.waste] : []; if(t.wasteOther === undefined) t.wasteOther = ''; });
   (s.bins||[]).forEach(b=>{
     if(b.status==='transit' || b.status==='repair') b.status = 'unknown'; /* dropped statuses */
     if(b.siteIdx === undefined) b.siteIdx = 0;
@@ -909,6 +932,9 @@ function openTripForm(opts){
       <label class="f">DO / V NUMBER <span style="font-weight:600">(read from photo — fix if wrong)</span></label>
       <input type="number" id="tf-dono" placeholder="from photo">`}
       ${binFields}
+      ${(!flow.noDO && cli.type!=='vessel') ? `
+      <label class="f">WASTE TYPE COLLECTED <span style="font-weight:600">(tick all that apply)</span></label>
+      ${wasteChecksHTML('tf', job ? [job.waste||''] : [], '')}` : ''}
       <label class="f">WEIGHBRIDGE <span style="font-weight:600">(optional here — you can add it after driving back, from My Jobs ⚖️)</span></label>
       <div class="grid3">
         <div><label class="f" style="margin-top:0">GROSS (kg)</label><input type="number" id="tf-gross" min="0" placeholder="from photo" oninput="tfNet()"></div>
@@ -1330,7 +1356,9 @@ async function saveTrip(){
     tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight,
     disposeTo, tonnage, tonnAdj: 0, distance, surcharges, remarks,
     doType: doTypeV, doNo: doNoInput,
-    waste: job ? (job.waste||'') : '',
+    ...(function(){ const w = isDriver ? readWasteChecks('tf') : null;
+      return w ? {waste: w.display || (job?(job.waste||''):''), wasteTypes: w.types, wasteOther: w.other}
+               : {waste: job ? (job.waste||'') : '', wasteTypes: [], wasteOther: ''}; })(),
     vessel: null, photos: [],
     weight: hasWeight ? {gross, tare, net: gross-tare, ticket:''} : null,
     weightAdj: 0,
@@ -1405,6 +1433,7 @@ function openTripDetail(id){
       <div class="title" style="font-weight:800">${esc(c?c.name:'?')}</div>
       <div class="muted" style="margin-top:4px">${esc(d.name)} · ${fmtDate(t.date)}</div>
       <div class="muted" style="margin-top:6px">🛠️ ${esc(t.jobType||(ty?ty.label:''))}${t.binOut?' · bin out '+esc(t.binOut):''}${t.binIn?' · bin in '+esc(t.binIn):''}</div>
+      ${t.waste?`<div class="muted">🗑️ ${esc(t.waste)}</div>`:''}
       ${tripTimesHTML(t)}
       ${t.disposeTo || t.tonnage || t.tonnAdj ? `<div class="muted">♻️ ${t.disposeTo?'Dispose to '+esc(t.disposeTo)+' · ':''}tonnage ${t.tonnage||0}${t.tonnAdj?` <b>${t.tonnAdj>0?'+':''}${t.tonnAdj}</b> = <b>${tonnTotal(t)} t</b> <span class="tag">ADJUSTED</span>`:' t'}</div>`:''}
       ${t.surcharges.length?`<div class="muted">➕ ${t.surcharges.map(s=>esc(SURCHARGES.find(x=>x.id===s)?.label)).join(', ')}</div>`:''}
@@ -1443,12 +1472,10 @@ function openTripDetail(id){
     </div>
     <label class="f">CUSTOMER</label>
     <select id="te-client">${S.clients.map(x=>`<option value="${x.id}" ${x.id===t.clientId?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
-    <div class="grid2">
-      <div><label class="f">WASTE TYPE</label>
-        <select id="te-waste"><option value="">—</option>${selOpts(wasteOptions(), t.waste)}</select></div>
-      <div><label class="f">DISPOSE TO</label>
-        <select id="te-dispose"><option value="">—</option>${selOpts(dumpOptions(), t.disposeTo)}</select></div>
-    </div>
+    <label class="f">WASTE TYPE <span style="font-weight:600">(tick all that apply)</span></label>
+    ${wasteChecksHTML('te', t.wasteTypes && t.wasteTypes.length ? t.wasteTypes : (t.waste?[t.waste]:[]), t.wasteOther||'')}
+    <label class="f">DISPOSE TO</label>
+    <select id="te-dispose"><option value="">—</option>${selOpts(dumpOptions(), t.disposeTo)}</select>
     <label class="f">💵 DRIVER PAY / FEE ($) <span style="font-weight:600">— basic pay for this trip (surcharges add on top)</span></label>
     <input type="number" id="te-price" step="0.01" value="${t.price!=null?t.price:''}" placeholder="${t.price==null?'(using rate sheet)':''}">
     <label class="f" style="opacity:.6">TRIP TYPE (only used if no fee above)</label>
@@ -1497,7 +1524,7 @@ async function saveTripEdit(id){
     binOut: ($('#te-binout').value||'').trim().toUpperCase(),
     binIn: ($('#te-binin').value||'').trim().toUpperCase(),
     timeStart: getTimeSel('te-ts'), timeEnd: getTimeSel('te-te'),
-    waste: $('#te-waste').value,
+    ...(function(){ const w = readWasteChecks('te'); return w ? {waste:w.display, wasteTypes:w.types, wasteOther:w.other} : {}; })(),
     disposeTo: $('#te-dispose').value,
     remarks: ($('#te-remarks').value||'').trim(),
     invoiced: $('#te-inv').checked,
