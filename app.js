@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v19';
+const APP_VERSION = 'v20';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -167,6 +167,55 @@ function readVesselFields(prefix){
   v.total = Math.round(tot*100)/100;
   return v;
 }
+
+/* ---------------- signature capture (finger/stylus on the driver's phone) ---------------- */
+function signaturePadHTML(prefix, name, position){
+  return `<div class="grid2">
+      <div><label class="f">CLIENT / DUTY OFFICER NAME</label><input type="text" id="${prefix}-sig-name" value="${esc(name||'')}" placeholder="Name"></div>
+      <div><label class="f">POSITION</label><input type="text" id="${prefix}-sig-pos" value="${esc(position||'')}" placeholder="e.g. Site Supervisor"></div>
+    </div>
+    <div class="sigwrap">
+      <canvas id="${prefix}-sig-pad" class="sigpad" width="600" height="220"></canvas>
+      <div class="sigwrap-hint" id="${prefix}-sig-hint">Sign here</div>
+    </div>
+    <div class="row" style="margin-top:6px"><button type="button" class="btn ghost slim" onclick="sigPadClear('${prefix}')">🗑️ Clear signature</button></div>`;
+}
+function sigPadInit(prefix){
+  const cv = $('#'+prefix+'-sig-pad'); if(!cv || cv._sigInit) return;
+  cv._sigInit = true;
+  const ctx = cv.getContext('2d');
+  ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0b2540';
+  let drawing = false, last = null;
+  const rect = () => cv.getBoundingClientRect();
+  const scale = () => ({sx: cv.width/rect().width, sy: cv.height/rect().height});
+  const pos = e=>{ const r=rect(), s=scale(); const p=(e.touches?e.touches[0]:e);
+    return {x:(p.clientX-r.left)*s.sx, y:(p.clientY-r.top)*s.sy}; };
+  const hint = $('#'+prefix+'-sig-hint');
+  const start = e=>{ e.preventDefault(); drawing=true; last=pos(e); if(hint) hint.style.display='none'; };
+  const move = e=>{ if(!drawing) return; e.preventDefault(); const p=pos(e);
+    ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; cv._hasInk=true; };
+  const end = ()=>{ drawing=false; };
+  cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+  cv.addEventListener('touchstart', start, {passive:false}); cv.addEventListener('touchmove', move, {passive:false}); cv.addEventListener('touchend', end);
+}
+function sigPadClear(prefix){
+  const cv = $('#'+prefix+'-sig-pad'); if(!cv) return;
+  cv.getContext('2d').clearRect(0,0,cv.width,cv.height); cv._hasInk = false;
+  const hint = $('#'+prefix+'-sig-hint'); if(hint) hint.style.display='block';
+}
+/* {name, position, dataUrl} or null if nothing was signed */
+function readSignature(prefix){
+  const cv = $('#'+prefix+'-sig-pad'); if(!cv) return null;
+  const name = ((($('#'+prefix+'-sig-name')||{}).value)||'').trim();
+  const position = ((($('#'+prefix+'-sig-pos')||{}).value)||'').trim();
+  if(!cv._hasInk) return (name || position) ? {name, position, dataUrl:''} : null;
+  return {name, position, dataUrl: cv.toDataURL('image/png')};
+}
+/* driver's own most-recently-used vehicle plate — remembered so they don't retype it every job */
+function lastVehicleForDriver(driverId){
+  const mine = S.trips.filter(t=>t.driverId===driverId && t.vehicleNo).sort((a,b)=>b.id-a.id);
+  return mine.length ? mine[0].vehicleNo : '';
+}
 /* earliest capture time (ms) among the tripPhotos of a given kind */
 function firstTs(kind){ const ts = tripPhotos.filter(p=>p.kind===kind && p.ts).map(p=>p.ts); return ts.length ? Math.min.apply(null, ts) : 0; }
 function msToHM(ms){ if(!ms) return ''; const d = new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -296,7 +345,8 @@ function migrate(s){
     if(j.contactIdx === undefined) j.contactIdx = 0;
   });
   (s.trips||[]).forEach(t=>{ if(t.tonnAdj === undefined) t.tonnAdj = 0; if(t.weightAdj === undefined) t.weightAdj = 0;
-    if(t.wasteTypes === undefined) t.wasteTypes = t.waste ? [t.waste] : []; if(t.wasteOther === undefined) t.wasteOther = ''; });
+    if(t.wasteTypes === undefined) t.wasteTypes = t.waste ? [t.waste] : []; if(t.wasteOther === undefined) t.wasteOther = '';
+    if(t.vehicleNo === undefined) t.vehicleNo = ''; if(t.sigName === undefined) t.sigName = ''; if(t.sigPosition === undefined) t.sigPosition = ''; });
   (s.bins||[]).forEach(b=>{
     if(b.status==='transit' || b.status==='repair') b.status = 'unknown'; /* dropped statuses */
     if(b.siteIdx === undefined) b.siteIdx = 0;
@@ -953,7 +1003,9 @@ function openTripForm(opts){
       ${flow.noDO ? '' : `
       <div class="muted" id="tf-ocr" style="margin-top:6px">Snap the DO — the app reads the number and fills the box below. Please check it's correct.</div>
       <label class="f">DO / V NUMBER <span style="font-weight:600">(read from photo — fix if wrong)</span></label>
-      <input type="number" id="tf-dono" placeholder="from photo">`}
+      <input type="number" id="tf-dono" placeholder="from photo">
+      <label class="f">VEHICLE NO. <span style="font-weight:600">(remembers your last one — change if on a different truck today)</span></label>
+      <input type="text" id="tf-vehicle" placeholder="e.g. XE6221D" style="text-transform:uppercase" autocapitalize="characters" value="${esc(lastVehicleForDriver(S.role.driverId))}">`}
       ${binFields}
       ${(!flow.noDO && cli.type!=='vessel') ? `
       <label class="f">WASTE TYPE COLLECTED <span style="font-weight:600">(tick all that apply)</span></label>
@@ -969,11 +1021,15 @@ function openTripForm(opts){
         <div><label class="f" style="margin-top:0">TARE (kg)</label><input type="number" id="tf-tare" min="0" placeholder="from photo" oninput="tfNet()"></div>
         <div><label class="f" style="margin-top:0">NET (kg)</label><input type="number" id="tf-net" readonly></div>
       </div>
+      ${flow.noDO ? '' : `
+      <label class="f">✍️ CUSTOMER SIGNATURE <span style="font-weight:600">(optional for now — paper copy is still official)</span></label>
+      ${signaturePadHTML('tf', '', '')}`}
       <div class="card" id="tf-times" style="box-shadow:none; background:var(--bg); margin:12px 0 4px; padding:10px 12px; font-size:13px">
         ⏱️ Times are logged automatically from your photos — you can't change them.</div>
       ${job && job.price ? `<div class="payline"><span>Pay for this job</span><span>${money(jobPay(job))}</span></div>` : ''}
       <div style="margin-top:14px"><button class="btn" onclick="saveTrip()">✅ Done — send to office</button></div>`);
     updateTimesDisplay();
+    if(!flow.noDO) sigPadInit('tf');
     return;
   }
 
@@ -1379,6 +1435,7 @@ async function saveTrip(){
     price: job && job.price != null ? job.price : null,
     binOut: ((($('#tf-binout')||{}).value)||'').trim().toUpperCase(),
     binIn: ((($('#tf-binin')||{}).value)||'').trim().toUpperCase(),
+    vehicleNo: ((($('#tf-vehicle')||{}).value)||'').trim().toUpperCase(),
     timeStart, timeEnd,
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
     tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight,
@@ -1388,6 +1445,8 @@ async function saveTrip(){
       return w ? {waste: w.display || (job?(job.waste||''):''), wasteTypes: w.types, wasteOther: w.other}
                : {waste: job ? (job.waste||'') : '', wasteTypes: [], wasteOther: ''}; })(),
     vessel: (isDriver && c && c.type==='vessel') ? readVesselFields('tfv') : null,
+    ...(function(){ const sig = isDriver ? readSignature('tf') : null;
+      return {sigName: sig?sig.name:'', sigPosition: sig?sig.position:''}; })(),
     photos: [],
     weight: hasWeight ? {gross, tare, net: gross-tare, ticket:''} : null,
     weightAdj: 0,
@@ -1405,8 +1464,13 @@ async function saveTrip(){
   t._charge = (t.price != null ? t.price : '');
   t._surch = t.surcharges.map(s=>(SURCHARGES.find(x=>x.id===s)||{}).label).filter(Boolean).join('; ');
   t._pay = tripPay(t);
-  /* order DO → Bin IN → Bin OUT → record → weight → named in Drive by kind */
-  const kindOrder = {do:0, in:1, out:2, bin:3, gross:4, tare:5};
+  /* signature image rides the same photo pipeline (Drive storage + PhotoDB cache), tagged its own kind */
+  const sigCanvas = isDriver ? $('#tf-sig-pad') : null;
+  if(sigCanvas && sigCanvas._hasInk){
+    tripPhotos.push({id:'sig'+Date.now().toString(36), full:sigCanvas.toDataURL('image/png'), thumb:sigCanvas.toDataURL('image/png'), kind:'signature', ts:Date.now()});
+  }
+  /* order Bin IN → Bin OUT → DO → record → weight → signature — matches the form's capture order, named in Drive by kind */
+  const kindOrder = {in:0, out:1, do:2, bin:3, gross:4, tare:5, signature:6};
   const photosToUpload = tripPhotos.slice().sort((a,b)=>(kindOrder[a.kind]??9)-(kindOrder[b.kind]??9));
   t.photosB64 = photosToUpload.map(p=>p.full.split(',')[1]);
   t.photoKinds = photosToUpload.map(p=>p.kind || 'do');
@@ -1475,6 +1539,11 @@ function openTripDetail(id){
         <div class="muted" style="margin-top:4px">Tap a photo to open the full-size DO from the archive.</div>`:''}
       <div style="margin-top:8px" class="pay">Pay: ${money(tripPay(t))}</div>
     </div>
+    ${(t.doType && (t.jobType!=='Sell' && t.jobType!=='Dump')) ? `
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost slim" onclick="openDOPrint(${t.id})">🖨️ View / Print Digital DO</button>
+      ${S.role.kind==='operator' ? `<button class="btn ghost slim" onclick="emailDOPrompt(${t.id})">✉️ Email DO to client</button>` : ''}
+    </div>` : ''}
     ${S.role.kind==='operator' ? `
     <label class="f">✏️ OPERATOR — COMPLETE / CORRECT THIS TRIP ${t.doNo?'':'<span class="tag" style="background:#fdf3dd;color:var(--amber)">DO NUMBER PENDING</span>'}</label>
     <div class="grid3">
@@ -1491,6 +1560,8 @@ function openTripDetail(id){
       <div><label class="f">BIN OUT <span style="font-weight:600">(full — leaving client)</span></label><input type="text" id="te-binout" value="${esc(t.binOut||'')}" style="text-transform:uppercase"></div>
       <div><label class="f">BIN IN <span style="font-weight:600">(empty — at client)</span></label><input type="text" id="te-binin" value="${esc(t.binIn||'')}" style="text-transform:uppercase"></div>
     </div>
+    <label class="f">VEHICLE NO.</label>
+    <input type="text" id="te-vehicle" value="${esc(t.vehicleNo||'')}" style="text-transform:uppercase" placeholder="e.g. XE6221D">
     <div class="grid2">
       <div><label class="f">DISTANCE (km)</label><input type="number" id="te-dist" step="0.1" value="${t.distance||''}"></div>
       <div><label class="f">NET WEIGHT (kg) <span style="font-weight:600">auto</span></label><input type="text" value="${weightNet(t)}" disabled></div>
@@ -1540,6 +1611,7 @@ async function saveTripEdit(id){
     distance, typeId, surcharges, clientId,
     binOut: ($('#te-binout').value||'').trim().toUpperCase(),
     binIn: ($('#te-binin').value||'').trim().toUpperCase(),
+    vehicleNo: ($('#te-vehicle').value||'').trim().toUpperCase(),
     timeStart: getTimeSel('te-ts'), timeEnd: getTimeSel('te-te'),
     ...(function(){ const w = readWasteChecks('te'); return w ? {waste:w.display, wasteTypes:w.types, wasteOther:w.other} : {}; })(),
     disposeTo: $('#te-dispose').value,
@@ -1559,6 +1631,128 @@ async function saveTripEdit(id){
   await api('updateTrip', {id, patch});
   render(); toast('Trip updated — Trips sheet refreshed ✅');
   openTripDetail(id);
+}
+
+/* ============================================================
+   DIGITAL DELIVERY ORDER — printable copy matching the paper forms
+   ============================================================ */
+const DO_LETTERHEAD = `
+  <div class="doh">
+    <div class="doh-logo">L<span>&hearts;</span></div>
+    <div class="doh-co">
+      <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
+      <div class="doh-tag">(Lead Resources To Quality)</div>
+      <div class="doh-addr">Warehouse: 23, Gul Drive Singapore 629471<br>
+      Office: 18 Boon Lay Way #09-123 Tradehub 21 (S) 609966<br>
+      Tel: 6717 6688 &nbsp; Fax: 6793 2309</div>
+    </div>
+  </div>`;
+function doPrintHTML(t){
+  const c = client(t.clientId), d = driver(t.driverId);
+  const sigPhoto = (t.photos||[]).find(p=>p && p.kind==='signature');
+  const isVessel = t.doType==='vessel';
+  const noLabel = isVessel ? 'No. V' : 'No. DO';
+  const dateStr = fmtDate(t.date);
+  const sigBlock = `
+    <div class="do-sig-row">
+      <div class="do-sig-box">
+        ${sigPhoto ? `<img class="do-sig-img" src="${sigPhoto.url||sigPhoto.thumb}">` : '<div class="do-sig-blank">Not signed digitally — see paper copy</div>'}
+        <div class="do-sig-line"></div>
+        <div class="do-sig-label">Customer / Duty Officer Signature</div>
+        <div class="do-sig-meta">Name: ${esc(t.sigName||'_____________________')}</div>
+        <div class="do-sig-meta">Position: ${esc(t.sigPosition||'_____________________')}</div>
+      </div>
+      <div class="do-sig-box">
+        <div class="do-sig-meta" style="margin-top:56px">Collected by (Driver): <b>${esc(d?d.name:'')}</b></div>
+        <div class="do-sig-meta">Vehicle No.: <b>${esc(t.vehicleNo||'—')}</b></div>
+        <div class="do-sig-meta">Time In: <b>${esc(t.timeStart?fmtTime12(t.timeStart):'—')}</b> &nbsp; Time Out: <b>${esc(t.timeEnd?fmtTime12(t.timeEnd):'—')}</b></div>
+      </div>
+    </div>`;
+  const body = isVessel ? `
+    <div class="do-field"><b>VESSEL NAME</b> : ${esc(t.vessel?t.vessel.name||'':'')}</div>
+    <div class="do-field"><b>LOCATION</b> : ${esc(t.vessel?t.vessel.location||'':'')} &nbsp;&nbsp; <b>DATE</b> : ${dateStr}</div>
+    <div class="do-sef-title">SERVICE ENGAGEMENT FORM (SEF)</div>
+    <table class="do-table">
+      <tr><th>TYPE OF WASTE</th><th>REMARKS (IF ANY)</th></tr>
+      <tr><td>
+        <table class="do-cats">
+          ${VESSEL_CATS.map(cat=>`<tr><td>Cat ${cat.k.toUpperCase()} : ${esc(cat.label.split('·')[1]||cat.label)}</td><td>${t.vessel&&t.vessel[cat.k]?t.vessel[cat.k]:'—'} m³</td></tr>`).join('')}
+          <tr><td><b>Total</b></td><td><b>${t.vessel?t.vessel.total||0:0} m³</b></td></tr>
+        </table>
+      </td><td style="vertical-align:top">${esc(t.remarks||'')}</td></tr>
+    </table>
+    <div class="do-field" style="margin-top:10px">I hereby certified that the waste information stated above is correct.</div>
+  ` : `
+    <div class="do-field"><b>COMPANY NAME</b> : ${esc(c?c.name:'')}</div>
+    <div class="do-field"><b>DATE OF COLLECTION</b> : ${dateStr}</div>
+    <div class="do-sef-title">SERVICE ENGAGEMENT FORM (SEF)</div>
+    <div class="do-jd-title">JOB DESCRIPTION</div>
+    <div class="do-field">GARBAGE DISPOSAL: We have collected the following open top container of:</div>
+    <div class="do-waste-list">${(t.wasteTypes&&t.wasteTypes.length?t.wasteTypes:(t.waste?[t.waste]:[])).map(w=>`<div>☑ ${esc(w)}</div>`).join('') || '<div class="muted">(none ticked)</div>'}
+      ${t.wasteOther?`<div>☑ Others: ${esc(t.wasteOther)}</div>`:''}</div>
+    <table class="do-bin-table">
+      <tr><td>Bin In (empty, at client)</td><td><b>${esc(t.binIn||'—')}</b></td></tr>
+      <tr><td>Bin Out (full, back to yard)</td><td><b>${esc(t.binOut||'—')}</b></td></tr>
+    </table>
+  `;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${noLabel} ${t.doNo||''} — ${esc(c?c.name:'')}</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif; color:#1a1a1a; max-width:720px; margin:20px auto; padding:0 16px}
+    .doh{display:flex; align-items:flex-start; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px}
+    .doh-logo{font-size:30px; font-weight:900; color:#0f7a4d}
+    .doh-name{font-weight:800; font-size:16px}
+    .doh-tag{font-size:11px; font-style:italic; color:#444}
+    .doh-addr{font-size:11px; color:#333; margin-top:2px}
+    .do-no{float:right; font-size:20px; font-weight:800; color:#b0281c}
+    .do-field{margin:8px 0; font-size:13.5px}
+    .do-sef-title{background:#111; color:#fff; font-weight:800; padding:6px 10px; margin-top:14px; font-size:13px}
+    .do-jd-title{font-weight:800; margin-top:8px; font-size:12.5px}
+    .do-waste-list{margin:8px 0; font-size:13px; line-height:1.7}
+    .do-bin-table, .do-table{width:100%; border-collapse:collapse; margin-top:8px; font-size:13px}
+    .do-bin-table td, .do-table td, .do-table th{border:1px solid #999; padding:6px 8px}
+    .do-cats{width:100%; border-collapse:collapse}
+    .do-cats td{border:none; padding:3px 4px; font-size:12.5px}
+    .do-sig-row{display:flex; gap:24px; margin-top:26px}
+    .do-sig-box{flex:1}
+    .do-sig-img{max-width:220px; max-height:80px; display:block}
+    .do-sig-blank{font-size:11.5px; color:#999; font-style:italic; height:60px; display:flex; align-items:center}
+    .do-sig-line{border-top:1px solid #333; margin-top:4px; width:220px}
+    .do-sig-label{font-size:10.5px; color:#555; margin-top:2px}
+    .do-sig-meta{font-size:12px; margin-top:6px}
+    .do-actions{margin:18px 0; display:flex; gap:10px}
+    .do-actions button{padding:10px 16px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer}
+    .do-print-btn{background:#0f7a4d; color:#fff}
+    .do-close-btn{background:#eee; color:#333}
+    @media print{ .do-actions{display:none} body{margin:0; max-width:none} }
+  </style></head>
+  <body>
+    <div class="do-actions"><button class="do-print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button><button class="do-close-btn" onclick="window.close()">Close</button></div>
+    ${DO_LETTERHEAD}
+    <div class="do-no">${noLabel} ${t.doNo||'—'}</div>
+    <div style="clear:both"></div>
+    ${body}
+    ${sigBlock}
+    <div class="do-field" style="margin-top:18px; font-size:10.5px; color:#888">Digital copy generated by Lirich Ops — not a substitute for the signed paper original during the trial period.</div>
+  </body></html>`;
+}
+function openDOPrint(id){
+  const t = S.trips.find(x=>x.id===id); if(!t) return;
+  const w = window.open('', '_blank');
+  if(!w){ toast('⚠️ Pop-up blocked — allow pop-ups to view the DO'); return; }
+  w.document.write(doPrintHTML(t));
+  w.document.close();
+}
+async function emailDOPrompt(id){
+  const t = S.trips.find(x=>x.id===id); if(!t) return;
+  const c = client(t.clientId);
+  const suggested = (cContact(c,0) && cContact(c,0).email) || '';
+  const to = prompt(`Email the digital DO to which address?\n(${c?c.name:''})`, suggested);
+  if(!to) return;
+  toast('Sending DO…');
+  try{
+    const res = await api('emailDO', {to, subject:`${t.doType==='vessel'?'V':'DO'} ${t.doNo||''} — ${c?c.name:''}`, html: doPrintHTML(t)});
+    toast(res && res.sent ? '✅ DO emailed to '+to : '⚠️ Could not send — check the Apps Script is authorised for Gmail');
+  }catch(e){ toast('⚠️ '+(e.message||'Send failed')); }
 }
 
 /* ============================================================

@@ -180,6 +180,10 @@ body.big-ui table.jt{font-size:14.5px}
   max-width:90%; animation:pop .25s ease;
 }
 @keyframes pop{from{transform:translateY(-14px); opacity:0} to{transform:none; opacity:1}}
+/* ---------- signature pad ---------- */
+.sigwrap{position:relative; border:1.5px dashed var(--line); border-radius:10px; overflow:hidden; margin-top:6px; background:#fff}
+.sigpad{width:100%; height:150px; display:block; touch-action:none; cursor:crosshair}
+.sigwrap-hint{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:var(--muted); font-size:13px; font-weight:700; pointer-events:none}
 /* ---------- bins ---------- */
 .bin-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(62px,1fr)); gap:6px}
 .bin-cell{

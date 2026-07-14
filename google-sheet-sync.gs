@@ -146,6 +146,7 @@ function doPost(e) {
   try {
     var q = JSON.parse(e.postData.contents);
     if (q.action === 'addPhoto') return json_(addPhoto_(q));
+    if (q.action === 'emailDO') return json_(emailDO_(q));
 
     var st = state_();
     if (q.action === 'initState') {
@@ -197,7 +198,7 @@ function apply_(st, q) {
       if (t.photosB64 && t.photosB64.length) {
         var jobtag = t.jobId ? t.jobId : ('T' + t.id);
         var kinds = t.photoKinds || [];
-        var PFX = { do: 'DO', out: 'BINOUT', in: 'BININ', bin: 'BIN', gross: 'GROSS', tare: 'TARE' };
+        var PFX = { do: 'DO', out: 'BINOUT', in: 'BININ', bin: 'BIN', gross: 'GROSS', tare: 'TARE', signature: 'SIG' };
         var cnt = {};
         t.photos = [];
         for (var pi = 0; pi < t.photosB64.length; pi++) {
@@ -277,6 +278,22 @@ function addPhoto_(q) {
   return { id: id, url: 'https://drive.google.com/uc?export=view&id=' + id, thumb: 'https://drive.google.com/thumbnail?id=' + id + '&sz=w240' };
 }
 
+/* ---------------- digital DO: render to PDF + email + Drive copy ---------------- */
+function emailDO_(q) {
+  if (!q.to || !q.html) return { sent: false, error: 'missing to/html' };
+  try {
+    var pdf = HtmlService.createHtmlOutput(q.html).getAs('application/pdf').setName((q.subject || 'Delivery Order') + '.pdf');
+    /* keep an office copy in Drive too, alongside the DO/bin photos */
+    var it = DriveApp.getFoldersByName('Lirich Ops DO Photos');
+    var folder = it.hasNext() ? it.next() : DriveApp.createFolder('Lirich Ops DO Photos');
+    folder.createFile(pdf.copyBlob());
+    GmailApp.sendEmail(q.to, q.subject || 'Delivery Order', 'Please find the delivery order attached.\n\nLirich Resources Pte Ltd', { attachments: [pdf], name: 'Lirich Resources' });
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: String(err) };
+  }
+}
+
 /* ---------------- housekeeping ---------------- */
 function autoArchive_(st) {
   if (st.trips.length <= 450) return;
@@ -290,13 +307,14 @@ function autoArchive_(st) {
 /* ---------------- Trips: rich report (one row per trip) ---------------- */
 function tripHeader_() {
   return ['Date', 'Job #', 'Driver', 'Customer', 'Service Location', 'Salesperson',
-    'Waste Type', 'Trip Type', 'DO Type', 'DO / V No',
+    'Waste Type', 'Trip Type', 'DO Type', 'DO / V No', 'Vehicle No.',
     'Bin Out (full)', 'Bin In (empty)', 'Time Start', 'Time End', 'Dispose To', 'Distance (km)',
     'Tonnage (t)', 'Adjustment (t)', 'Final Tonnage (t)',
     'Gross (kg)', 'Tare (kg)', 'Adjustment (kg)', 'Net (kg)', 'Weighing Ticket',
     'Surcharges', 'Driver Pay ($)', 'Customer Charge ($)',
     'Vessel Name', 'Vessel Location',
     'Cat A Plastics (m³)', 'Cat B Food (m³)', 'Cat C Domestic (m³)', 'Cat D Cooking Oil (m³)', 'Cat E Ashes (m³)', 'Cat F Operational (m³)', 'Total (m³)',
+    'Signed', 'Signed By', 'Signer Position',
     'DO Photos', 'Bin Photos', 'Weight Photos', 'DO Photo Links', 'Bin Photo Links', 'Weight Photo Links', 'Remarks', 'Invoiced',
     /* --- photo-stamped times + tamper cross-check (office does OT formulas off these) --- */
     'Time Accept', 'Time DO Photo', 'Time Bin OUT', 'Time Bin IN', 'Time Finish', 'Time Weigh', 'Server Received',
@@ -310,11 +328,12 @@ function tripRow_(t) {
   var w = t.weight || {};
   var wNet = (w.gross || w.gross === 0) && (w.tare || w.tare === 0)
     ? Math.round(((Number(w.gross) - Number(w.tare)) + (Number(t.weightAdj) || 0)) * 100) / 100 : '';
-  var doP = [], binP = [], wP = [];
+  var doP = [], binP = [], wP = [], sigP = '';
   (t.photos || []).forEach(function (p) {
     if (!p || !p.url) return;
     if (p.kind === 'do') doP.push(p.url);
     else if (p.kind === 'gross' || p.kind === 'tare') wP.push(p.url);
+    else if (p.kind === 'signature') sigP = p.url;
     else binP.push(p.url);
   });
   var v = t.vessel || {};
@@ -340,13 +359,14 @@ function tripRow_(t) {
   var doCell = noDO ? '—' : (t.doNo ? ((t.doType === 'vessel' ? 'V ' : 'DO ') + t.doNo) : 'PENDING');
   return [
     t.date, t.jobId || '', t._driver || '', t._client || '', t._addr || '', t._sales || '',
-    t.waste || '', t._type || '', t.doType || '', doCell,
+    t.waste || '', t._type || '', t.doType || '', doCell, t.vehicleNo || '',
     t.binOut || '', t.binIn || '', t.timeStart || '', t.timeEnd || '', t.disposeTo || '', t.distance || '',
     t.tonnage || 0, t.tonnAdj || 0, total,
     w.gross || '', w.tare || '', t.weightAdj || 0, wNet, w.ticket || '',
     t._surch || '', t._pay || 0, (t._charge != null ? t._charge : ''),
     v.name || '', v.location || '',
     (v.a || ''), (v.b || ''), (v.c || ''), (v.d || ''), (v.e || ''), (v.f || ''), (v.total || ''),
+    sigP ? 'YES' : 'No', t.sigName || '', t.sigPosition || '',
     doP.length, binP.length, wP.length, doP.join('\n'), binP.join('\n'), wP.join('\n'), t.remarks || '', t.invoiced ? 'YES' : '',
     tsDate_(t.tAccept), tsDate_(t.tDO), tsDate_(t.tBinOut), tsDate_(t.tBinIn), tsDate_(t.tEnd), tsDate_(t.tWeight), tsDate_(t.tServer),
     travel, wait, jobMin, totalMin, flag
