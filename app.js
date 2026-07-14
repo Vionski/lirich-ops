@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v18';
+const APP_VERSION = 'v19';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -403,7 +403,7 @@ function openRoleSheet(){
     ${DRIVERS.map(d=>`
       <div class="item tap" onclick="viewAsDriver(${d.id})">
         ${avatarHTML(d)}
-        <div class="grow"><div class="title">${esc(d.name)}</div><div class="sub">Driver ${d.id} · ${d.truck}</div></div>
+        <div class="grow"><div class="title">${esc(d.name)}</div><div class="sub">Driver ${d.id}</div></div>
         <span class="icon-btn">›</span>
       </div>`).join('')}` : ''}
     <p class="muted" style="margin:10px 0 8px">To use a different account, log out and sign in with that account's PIN.</p>
@@ -595,7 +595,7 @@ function vDash(){
         return `<div class="item">
           ${avatarHTML(d)}
           <div class="grow">
-            <div class="title">${esc(d.name)} <span class="muted" style="font-weight:600">· ${d.truck}</span>
+            <div class="title">${esc(d.name)}
               ${onJob?'<span class="chip st-in_progress">ON A JOB</span>':''}</div>
             <div class="sub">Jobs ${done}/${jobs.length} done · ${tr.length} trip${tr.length===1?'':'s'} logged</div>
           </div>
@@ -757,7 +757,7 @@ function openJobDetail(id){
     ${S.role.kind==='operator' ? `
       <label class="f">REASSIGN DRIVER</label>
       <div class="row">
-        <select id="jd-driver" class="grow">${DRIVERS.map(x=>`<option value="${x.id}" ${x.id===j.driverId?'selected':''}>${esc(x.name)} · ${x.truck}</option>`).join('')}</select>
+        <select id="jd-driver" class="grow">${DRIVERS.map(x=>`<option value="${x.id}" ${x.id===j.driverId?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
         <button class="btn slim" onclick="reassignJob(${j.id})">Save</button>
       </div>
       <div style="margin-top:10px"><button class="btn danger" onclick="deleteJob(${j.id})">🗑️ Delete job</button></div>` : ''}`);
@@ -779,7 +779,7 @@ function fmtTime12(t){
 async function reassignJob(id){
   const driverId = Number($('#jd-driver').value);
   closeSheet();
-  await api('updateJob', {id, patch:{driverId, truckId: driver(driverId).truck, _driver: driver(driverId).name}});
+  await api('updateJob', {id, patch:{driverId, _driver: driver(driverId).name}});
   render(); toast('Job reassigned to '+driver(driverId).name);
 }
 async function deleteJob(id){
@@ -859,8 +859,7 @@ function jfClientChanged(){
   autoDistance();
 }
 async function saveJob(){
-  const [dId, dVeh] = $('#jf-driver').value.split('|');
-  const driverId = Number(dId);
+  const driverId = Number($('#jf-driver').value);
   const c = client($('#jf-client').value);
   const jtSel = $('#jf-jobtype').selectedOptions[0];
   const jobType = $('#jf-jobtype').value;
@@ -874,7 +873,7 @@ async function saveJob(){
     dumpTo: $('#jf-dump').value,
     distance: Number($('#jf-dist').value) || 0,
     instructions: $('#jf-notes').value.trim(),
-    driverId, truckId: dVeh || driver(driverId).truck,
+    driverId,
     status:'assigned', date: TODAY, createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
   };
   /* denormalised display fields for the Google Sheet "Jobs" tab */
@@ -1401,7 +1400,7 @@ async function saveTrip(){
   const d = driver(t.driverId), ty = ttype(t.typeId);
   t._client = c ? c.name : ''; t._sales = c ? (c.salesRep||'') : '';
   t._addr = c ? cSite(c, job ? job.siteIdx : 0).addr : '';
-  t._driver = d.name; t._truck = (job && job.truckId) || d.truck;
+  t._driver = d.name;
   t._type = t.jobType || (ty ? ty.label : t.typeId);
   t._charge = (t.price != null ? t.price : '');
   t._surch = t.surcharges.map(s=>(SURCHARGES.find(x=>x.id===s)||{}).label).filter(Boolean).join('; ');
@@ -1715,20 +1714,8 @@ function dumpOptions(){
     : ['Lirich Resources Pte Ltd','NEA','WDL','Bee Joo','Kim Hock'];
 }
 function driverSelectOptions(selectedId){
-  /* sheet rows map onto the 5 login accounts by name; one driver can appear
-     with several vehicles — each pairing becomes an option */
-  let list;
-  if(S.sheetDB && S.sheetDB.drivers && S.sheetDB.drivers.length){
-    list = S.sheetDB.drivers.map(sd=>{
-      const d = DRIVERS.find(x=>{
-        const a = x.name.toLowerCase(), b = sd.name.toLowerCase();
-        return a.startsWith(b.slice(0,4)) || b.startsWith(a.slice(0,4));
-      });
-      return d ? {id:d.id, vehicle: sd.vehicle || d.truck, label: sd.name+' · '+(sd.vehicle||d.truck)} : null;
-    }).filter(Boolean);
-  }
-  if(!list || !list.length) list = DRIVERS.map(d=>({id:d.id, vehicle:d.truck, label:d.name+' · '+d.truck}));
-  return list.map(o=>`<option value="${o.id}|${esc(o.vehicle)}" ${o.id===selectedId?'selected':''}>${esc(o.label)}</option>`).join('');
+  /* just the 5 drivers by name — vehicles are no longer tracked (drivers swap trucks) */
+  return DRIVERS.map(d=>`<option value="${d.id}" ${d.id===selectedId?'selected':''}>${esc(d.name)}</option>`).join('');
 }
 function selOpts(list, selected){
   return list.map(o=>`<option ${o===selected?'selected':''}>${esc(o)}</option>`).join('');
@@ -1962,7 +1949,7 @@ function vEarnings(){
       const tr = trips.filter(t=>t.driverId===d.id);
       return `<details class="drv" ${tr.length?'open':''}>
         <summary>${avatarHTML(d)}
-          <div class="grow"><div class="title" style="font-weight:800; font-size:13.5px">${esc(d.name)} <span class="muted" style="font-weight:600">· ${d.truck}</span></div>
+          <div class="grow"><div class="title" style="font-weight:800; font-size:13.5px">${esc(d.name)}</div>
           <div class="sub muted">${tr.length} trip${tr.length===1?'':'s'}</div></div>
           <div class="pay">${money(payOf(tr))}</div></summary>
         <div class="body">
@@ -2026,13 +2013,13 @@ function downloadCSV(name, rows){
 }
 function exportDayCSV(){
   const trips = tripsOn(earnDate);
-  const rows = [['Date','Driver','Truck','Client','Salesperson','Trip Type','DO No','Bin Out','Bin In','Tonnage (t)','Adjustment (t)','Total (t)','Distance (km)','Surcharges','Pay (SGD)']];
+  const rows = [['Date','Driver','Client','Salesperson','Trip Type','DO No','Bin Out','Bin In','Tonnage (t)','Adjustment (t)','Total (t)','Distance (km)','Surcharges','Pay (SGD)']];
   trips.forEach(t=>{
     const d = driver(t.driverId), c = client(t.clientId), ty = ttype(t.typeId);
-    rows.push([t.date, d.name, d.truck, c?c.name:'', c?c.salesRep||'':'', ty?ty.label:'', t.doNo, t.binOut, t.binIn,
+    rows.push([t.date, d.name, c?c.name:'', c?c.salesRep||'':'', ty?ty.label:'', t.doNo, t.binOut, t.binIn,
       t.tonnage||'', t.tonnAdj||'', tonnTotal(t)||'', t.distance||'', t.surcharges.map(s=>SURCHARGES.find(x=>x.id===s)?.label).join('; '), tripPay(t).toFixed(2)]);
   });
-  rows.push(['','','','','','','','','','','','','','TOTAL', payOf(trips).toFixed(2)]);
+  rows.push(['','','','','','','','','','','','','TOTAL', payOf(trips).toFixed(2)]);
   downloadCSV(`lirich-earnings-${earnDate}.csv`, rows);
   toast('Earnings CSV downloaded');
 }
