@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v23';
+const APP_VERSION = 'v24';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -454,7 +454,6 @@ function openRoleSheet(){
       </div>`).join('')}` : ''}
     <p class="muted" style="margin:10px 0 8px">To use a different account, log out and sign in with that account's PIN.</p>
     <div style="margin:6px 0"><button class="btn" onclick="logout()">🔒 Log out / switch user</button></div>
-    ${isOp ? `<div style="margin-top:8px"><button class="btn danger" onclick="resetDemo()">↺ Reset demo data</button></div>` : ''}
     <p class="muted" style="margin-top:14px; text-align:center; font-size:11px">App build ${APP_VERSION}</p>`);
 }
 /* operator preview: view a driver's app without logging out (stays authed as operator) */
@@ -537,8 +536,13 @@ function logout(){
   persist(); closeSheet(); render();
 }
 async function resetDemo(){
+  /* DISABLED for the live trial — the reset button was removed from the Account screen and this
+     function is hard-blocked so no stale-cached device or console call can wipe the live database. */
+  toast('⚠️ Database reset is disabled — this is live data');
+  return;
+  /* eslint-disable no-unreachable */
   const u = curUser();
-  if(!u || u.role!=='operator'){ toast('⚠️ Only the operator can reset the database'); return; } /* button is hidden too — this is the real guard */
+  if(!u || u.role!=='operator'){ toast('⚠️ Only the operator can reset the database'); return; }
   if(!confirm('Reset ALL data in the central database back to the seed? Every device will see this.')) return;
   const keepUrl = S.settings.sheetUrl;
   S = seed(); S.settings.sheetUrl = keepUrl; persist();
