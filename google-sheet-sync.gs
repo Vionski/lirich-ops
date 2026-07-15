@@ -61,7 +61,7 @@ function col_(headers, needle) {
 function customerDB_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var out = { clients: [], drivers: [], wasteTypes: [], dumpLocations: [], binTypes: [], bins: [] };
-  var JOBTYPES = ['Exchange', 'Collect', 'Delivery', 'Sell', 'Dump'];
+  var JOBTYPES = ['Exchange', 'Collect', 'Delivery', 'Sell', 'Dump', 'Load'];
 
   // ---- clients (prefer "Customers" tab, else legacy "Customer DB") ----
   var cust = ss.getSheetByName('Customers') || ss.getSheetByName('Customer DB');
@@ -81,7 +81,7 @@ function customerDB_() {
         var cname = name || last;
         if (!cname && !addr) continue;
         var prices = {};
-        for (var j = 0; j < 5; j++) { if (pIdx[j] >= 0) { var v = n_(r[pIdx[j]]); if (v != null) prices[JOBTYPES[j]] = v; } }
+        for (var j = 0; j < JOBTYPES.length; j++) { if (pIdx[j] >= 0) { var v = n_(r[pIdx[j]]); if (v != null) prices[JOBTYPES[j]] = v; } }
         out.clients.push({
           name: cname, addr: addr,
           contact: cPerson >= 0 ? String(r[cPerson] || '').trim() : '',

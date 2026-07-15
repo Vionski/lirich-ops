@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v24';
+const APP_VERSION = 'v25';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -87,7 +87,7 @@ const DRIVERS = [
 const BIN_SIZES = ['5ft','10ft','15ft','20ft','30ft'];
 const SALES = ['Marcus', 'Patrick'];
 /* customer job-request types — priced per customer in the "Customers" sheet (cols F-J) */
-const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump'];
+const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load'];
 
 /* Photo sections + which photo stamps which time, per job type.
    Lirich convention: Bin IN = the bin is IN at the client premises (empty, just dropped off),
@@ -113,6 +113,11 @@ const JOB_FLOW = {
   Dump:     { photos:[
       {k:'bin', label:'📷 BIN ON SITE', hint:'sets Time Finish', req:true}],
     bins:[], fixed:true, noDO:true },
+  Load:     { photos:[
+      {k:'in',  label:'📷 BIN IN — empty bin dropped for loading', hint:'sets Time Start', req:true},
+      {k:'out', label:'📷 BIN OUT — same bin picked up loaded', hint:'sets Time End', req:true},
+      {k:'do',  label:'📷 DO / PSA', hint:'required', req:true}],
+    bins:['in','out'], start:'in', end:'out' },
 };
 /* weighbridge photos are NOT part of phase 1 — the yard is a different location from the client
    site, so weight is always captured later via the ⚖️ Add weight step (openWeighForm/saveWeigh). */
