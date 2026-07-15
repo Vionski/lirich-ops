@@ -186,9 +186,15 @@ function apply_(st, q) {
       if (j) for (var k in q.patch) j[k] = q.patch[k];
       break;
     }
-    case 'deleteJob':
-      st.jobs = st.jobs.filter(function (x) { return x.id !== q.id; });
+    case 'voidJob': {
+      var vj = find(st.jobs, q.id);
+      if (vj) {
+        var hasInvoiced = st.trips.some(function (x) { return x.jobId === q.id && x.invoiced; });
+        if (hasInvoiced) throw 'This job has an invoiced trip and cannot be voided.';
+        vj.status = 'void';
+      }
       break;
+    }
     case 'addTrip': {
       var t = q.trip;
       t.id = st.seq.trip++;
@@ -307,7 +313,7 @@ function autoArchive_(st) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName('Trips Archive') || ss.insertSheet('Trips Archive');
   if (sh.getLastRow() === 0) sh.appendRow(tripHeader_());
-  old.forEach(function (t) { sh.appendRow(tripRow_(t)); });
+  old.forEach(function (t) { sh.appendRow(tripRow_(t, st)); });
 }
 
 /* ---------------- Trips: rich report (one row per trip) ---------------- */
@@ -329,7 +335,12 @@ function tripHeader_() {
 /* ms epoch -> real Date for the sheet (blank if 0/absent). Sheet timezone formats it. */
 function tsDate_(ms) { return ms ? new Date(Number(ms)) : ''; }
 function mins_(a, b) { return (a && b && b >= a) ? Math.round((b - a) / 60000) : ''; }
-function tripRow_(t) {
+function tripRow_(t, st) {
+  var jobIdCell = t.jobId ? t.jobId : ('T' + t.id);
+  if (t.jobId && st) {
+    var linkedJob = (st.jobs || []).filter(function (x) { return x.id === t.jobId; })[0];
+    if (linkedJob && linkedJob.status === 'void') jobIdCell = jobIdCell + ' (VOID)';
+  }
   var total = Math.round(((Number(t.tonnage) || 0) + (Number(t.tonnAdj) || 0)) * 100) / 100;
   var w = t.weight || {};
   var wNet = (w.gross || w.gross === 0) && (w.tare || w.tare === 0)
@@ -364,7 +375,7 @@ function tripRow_(t) {
   var noDO = (t.jobType === 'Sell' || t.jobType === 'Dump');
   var doCell = noDO ? '—' : (t.doNo ? ((t.doType === 'vessel' ? 'V ' : 'DO ') + t.doNo) : 'PENDING');
   return [
-    t.date, t.jobId || '', t._driver || '', t._client || '', t._addr || '', t._sales || '',
+    t.date, jobIdCell, t._driver || '', t._client || '', t._addr || '', t._sales || '',
     t.waste || '', t._type || '', t.doType || '', doCell, t.vehicleNo || '',
     t.binOut || '', t.binIn || '', t.timeStart || '', t.timeEnd || '', t.disposeTo || '', t.distance || '',
     t.tonnage || 0, t.tonnAdj || 0, total,
@@ -383,7 +394,7 @@ function tripRow_(t) {
 function mirror_(st) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tSheet = ss.getSheetByName('Trips') || ss.insertSheet('Trips');
-  var tRows = [tripHeader_()].concat(st.trips.map(tripRow_));
+  var tRows = [tripHeader_()].concat(st.trips.map(function (t) { return tripRow_(t, st); }));
   tSheet.clearContents();
   tSheet.getRange(1, 1, tRows.length, tRows[0].length).setValues(tRows);
   tSheet.getRange(1, 1, 1, tRows[0].length).setFontWeight('bold');

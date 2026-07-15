@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -384,7 +384,7 @@ function initials(name){ return name.split(' ').map(w=>w[0]).join('').slice(0,2)
 function avatarHTML(d, cls){
   return `<span class="avatar ${cls||''}" style="background:${d.color}">${initials(d.name)}</span>`;
 }
-const STATUS_LABEL = {assigned:'Assigned', in_progress:'In progress', done:'Done'};
+const STATUS_LABEL = {assigned:'Assigned', in_progress:'In progress', done:'Done', void:'Void'};
 /* 'unknown' = location not yet confirmed by any driver trip (grey/unverified in the Bin page).
    Becomes 'yard' or 'client' the moment a trip's Bin IN/OUT touches that bin no. */
 const BIN_STATUS = [
@@ -604,7 +604,6 @@ function renderFab(){
   const t = curTab();
   if(S.role.kind==='operator' && (t==='jobs' || t==='dash')){ fab.style.display='block'; fab.textContent='＋ Assign job'; fab.onclick=()=>openJobForm(); }
   else if(S.role.kind==='operator' && t==='crm'){ fab.style.display='block'; fab.textContent='＋ Add'; fab.onclick=()=>openClientForm(); }
-  else if(S.role.kind==='driver' && (t==='card'||t==='myjobs')){ fab.style.display='block'; fab.textContent='＋ Log a trip / DO'; fab.onclick=()=>openTripForm({}); }
   else fab.style.display='none';
 }
 
@@ -613,7 +612,7 @@ function renderFab(){
    ============================================================ */
 function vDash(){
   const jobsToday  = S.jobs.filter(j=>j.date===TODAY);
-  const openJobs   = jobsToday.filter(j=>j.status!=='done');
+  const openJobs   = jobsToday.filter(j=>j.status!=='done' && j.status!=='void');
   const trToday    = tripsOn(TODAY);
   const payToday   = payOf(trToday);
   const binsOut    = S.bins.filter(b=>b.status==='client').length;
@@ -634,7 +633,7 @@ function vDash(){
     <div class="card">
       <h2>🚛 Fleet today</h2>
       ${DRIVERS.map(d=>{
-        const jobs = driverJobs(d.id, TODAY);
+        const jobs = driverJobs(d.id, TODAY).filter(j=>j.status!=='void');
         const done = jobs.filter(j=>j.status==='done').length;
         const onJob = jobs.some(j=>j.status==='in_progress');
         const tr = driverTrips(d.id, TODAY);
@@ -680,7 +679,7 @@ function jobRow(j){
   </div>`;
 }
 function vJobs(){
-  const F = [['all','All'],['assigned','Assigned'],['in_progress','In progress'],['done','Done']];
+  const F = [['all','All'],['assigned','Assigned'],['in_progress','In progress'],['done','Done'],['void','Void']];
   const list = S.jobs.filter(j=>jobFilter==='all'||j.status===jobFilter).slice().reverse();
   $('#main').innerHTML = `
     <div class="ftabs">${F.map(([id,l])=>{
@@ -714,7 +713,7 @@ function driverJobCard(j){
   </div>`;
 }
 function vMyJobs(){
-  const mine = driverJobs(S.role.driverId).slice().reverse();
+  const mine = driverJobs(S.role.driverId).filter(j=>j.status!=='void').slice().reverse();
   const open = mine.filter(j=>j.status!=='done');
   const done = mine.filter(j=>j.status==='done');
   $('#main').innerHTML = `
@@ -804,13 +803,13 @@ function openJobDetail(id){
     ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-bottom:8px">💬 WhatsApp ${esc(person.name||c.name)}</button></a>`:''}
     ${mine && j.status==='assigned' ? `<button class="btn" onclick="acceptJob(${j.id})">▶️ Accept job</button>` : ''}
     ${mine && j.status==='in_progress' ? `<button class="btn" onclick="closeSheet(); openTripForm({jobId:${j.id}})">📋 Log trip / DO for this job</button>` : ''}
-    ${S.role.kind==='operator' ? `
+    ${S.role.kind==='operator' && j.status!=='void' ? `
       <label class="f">REASSIGN DRIVER</label>
       <div class="row">
         <select id="jd-driver" class="grow">${DRIVERS.map(x=>`<option value="${x.id}" ${x.id===j.driverId?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
         <button class="btn slim" onclick="reassignJob(${j.id})">Save</button>
       </div>
-      <div style="margin-top:10px"><button class="btn danger" onclick="deleteJob(${j.id})">🗑️ Delete job</button></div>` : ''}`);
+      <div style="margin-top:10px"><button class="btn danger" onclick="voidJob(${j.id})">🚫 Void job</button></div>` : ''}`);
 }
 async function acceptJob(id){
   const now = Date.now();
@@ -833,11 +832,13 @@ async function reassignJob(id){
   await api('updateJob', {id, patch:{driverId, _driver: driver(driverId).name}});
   render(); toast('Job reassigned to '+driver(driverId).name);
 }
-async function deleteJob(id){
-  if(!confirm('Delete this job?')) return;
+async function voidJob(id){
+  const invoiced = S.trips.some(t=>t.jobId===id && t.invoiced);
+  if(invoiced){ alert('This job has an invoiced trip and cannot be voided.'); return; }
+  if(!confirm('Void this job? It stays on record in the Trips sheet (marked VOID) for dispute purposes, but disappears from active lists.')) return;
   closeSheet();
-  await api('deleteJob', {id});
-  render(); toast('Job deleted');
+  await api('voidJob', {id});
+  render(); toast('Job voided');
 }
 
 function openJobForm(presetClientId){
