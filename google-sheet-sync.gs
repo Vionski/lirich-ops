@@ -223,7 +223,9 @@ function apply_(st, q) {
       if (t.binIn) { var bi = ensureBin_(t.binIn); bi.status = 'client'; bi.clientId = t.clientId; bi.siteIdx = t.jobSiteIdx || 0; }
       if (t.binOut) { var bo = ensureBin_(t.binOut); bo.status = 'yard'; bo.clientId = null; bo.siteIdx = 0; }
       delete t.jobBinSize; delete t.jobSiteIdx;
-      if (t.jobId) { var tj = find(st.jobs, t.jobId); if (tj) tj.status = 'done'; }
+      /* q.final === false = driver tapped "Save" (waiting on something, e.g. the DO) — the job
+         stays open so they can resume it later. Anything else (incl. old clients with no flag) finalises as before. */
+      if (t.jobId && q.final !== false) { var tj = find(st.jobs, t.jobId); if (tj) tj.status = 'done'; }
       st.trips.push(t);
       break;
     }
@@ -235,8 +237,12 @@ function apply_(st, q) {
     case 'updateTrip': {
       var tu = find(st.trips, q.id);
       if (tu) {
+        var wasFinal = q.patch && ('final' in q.patch) ? q.patch.final : null;
+        if (q.patch) delete q.patch.final; /* driver Save/Done flag — not a real trip field */
         for (var k3 in q.patch) tu[k3] = q.patch[k3];
         if (tu.weight && tu.weight.gross && !tu.weight.ticket) tu.weight.ticket = 'LR' + (st.seq.ticket++);
+        /* resuming a saved-for-later trip and tapping "Done" now finalises the linked job */
+        if (wasFinal === true && tu.jobId) { var tj2 = find(st.jobs, tu.jobId); if (tj2) tj2.status = 'done'; }
       }
       break;
     }

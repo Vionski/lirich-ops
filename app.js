@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v21';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -114,12 +114,8 @@ const JOB_FLOW = {
       {k:'bin', label:'📷 BIN ON SITE', hint:'sets Time Finish', req:true}],
     bins:[], fixed:true, noDO:true },
 };
-/* every job type also gets an optional weighbridge-photo capture (Gross/Tare) after its own photos */
-const WEIGHT_PHOTOS = [
-  {k:'gross', label:'📷 WEIGHT — GROSS (kg)', hint:'optional — snap the scale', req:false},
-  {k:'tare',  label:'📷 WEIGHT — TARE (kg)',  hint:'optional — snap the scale', req:false},
-];
-Object.keys(JOB_FLOW).forEach(k=>{ JOB_FLOW[k].photos = JOB_FLOW[k].photos.concat(WEIGHT_PHOTOS); });
+/* weighbridge photos are NOT part of phase 1 — the yard is a different location from the client
+   site, so weight is always captured later via the ⚖️ Add weight step (openWeighForm/saveWeigh). */
 function jobFlow(job){ return (job && JOB_FLOW[job.jobType]) || JOB_FLOW.Exchange; }
 /* waste types the driver ticks on a land DO (mirrors the paper SEF; multi-select + Others free-text) */
 const WASTE_TYPES = ['General Waste','Wood Waste','Plastic Waste','Metal Waste','Mixed Waste','Food Waste'];
@@ -710,8 +706,8 @@ function driverJobCard(j){
     ${j.instructions?`<div class="djob-sub muted">📝 ${esc(j.instructions)}</div>`:''}
     ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-top:10px">💬 Call ${esc(person.name||'customer')}</button></a>`:''}
     ${started
-      ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 TAKE DO PHOTO &amp; FINISH</button>`
-      : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ START JOB</button>`}
+      ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
+      : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
   </div>`;
 }
 function vMyJobs(){
@@ -802,7 +798,7 @@ function openJobDetail(id){
       <div class="muted" style="margin-top:6px">💵 Base pay: <b>${ty && !ty.perKm ? money(ty.base) : '$1.50 × km'}</b></div>
     </div>
     ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-bottom:8px">💬 WhatsApp ${esc(person.name||c.name)}</button></a>`:''}
-    ${mine && j.status==='assigned' ? `<button class="btn" onclick="acceptJob(${j.id})">▶️ Accept &amp; start</button>` : ''}
+    ${mine && j.status==='assigned' ? `<button class="btn" onclick="acceptJob(${j.id})">▶️ Accept job</button>` : ''}
     ${mine && j.status==='in_progress' ? `<button class="btn" onclick="closeSheet(); openTripForm({jobId:${j.id}})">📋 Log trip / DO for this job</button>` : ''}
     ${S.role.kind==='operator' ? `
       <label class="f">REASSIGN DRIVER</label>
@@ -819,6 +815,7 @@ async function acceptJob(id){
   await api('updateJob', {id, patch:{status:'in_progress', startedAt, acceptedAtMs:now}});
   render();
   toast(`Job accepted at ${fmtTime12(startedAt)} — safe driving! 🚛`);
+  openTripForm({jobId:id}); /* straight into the job — no second tap needed */
 }
 function fmtTime12(t){
   if(!t) return '';
@@ -967,9 +964,13 @@ function vJobCard(){
    TRIP / DO FORM (core screen)
    ============================================================ */
 let tripPhotos = [];
+let existingTripPhotos = []; /* already-uploaded photos when resuming a saved-for-later trip (Drive-hosted, read-only) */
 function openTripForm(opts){
   tripPhotos = [];
+  existingTripPhotos = [];
   const job = opts.jobId ? S.jobs.find(j=>j.id===opts.jobId) : null;
+  /* a job still open with a trip already against it = the driver tapped "Save" earlier — resume it */
+  const draft = (S.role.kind==='driver' && job) ? S.trips.find(t=>t.jobId===job.id) : null;
   const presetClient = job ? job.clientId : (opts.clientId || S.clients[0].id);
   const presetType = job ? job.task : 'col_m';
   const cli = client(presetClient);
@@ -977,6 +978,7 @@ function openTripForm(opts){
   /* ---- DRIVER: photos drive the clock — sections & times depend on job type ---- */
   if(S.role.kind === 'driver'){
     const flow = jobFlow(job);
+    if(draft) existingTripPhotos = draft.photos||[];
     const photoSections = flow.photos.map(s=>`
       <label class="f">${s.label} <span style="font-weight:600">· ${s.hint}</span></label>
       <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
@@ -984,13 +986,15 @@ function openTripForm(opts){
     const binFields = flow.bins.length ? `<div class="grid2">
       ${flow.bins.map(k=> k==='out'
         ? `<div><label class="f">BIN OUT NO. <span style="font-weight:600">(full — from photo, fix if wrong)</span></label>
-        <input type="text" id="tf-binout" placeholder="e.g. 7022" style="text-transform:uppercase" autocapitalize="characters"></div>`
+        <input type="text" id="tf-binout" placeholder="e.g. 7022" style="text-transform:uppercase" autocapitalize="characters" value="${esc(draft?draft.binOut||'':'')}"></div>`
         : `<div><label class="f">BIN IN NO. <span style="font-weight:600">(empty — from photo, fix if wrong)</span></label>
-        <input type="text" id="tf-binin" placeholder="e.g. R08" style="text-transform:uppercase" autocapitalize="characters"></div>`
+        <input type="text" id="tf-binin" placeholder="e.g. R08" style="text-transform:uppercase" autocapitalize="characters" value="${esc(draft?draft.binIn||'':'')}"></div>`
       ).join('')}
     </div>` : '';
-    openSheet(sheetTitle('Log trip — snap the DO') + `
+    openSheet(sheetTitle(draft ? 'Continue trip' : 'Log trip — snap the DO') + `
       <input type="hidden" id="tf-job" value="${job?job.id:''}">
+      <input type="hidden" id="tf-draft" value="${draft?draft.id:''}">
+      ${draft ? `<div class="muted" style="margin-bottom:8px">📝 Picking up where you left off — already-sent photos are marked SENT.</div>` : ''}
       ${job ? `
       <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0; padding:10px 12px">
         <div class="title" style="font-weight:800">${esc(cli.name)}</div>
@@ -1003,32 +1007,29 @@ function openTripForm(opts){
       ${flow.noDO ? '' : `
       <div class="muted" id="tf-ocr" style="margin-top:6px">Snap the DO — the app reads the number and fills the box below. Please check it's correct.</div>
       <label class="f">DO / V NUMBER <span style="font-weight:600">(read from photo — fix if wrong)</span></label>
-      <input type="number" id="tf-dono" placeholder="from photo">
+      <input type="number" id="tf-dono" placeholder="from photo" value="${draft&&draft.doNo?draft.doNo:''}">
       <label class="f">VEHICLE NO. <span style="font-weight:600">(remembers your last one — change if on a different truck today)</span></label>
-      <input type="text" id="tf-vehicle" placeholder="e.g. XE6221D" style="text-transform:uppercase" autocapitalize="characters" value="${esc(lastVehicleForDriver(S.role.driverId))}">`}
+      <input type="text" id="tf-vehicle" placeholder="e.g. XE6221D" style="text-transform:uppercase" autocapitalize="characters" value="${esc((draft&&draft.vehicleNo)||lastVehicleForDriver(S.role.driverId))}">`}
       ${binFields}
       ${(!flow.noDO && cli.type!=='vessel') ? `
       <label class="f">WASTE TYPE COLLECTED <span style="font-weight:600">(tick all that apply)</span></label>
-      ${wasteChecksHTML('tf', job ? [job.waste||''] : [], '')}` : ''}
+      ${wasteChecksHTML('tf', draft ? (draft.wasteTypes&&draft.wasteTypes.length?draft.wasteTypes:[draft.waste||'']) : (job ? [job.waste||''] : []), draft?draft.wasteOther||'':'')}` : ''}
       ${(!flow.noDO && cli.type==='vessel') ? `
       <label class="f">🚢 VESSEL SEF — TYPE OF WASTE <span style="font-weight:600">(type volumes from the green DO)</span></label>
-      ${vesselFieldsHTML('tfv', null)}
+      ${vesselFieldsHTML('tfv', draft?draft.vessel:null)}
       <label class="f">REMARKS <span style="font-weight:600">(if any)</span></label>
-      <input type="text" id="tf-remarks" placeholder="Optional">` : ''}
-      <label class="f">WEIGHBRIDGE <span style="font-weight:600">(optional here — you can add it after driving back, from My Jobs ⚖️)</span></label>
-      <div class="grid3">
-        <div><label class="f" style="margin-top:0">GROSS (kg)</label><input type="number" id="tf-gross" min="0" placeholder="from photo" oninput="tfNet()"></div>
-        <div><label class="f" style="margin-top:0">TARE (kg)</label><input type="number" id="tf-tare" min="0" placeholder="from photo" oninput="tfNet()"></div>
-        <div><label class="f" style="margin-top:0">NET (kg)</label><input type="number" id="tf-net" readonly></div>
-      </div>
+      <input type="text" id="tf-remarks" placeholder="Optional" value="${esc(draft?draft.remarks||'':'')}">` : ''}
       ${flow.noDO ? '' : `
       <label class="f">✍️ CUSTOMER SIGNATURE <span style="font-weight:600">(optional for now — paper copy is still official)</span></label>
-      ${signaturePadHTML('tf', '', '')}`}
+      <div class="thumbs" id="tf-thumbs-signature"></div>
+      ${signaturePadHTML('tf', draft?draft.sigName||'':'', draft?draft.sigPosition||'':'')}`}
       <div class="card" id="tf-times" style="box-shadow:none; background:var(--bg); margin:12px 0 4px; padding:10px 12px; font-size:13px">
         ⏱️ Times are logged automatically from your photos — you can't change them.</div>
       ${job && job.price ? `<div class="payline"><span>Pay for this job</span><span>${money(jobPay(job))}</span></div>` : ''}
-      <div style="margin-top:14px"><button class="btn" onclick="saveTrip()">✅ Done — send to office</button></div>`);
+      <div style="margin-top:14px"><button class="btn" onclick="saveTrip(true)">✅ Done — send to office</button></div>
+      <div style="margin-top:8px"><button class="btn ghost" onclick="saveTrip(false)">💾 Save — I'll finish later (e.g. waiting for the DO)</button></div>`);
     updateTimesDisplay();
+    renderFormThumbs();
     if(!flow.noDO) sigPadInit('tf');
     return;
   }
@@ -1082,7 +1083,7 @@ function openTripForm(opts){
     <label class="f">REMARKS</label>
     <input type="text" id="tf-remarks" placeholder="Optional">
     <div class="payline"><span>Trip pay</span><span id="tf-pay">$0.00</span></div>
-    <div style="margin-top:12px"><button class="btn" onclick="saveTrip()">Save trip &amp; DO</button></div>`);
+    <div style="margin-top:12px"><button class="btn" onclick="saveTrip(true)">Save trip &amp; DO</button></div>`);
   tfTypeChanged();
 }
 function tfClientChanged(){
@@ -1168,11 +1169,20 @@ function photoThumbHTML(p){
     </div>`;
 }
 function removePhoto(id){ tripPhotos = tripPhotos.filter(p=>p.id!==id); renderFormThumbs(); updateTimesDisplay(); }
+function alreadySentThumbHTML(p){
+  return `<div style="position:relative">
+      <img src="${p.thumb||p.url}" alt="photo" style="opacity:.75">
+      <span class="tag" style="position:absolute; bottom:2px; left:2px; font-size:8px; background:var(--brand); color:#fff">SENT</span>
+    </div>`;
+}
 function renderFormThumbs(){
-  /* driver form: one thumbs div per photo section */
-  ['do','out','in','bin','gross','tare'].forEach(k=>{
+  /* driver form: one thumbs div per photo section — already-sent photos (resumed drafts) show first, read-only */
+  ['do','out','in','bin','gross','tare','signature'].forEach(k=>{
     const div = $('#tf-thumbs-'+k);
-    if(div) div.innerHTML = tripPhotos.filter(p=>p.kind===k).map(photoThumbHTML).join('');
+    if(!div) return;
+    const already = existingTripPhotos.filter(p=>p.kind===k).map(alreadySentThumbHTML).join('');
+    const fresh = tripPhotos.filter(p=>p.kind===k).map(photoThumbHTML).join('');
+    div.innerHTML = already + fresh;
   });
   const allDiv = $('#tf-thumbs');
   if(allDiv){ /* operator combined view + manual OCR button */
@@ -1374,24 +1384,32 @@ async function backgroundEnrich(tripId, doPhoto){
     if(Object.keys(p).length) await api('updateTrip', {id:tripId, patch:p});
   }catch(e){ /* best-effort — office completes from the photo if this fails */ }
 }
-async function saveTrip(){
+/* final=true → "Done" (finalises the job); final=false → "Save" (keeps the job open so the
+   driver can resume later, e.g. still waiting on the signed/office DO). Operator saves are
+   always final — there's no draft concept on that side. */
+async function saveTrip(final){
   const isDriver = S.role.kind==='driver';
   const jobId = $('#tf-job').value ? Number($('#tf-job').value) : null;
   const job = jobId ? S.jobs.find(j=>j.id===jobId) : null;
+  const draftId = Number((($('#tf-draft')||{}).value))||0;
+  const draft = draftId ? S.trips.find(x=>x.id===draftId) : null;
   const clientId = job ? job.clientId : ($('#tf-client') ? $('#tf-client').value : S.clients[0].id);
   const c = client(clientId);
-  const gross = Number($('#tf-gross').value)||0, tare = Number($('#tf-tare').value)||0;
+  /* weight is captured only in phase 2 now — these fields only exist on the operator's own form */
+  const gross = Number((($('#tf-gross')||{}).value))||0, tare = Number((($('#tf-tare')||{}).value))||0;
   const hasWeight = gross>0 && tare>0;
   const doNoInput = Number((($('#tf-dono')||{}).value)) || 0;
 
   let doTypeV, typeId, surcharges, disposeTo, tonnage, distance, remarks;
-  let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0, tWeight = 0;
+  let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0;
   if(isDriver){
-    /* driver: photos are the record AND the clock — times can never be typed */
+    /* driver: photos are the record AND the clock — times can never be typed.
+       "Save" skips this — a partial save is allowed to be partial. */
     const flow = jobFlow(job);
-    for(const s of flow.photos){
-      if(s.req && !tripPhotos.some(p=>p.kind===s.k)){
-        toast(`⚠️ ${s.label.replace(/^📷 /,'')} photo is needed 📷`); return;
+    if(final){
+      for(const s of flow.photos){
+        const have = tripPhotos.some(p=>p.kind===s.k) || existingTripPhotos.some(p=>p.kind===s.k);
+        if(s.req && !have){ toast(`⚠️ ${s.label.replace(/^📷 /,'')} photo is needed 📷`); return; }
       }
     }
     doTypeV = (c && c.type==='vessel') ? 'vessel' : 'land';
@@ -1401,16 +1419,20 @@ async function saveTrip(){
     tonnage = 0;
     distance = job ? (Number(job.distance)||0) : 0;
     remarks = ((($('#tf-remarks')||{}).value)||'').trim(); /* vessel SEF remarks (land form has none) */
-    /* photo-stamped times (the trusted clock) */
-    tAccept = (job && job.acceptedAtMs) || 0;
-    tDO = firstTs('do'); tBinOut = firstTs('out'); tBinIn = firstTs('in');
-    tWeight = Math.min(firstTs('gross')||Infinity, firstTs('tare')||Infinity); if(tWeight===Infinity) tWeight = 0;
+    /* photo-stamped times — a resumed draft keeps its original times; only a kind with no
+       saved time yet picks one up from this session's photos */
+    tAccept = (job && job.acceptedAtMs) || (draft&&draft.tAccept) || 0;
+    tDO = (draft&&draft.tDO) || firstTs('do');
+    tBinOut = (draft&&draft.tBinOut) || firstTs('out');
+    tBinIn = (draft&&draft.tBinIn) || firstTs('in');
     if(flow.start){              /* Exchange: whichever kind is start/end drives the time */
-      timeStart = msToHM(firstTs(flow.start)); timeEnd = msToHM(firstTs(flow.end)); tEnd = firstTs(flow.end);
+      const tStart = flow.start==='out'?tBinOut:tBinIn, tE = flow.end==='out'?tBinOut:tBinIn;
+      timeStart = msToHM(tStart); timeEnd = msToHM(tE); tEnd = tE;
     }else if(flow.mark){          /* Collect (bin out) / Delivery (bin in) */
-      timeStart = msToHM(firstTs(flow.mark)); tEnd = firstTs(flow.mark);
+      const tM = flow.mark==='out'?tBinOut:tBinIn;
+      timeStart = msToHM(tM); tEnd = tM;
     }else if(flow.fixed){        /* Sell / Dump: no DO — Accept + bin-on-site photo = finish */
-      tEnd = firstTs('bin');
+      tEnd = (draft&&draft.tEnd) || firstTs('bin');
       timeStart = msToHM(tAccept); timeEnd = msToHM(tEnd);
     }
     /* DO number filled by background OCR after save, or by the office from the photo */
@@ -1428,25 +1450,67 @@ async function saveTrip(){
     remarks = $('#tf-remarks').value.trim();
     timeStart = getTimeSel('tf-ts'); timeEnd = getTimeSel('tf-te');
   }
+  const binOut = ((($('#tf-binout')||{}).value)||'').trim().toUpperCase();
+  const binIn = ((($('#tf-binin')||{}).value)||'').trim().toUpperCase();
+  const vehicleNo = ((($('#tf-vehicle')||{}).value)||'').trim().toUpperCase();
+  const wasteRead = isDriver ? readWasteChecks('tf') : null;
+  const waste = wasteRead ? (wasteRead.display || (job?(job.waste||''):'')) : (job ? (job.waste||'') : '');
+  const wasteTypes = wasteRead ? wasteRead.types : [];
+  const wasteOther = wasteRead ? wasteRead.other : '';
+  const vessel = (isDriver && c && c.type==='vessel') ? readVesselFields('tfv') : null;
+  const sig = isDriver ? readSignature('tf') : null;
+  const sigName = sig?sig.name:'', sigPosition = sig?sig.position:'';
+  /* signature image rides the same photo pipeline (Drive storage + PhotoDB cache), tagged its own kind */
+  const sigCanvas = isDriver ? $('#tf-sig-pad') : null;
+  if(sigCanvas && sigCanvas._hasInk){
+    tripPhotos.push({id:'sig'+Date.now().toString(36), full:sigCanvas.toDataURL('image/png'), thumb:sigCanvas.toDataURL('image/png'), kind:'signature', ts:Date.now()});
+  }
+  /* order Bin IN → Bin OUT → DO → record → weight → signature — matches the form's capture order, named in Drive by kind */
+  const kindOrder = {in:0, out:1, do:2, bin:3, gross:4, tare:5, signature:6};
+  const photosToUpload = tripPhotos.slice().sort((a,b)=>(kindOrder[a.kind]??9)-(kindOrder[b.kind]??9));
+  closeSheet();
+
+  if(draft){
+    /* resuming a saved-for-later trip: upload only the NEW photos (existing ones already sent),
+       then a minimal patch — never touches office-owned fields like weight/tonnAdj/invoiced */
+    toast(photosToUpload.length ? `Saving ${photosToUpload.length} new photo(s)…` : 'Saving…');
+    const jobtag = jobId || ('T'+draft.id);
+    const PFX = {do:'DO', out:'BINOUT', in:'BININ', bin:'BIN', gross:'GROSS', tare:'TARE', signature:'SIG'};
+    const cnt = {}; existingTripPhotos.forEach(p=>{ const k=PFX[p.kind]||'DO'; cnt[k]=(cnt[k]||0)+1; });
+    const newPhotoRecords = [];
+    for(const p of photosToUpload){
+      const k = PFX[p.kind]||'DO'; cnt[k]=(cnt[k]||0)+1;
+      try{
+        const rec = await api('addPhoto', {b64:p.full.split(',')[1], name:k+'-'+jobtag+'-'+cnt[k]+'.jpg'});
+        if(rec && rec.id){ rec.kind = p.kind; newPhotoRecords.push(rec);
+          PhotoDB.put({id:rec.id, full:p.full, thumb:p.thumb, clientId, driverId:draft.driverId, date:draft.date, createdAt:Date.now()}).catch(()=>{}); }
+      }catch(e){}
+    }
+    const patch = {
+      binOut, binIn, vehicleNo, timeStart, timeEnd, tAccept, tDO, tBinOut, tBinIn, tEnd,
+      doNo: doNoInput, doType: doTypeV, waste, wasteTypes, wasteOther, vessel, remarks,
+      sigName, sigPosition, photos: existingTripPhotos.concat(newPhotoRecords), final,
+    };
+    const st = await api('updateTrip', {id: draft.id, patch});
+    render();
+    toast(final ? '✅ Sent to office — thanks!' : "💾 Progress saved — resume anytime from My Jobs");
+    const doPhoto = photosToUpload.find(p=>p.kind==='do');
+    if(doPhoto && st && st.trips){ const saved = st.trips.find(x=>x.id===draft.id); if(saved) backgroundEnrich(saved.id, doPhoto); }
+    return;
+  }
+
   const t = {
     driverId: isDriver ? S.role.driverId : 1,
     date: TODAY, clientId, typeId,
     jobType: job ? (job.jobType||'') : '',
     price: job && job.price != null ? job.price : null,
-    binOut: ((($('#tf-binout')||{}).value)||'').trim().toUpperCase(),
-    binIn: ((($('#tf-binin')||{}).value)||'').trim().toUpperCase(),
-    vehicleNo: ((($('#tf-vehicle')||{}).value)||'').trim().toUpperCase(),
+    binOut, binIn, vehicleNo,
     timeStart, timeEnd,
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
-    tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight,
+    tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight: 0,
     disposeTo, tonnage, tonnAdj: 0, distance, surcharges, remarks,
     doType: doTypeV, doNo: doNoInput,
-    ...(function(){ const w = isDriver ? readWasteChecks('tf') : null;
-      return w ? {waste: w.display || (job?(job.waste||''):''), wasteTypes: w.types, wasteOther: w.other}
-               : {waste: job ? (job.waste||'') : '', wasteTypes: [], wasteOther: ''}; })(),
-    vessel: (isDriver && c && c.type==='vessel') ? readVesselFields('tfv') : null,
-    ...(function(){ const sig = isDriver ? readSignature('tf') : null;
-      return {sigName: sig?sig.name:'', sigPosition: sig?sig.position:''}; })(),
+    waste, wasteTypes, wasteOther, vessel, sigName, sigPosition,
     photos: [],
     weight: hasWeight ? {gross, tare, net: gross-tare, ticket:''} : null,
     weightAdj: 0,
@@ -1464,19 +1528,10 @@ async function saveTrip(){
   t._charge = (t.price != null ? t.price : '');
   t._surch = t.surcharges.map(s=>(SURCHARGES.find(x=>x.id===s)||{}).label).filter(Boolean).join('; ');
   t._pay = tripPay(t);
-  /* signature image rides the same photo pipeline (Drive storage + PhotoDB cache), tagged its own kind */
-  const sigCanvas = isDriver ? $('#tf-sig-pad') : null;
-  if(sigCanvas && sigCanvas._hasInk){
-    tripPhotos.push({id:'sig'+Date.now().toString(36), full:sigCanvas.toDataURL('image/png'), thumb:sigCanvas.toDataURL('image/png'), kind:'signature', ts:Date.now()});
-  }
-  /* order Bin IN → Bin OUT → DO → record → weight → signature — matches the form's capture order, named in Drive by kind */
-  const kindOrder = {in:0, out:1, do:2, bin:3, gross:4, tare:5, signature:6};
-  const photosToUpload = tripPhotos.slice().sort((a,b)=>(kindOrder[a.kind]??9)-(kindOrder[b.kind]??9));
   t.photosB64 = photosToUpload.map(p=>p.full.split(',')[1]);
   t.photoKinds = photosToUpload.map(p=>p.kind || 'do');
-  closeSheet();
   toast(photosToUpload.length ? `Saving trip + ${photosToUpload.length} photo(s)…` : 'Saving trip to database…');
-  const st = await api('addTrip', {trip:t});
+  const st = await api('addTrip', {trip:t, final});
   const saved = st.trips[st.trips.length-1];
   /* cache full-res locally under the Drive ids so this device can view offline */
   (saved.photos||[]).forEach((ph,i)=>{
@@ -1485,9 +1540,8 @@ async function saveTrip(){
       driverId:saved.driverId, date:saved.date, createdAt:Date.now()}).catch(()=>{});
   });
   render();
-  const noWeightYet = isDriver && !hasWeight;
   toast(isDriver
-    ? (noWeightYet ? '✅ Sent to office! Back at the yard, tap ⚖️ Add weight on this job.' : '✅ Sent to office — thanks!')
+    ? (final ? '✅ Sent to office! Back at the yard, tap ⚖️ Add weight on this job.' : "💾 Progress saved — resume anytime from My Jobs")
     : `Trip saved — ${doLabel(saved)} · pay ${money(tripPay(saved))} ✅`);
   /* driver: OCR the DO photo in the BACKGROUND and fill the office's fields — driver never waits */
   if(isDriver){
