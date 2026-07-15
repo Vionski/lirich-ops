@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v21';
+const APP_VERSION = 'v22';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -696,6 +696,8 @@ function driverJobCard(j){
   const site = cSite(c, j.siteIdx);
   const person = cContact(c, j.contactIdx);
   const started = j.status==='in_progress';
+  const trip = S.trips.find(t=>t.jobId===j.id);
+  const hasWeight = trip && trip.weight && trip.weight.gross;
   return `<div class="djob">
     <div class="djob-h">${esc(c?c.name:'?')}
       <span class="djob-badge ${started?'run':'go'}">${started?'IN PROGRESS':'NEW'}</span></div>
@@ -708,6 +710,7 @@ function driverJobCard(j){
     ${started
       ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
       : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
+    ${trip && !hasWeight ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
   </div>`;
 }
 function vMyJobs(){
@@ -731,6 +734,7 @@ function vMyJobs(){
 function openWeighForm(tripId){
   const t = S.trips.find(x=>x.id===tripId); if(!t) return;
   tripPhotos = [];
+  existingTripPhotos = [];
   const c = client(t.clientId);
   openSheet(sheetTitle(`⚖️ Weighbridge — ${doLabel(t)}`) + `
     <div class="muted" style="margin-bottom:6px">${esc(c?c.name:'')} — snap the scale display, the app reads the number.</div>
