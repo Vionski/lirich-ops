@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v29';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -70,6 +70,60 @@ async function shrinkImage(dataURL, maxPx, quality){
   cv.height = Math.max(1, Math.round(im.height*sc));
   cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
   return cv.toDataURL('image/jpeg', quality);
+}
+/* reads EXIF DateTimeOriginal (tag 0x9003, falls back to DateTime 0x0132) from a JPEG
+   ArrayBuffer. Returns ms epoch (local time — EXIF carries no timezone) or null if the
+   file isn't a JPEG or has no EXIF block (e.g. a screenshot, or some HEIC-origin photos).
+   Lets a photo picked from the gallery carry its real capture time instead of upload time. */
+function readExifDateMs(buf){
+  try{
+    const view = new DataView(buf);
+    if(view.getUint16(0) !== 0xFFD8) return null; // not a JPEG
+    let offset = 2;
+    while(offset + 4 <= view.byteLength){
+      const marker = view.getUint16(offset);
+      if((marker & 0xFF00) !== 0xFF00) break;
+      const segLen = view.getUint16(offset+2);
+      if(marker === 0xFFE1){
+        const segStart = offset+4;
+        if(view.getUint32(segStart) !== 0x45786966 || view.getUint16(segStart+4) !== 0x0000) return null; // not "Exif\0\0"
+        const tiffStart = segStart+6;
+        const little = view.getUint16(tiffStart) === 0x4949;
+        const getU16 = o => view.getUint16(o, little);
+        const getU32 = o => view.getUint32(o, little);
+        const readAscii = (o, len) => { let s=''; for(let i=0;i<len;i++){ const c=view.getUint8(o+i); if(c===0) break; s+=String.fromCharCode(c); } return s; };
+        const readIFD = (ifdOffset) => {
+          const count = getU16(ifdOffset);
+          let exifIFDOffset = null, dateStr = null;
+          for(let i=0;i<count;i++){
+            const entry = ifdOffset+2+i*12;
+            const tag = getU16(entry);
+            if(tag === 0x8769) exifIFDOffset = getU32(entry+8);
+            if(tag === 0x0132) dateStr = readAscii(tiffStart+getU32(entry+8), 19);
+          }
+          return {exifIFDOffset, dateStr};
+        };
+        const ifd0Offset = getU32(tiffStart+4);
+        let {exifIFDOffset, dateStr} = readIFD(tiffStart+ifd0Offset);
+        if(exifIFDOffset != null){
+          const subBase = tiffStart+exifIFDOffset;
+          const subCount = getU16(subBase);
+          for(let i=0;i<subCount;i++){
+            const entry = subBase+2+i*12;
+            if(getU16(entry) === 0x9003){ dateStr = readAscii(tiffStart+getU32(entry+8), 19); break; }
+          }
+        }
+        if(!dateStr) return null;
+        const m = dateStr.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+        if(!m) return null;
+        const dt = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]), Number(m[5]), Number(m[6]));
+        return isNaN(dt.getTime()) ? null : dt.getTime();
+      }
+      if(marker === 0xFFDA) break; // start of scan — no more APPn markers ahead
+      offset += 2 + segLen;
+    }
+    return null;
+  }catch(e){ return null; }
 }
 
 /* ---------------- fixed reference data ---------------- */
@@ -710,6 +764,12 @@ function driverJobCard(j){
   const started = j.status==='in_progress';
   const trip = S.trips.find(t=>t.jobId===j.id);
   const hasWeight = trip && trip.weight && trip.weight.gross;
+  /* weighing (phase 2) only unlocks once every required BIN photo for this job type is
+     actually on the trip — a Save-for-later with bin photos still missing must not let the
+     driver skip ahead to weighing before that proof exists. DO photo is excluded on purpose:
+     the DO/paperwork can follow separately and shouldn't block the weighbridge step. */
+  const requiredKinds = jobFlow(j).photos.filter(p=>p.req && p.k!=='do').map(p=>p.k);
+  const hasAllRequired = trip && requiredKinds.every(k => (trip.photos||[]).some(p=>p.kind===k));
   return `<div class="djob">
     <div class="djob-h">${esc(c?c.name:'?')}
       <span class="djob-badge ${started?'run':'go'}">${started?'IN PROGRESS':'NEW'}</span></div>
@@ -722,7 +782,7 @@ function driverJobCard(j){
     ${started
       ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
       : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
-    ${trip && !hasWeight ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
+    ${trip && !hasWeight && hasAllRequired ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
   </div>`;
 }
 function vMyJobs(){
@@ -752,10 +812,10 @@ function openWeighForm(tripId){
   openSheet(sheetTitle(`⚖️ Weighbridge — ${doLabel(t)}`) + `
     <div class="muted" style="margin-bottom:6px">${esc(c?c.name:'')} — snap the scale display, the app reads the number.</div>
     <label class="f">📷 WEIGHT — GROSS (kg)</label>
-    <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-gross" onchange="onPhotoAdd(this,'gross')">
+    <input type="file" accept="image/*" multiple id="tf-photo-gross" onchange="onPhotoAdd(this,'gross')">
     <div class="thumbs" id="tf-thumbs-gross"></div>
     <label class="f">📷 WEIGHT — TARE (kg)</label>
-    <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-tare" onchange="onPhotoAdd(this,'tare')">
+    <input type="file" accept="image/*" multiple id="tf-photo-tare" onchange="onPhotoAdd(this,'tare')">
     <div class="thumbs" id="tf-thumbs-tare"></div>
     <div class="muted" id="tf-ocr" style="margin-top:6px"></div>
     <div class="grid3">
@@ -1008,7 +1068,7 @@ function openTripForm(opts){
     if(draft) existingTripPhotos = draft.photos||[];
     const photoSections = flow.photos.map(s=>`
       <label class="f">${s.label} <span style="font-weight:600">· ${s.hint}</span></label>
-      <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
+      <input type="file" accept="image/*" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
       <div class="thumbs" id="tf-thumbs-${s.k}"></div>`).join('');
     const binFields = flow.bins.length ? `<div class="grid2">
       ${flow.bins.map(k=> k==='out'
@@ -1104,7 +1164,7 @@ function openTripForm(opts){
       <div><label class="f" style="margin-top:0">NET (kg)</label><input type="number" id="tf-net" min="0" readonly></div>
     </div>
     <label class="f">PHOTOS — DO + PSA PASS</label>
-    <input type="file" accept="image/*" capture="environment" id="tf-photo" onchange="onPhotoAdd(this)">
+    <input type="file" accept="image/*" id="tf-photo" onchange="onPhotoAdd(this)">
     <div class="muted" id="tf-ocr" style="margin-top:6px">📷 Snap the paper DO — the app reads it in the background; the office checks the details.</div>
     <div class="thumbs" id="tf-thumbs"></div>
     <label class="f">REMARKS</label>
@@ -1146,14 +1206,18 @@ async function onPhotoAdd(input, kind){
   const st = $('#tf-ocr'); if(st) st.textContent = 'Adding photo…';
   try{
     for(const f of files){
-      const raw = await new Promise((res, rej)=>{
-        const fr = new FileReader();
-        fr.onload = ()=>res(fr.result); fr.onerror = rej; fr.readAsDataURL(f);
-      });
+      const [raw, buf] = await Promise.all([
+        new Promise((res, rej)=>{ const fr = new FileReader(); fr.onload = ()=>res(fr.result); fr.onerror = rej; fr.readAsDataURL(f); }),
+        (f.arrayBuffer ? f.arrayBuffer() : Promise.resolve(null)).catch(()=>null),
+      ]);
       const full  = await shrinkImage(raw, 1600, .85);
       const thumb = await shrinkImage(raw, 240, .7);
-      /* append — multiple photos allowed per slot; ts = capture time (the trusted clock) */
-      tripPhotos.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), full, thumb, kind, ts:Date.now()});
+      /* append — multiple photos allowed per slot. ts prefers the photo's own EXIF capture
+         time (so a photo picked from the gallery after the fact still carries the real
+         moment it was taken, not when the driver got around to uploading it); falls back
+         to now for a fresh camera shot or when EXIF is absent/unreadable. */
+      const exifMs = buf ? readExifDateMs(buf) : null;
+      tripPhotos.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), full, thumb, kind, ts: exifMs || Date.now()});
     }
     input.value = '';
     renderFormThumbs();
