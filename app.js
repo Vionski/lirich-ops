@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v27';
+const APP_VERSION = 'v28';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -70,60 +70,6 @@ async function shrinkImage(dataURL, maxPx, quality){
   cv.height = Math.max(1, Math.round(im.height*sc));
   cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
   return cv.toDataURL('image/jpeg', quality);
-}
-/* reads EXIF DateTimeOriginal (tag 0x9003, falls back to DateTime 0x0132) from a JPEG
-   ArrayBuffer. Returns ms epoch (local time — EXIF carries no timezone) or null if the
-   file isn't a JPEG or has no EXIF block (e.g. a screenshot, or some HEIC-origin photos).
-   Lets a photo picked from the gallery carry its real capture time instead of upload time. */
-function readExifDateMs(buf){
-  try{
-    const view = new DataView(buf);
-    if(view.getUint16(0) !== 0xFFD8) return null; // not a JPEG
-    let offset = 2;
-    while(offset + 4 <= view.byteLength){
-      const marker = view.getUint16(offset);
-      if((marker & 0xFF00) !== 0xFF00) break;
-      const segLen = view.getUint16(offset+2);
-      if(marker === 0xFFE1){
-        const segStart = offset+4;
-        if(view.getUint32(segStart) !== 0x45786966 || view.getUint16(segStart+4) !== 0x0000) return null; // not "Exif\0\0"
-        const tiffStart = segStart+6;
-        const little = view.getUint16(tiffStart) === 0x4949;
-        const getU16 = o => view.getUint16(o, little);
-        const getU32 = o => view.getUint32(o, little);
-        const readAscii = (o, len) => { let s=''; for(let i=0;i<len;i++){ const c=view.getUint8(o+i); if(c===0) break; s+=String.fromCharCode(c); } return s; };
-        const readIFD = (ifdOffset) => {
-          const count = getU16(ifdOffset);
-          let exifIFDOffset = null, dateStr = null;
-          for(let i=0;i<count;i++){
-            const entry = ifdOffset+2+i*12;
-            const tag = getU16(entry);
-            if(tag === 0x8769) exifIFDOffset = getU32(entry+8);
-            if(tag === 0x0132) dateStr = readAscii(tiffStart+getU32(entry+8), 19);
-          }
-          return {exifIFDOffset, dateStr};
-        };
-        const ifd0Offset = getU32(tiffStart+4);
-        let {exifIFDOffset, dateStr} = readIFD(tiffStart+ifd0Offset);
-        if(exifIFDOffset != null){
-          const subBase = tiffStart+exifIFDOffset;
-          const subCount = getU16(subBase);
-          for(let i=0;i<subCount;i++){
-            const entry = subBase+2+i*12;
-            if(getU16(entry) === 0x9003){ dateStr = readAscii(tiffStart+getU32(entry+8), 19); break; }
-          }
-        }
-        if(!dateStr) return null;
-        const m = dateStr.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
-        if(!m) return null;
-        const dt = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]), Number(m[5]), Number(m[6]));
-        return isNaN(dt.getTime()) ? null : dt.getTime();
-      }
-      if(marker === 0xFFDA) break; // start of scan — no more APPn markers ahead
-      offset += 2 + segLen;
-    }
-    return null;
-  }catch(e){ return null; }
 }
 
 /* ---------------- fixed reference data ---------------- */
@@ -339,11 +285,15 @@ function tripPay(trip){
   });
   return Math.round(p*100)/100;
 }
-/* job-request types this client is priced for (from the Customers sheet) */
-function jobTypeOptions(clientId, selected){
-  const c = client(clientId), prices = (c && c.prices) || {};
+/* job-request types this SITE is priced for (from the Customers sheet) — pricing is per
+   site, not per client, since the same company can have different addresses on different
+   rates (falls back to the client-level price only for legacy/addressless entries). */
+function jobTypeOptions(clientId, siteIdx, selected){
+  const c = client(clientId);
+  const site = c && c.sites && c.sites[siteIdx];
+  const prices = (site && site.prices) || (c && c.prices) || {};
   const avail = JOB_TYPES.filter(jt => prices[jt] != null);
-  if(!avail.length) return '<option value="">— no price set for this client —</option>';
+  if(!avail.length) return '<option value="">— no price set for this site —</option>';
   return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jt} — ${money(prices[jt])}</option>`).join('');
 }
 function jobTypeLabel(j){ return j.jobType || (ttype(j.task)||{}).label || j.task || ''; }
@@ -760,12 +710,6 @@ function driverJobCard(j){
   const started = j.status==='in_progress';
   const trip = S.trips.find(t=>t.jobId===j.id);
   const hasWeight = trip && trip.weight && trip.weight.gross;
-  /* weighing (phase 2) only unlocks once every required BIN photo for this job type is
-     actually on the trip — a Save-for-later with bin photos still missing must not let the
-     driver skip ahead to weighing before that proof exists. DO photo is excluded on purpose:
-     the DO/paperwork can follow separately and shouldn't block the weighbridge step. */
-  const requiredKinds = jobFlow(j).photos.filter(p=>p.req && p.k!=='do').map(p=>p.k);
-  const hasAllRequired = trip && requiredKinds.every(k => (trip.photos||[]).some(p=>p.kind===k));
   return `<div class="djob">
     <div class="djob-h">${esc(c?c.name:'?')}
       <span class="djob-badge ${started?'run':'go'}">${started?'IN PROGRESS':'NEW'}</span></div>
@@ -778,7 +722,7 @@ function driverJobCard(j){
     ${started
       ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
       : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
-    ${trip && !hasWeight && hasAllRequired ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
+    ${trip && !hasWeight ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
   </div>`;
 }
 function vMyJobs(){
@@ -808,10 +752,10 @@ function openWeighForm(tripId){
   openSheet(sheetTitle(`⚖️ Weighbridge — ${doLabel(t)}`) + `
     <div class="muted" style="margin-bottom:6px">${esc(c?c.name:'')} — snap the scale display, the app reads the number.</div>
     <label class="f">📷 WEIGHT — GROSS (kg)</label>
-    <input type="file" accept="image/*" multiple id="tf-photo-gross" onchange="onPhotoAdd(this,'gross')">
+    <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-gross" onchange="onPhotoAdd(this,'gross')">
     <div class="thumbs" id="tf-thumbs-gross"></div>
     <label class="f">📷 WEIGHT — TARE (kg)</label>
-    <input type="file" accept="image/*" multiple id="tf-photo-tare" onchange="onPhotoAdd(this,'tare')">
+    <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-tare" onchange="onPhotoAdd(this,'tare')">
     <div class="thumbs" id="tf-thumbs-tare"></div>
     <div class="muted" id="tf-ocr" style="margin-top:6px"></div>
     <div class="grid3">
@@ -919,11 +863,11 @@ function openJobForm(presetClientId){
     <label class="f">CLIENT</label>
     <select id="jf-client" onchange="jfClientChanged()">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClientId?'selected':''}>${esc(c.name)}${c.salesRep?' · '+c.salesRep:''}</option>`).join('')}</select>
     <label class="f">YARD / ADDRESS</label>
-    <select id="jf-site" onchange="autoDistance()"></select>
+    <select id="jf-site" onchange="jfSiteChanged()"></select>
     <label class="f">CONTACT PERSON</label>
     <select id="jf-contact"></select>
-    <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(the driver sees this price)</span></label>
-    <select id="jf-jobtype">${jobTypeOptions(presetClientId||S.clients[0].id)}</select>
+    <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(the driver sees this price — set per site)</span></label>
+    <select id="jf-jobtype">${jobTypeOptions(presetClientId||S.clients[0].id, 0)}</select>
     <label class="f">DRIVER · VEHICLE</label>
     <select id="jf-driver">${driverSelectOptions()}</select>
     <div class="grid2">
@@ -979,8 +923,14 @@ function jfClientChanged(){
   $('#jf-contact').innerHTML = (c.contacts||[]).map((p,i)=>
     `<option value="${i}">${esc(p.name)}${p.phone?' · '+esc(p.phone):''}</option>`).join('')
     || '<option value="0">— no contact on file —</option>';
-  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id); /* prices are per-client */
+  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0); /* prices are per-site */
   autoDistance();
+}
+/* re-price when the yard/address changes — the same client can charge differently per site */
+function jfSiteChanged(){
+  autoDistance();
+  const c = client($('#jf-client').value);
+  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0);
 }
 async function saveJob(){
   const driverId = Number($('#jf-driver').value);
@@ -1058,7 +1008,7 @@ function openTripForm(opts){
     if(draft) existingTripPhotos = draft.photos||[];
     const photoSections = flow.photos.map(s=>`
       <label class="f">${s.label} <span style="font-weight:600">· ${s.hint}</span></label>
-      <input type="file" accept="image/*" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
+      <input type="file" accept="image/*" capture="environment" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
       <div class="thumbs" id="tf-thumbs-${s.k}"></div>`).join('');
     const binFields = flow.bins.length ? `<div class="grid2">
       ${flow.bins.map(k=> k==='out'
@@ -1154,7 +1104,7 @@ function openTripForm(opts){
       <div><label class="f" style="margin-top:0">NET (kg)</label><input type="number" id="tf-net" min="0" readonly></div>
     </div>
     <label class="f">PHOTOS — DO + PSA PASS</label>
-    <input type="file" accept="image/*" id="tf-photo" onchange="onPhotoAdd(this)">
+    <input type="file" accept="image/*" capture="environment" id="tf-photo" onchange="onPhotoAdd(this)">
     <div class="muted" id="tf-ocr" style="margin-top:6px">📷 Snap the paper DO — the app reads it in the background; the office checks the details.</div>
     <div class="thumbs" id="tf-thumbs"></div>
     <label class="f">REMARKS</label>
@@ -1196,18 +1146,14 @@ async function onPhotoAdd(input, kind){
   const st = $('#tf-ocr'); if(st) st.textContent = 'Adding photo…';
   try{
     for(const f of files){
-      const [raw, buf] = await Promise.all([
-        new Promise((res, rej)=>{ const fr = new FileReader(); fr.onload = ()=>res(fr.result); fr.onerror = rej; fr.readAsDataURL(f); }),
-        (f.arrayBuffer ? f.arrayBuffer() : Promise.resolve(null)).catch(()=>null),
-      ]);
+      const raw = await new Promise((res, rej)=>{
+        const fr = new FileReader();
+        fr.onload = ()=>res(fr.result); fr.onerror = rej; fr.readAsDataURL(f);
+      });
       const full  = await shrinkImage(raw, 1600, .85);
       const thumb = await shrinkImage(raw, 240, .7);
-      /* append — multiple photos allowed per slot. ts prefers the photo's own EXIF capture
-         time (so a photo picked from the gallery after the fact still carries the real
-         moment it was taken, not when the driver got around to uploading it); falls back
-         to now for a fresh camera shot or when EXIF is absent/unreadable. */
-      const exifMs = buf ? readExifDateMs(buf) : null;
-      tripPhotos.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), full, thumb, kind, ts: exifMs || Date.now()});
+      /* append — multiple photos allowed per slot; ts = capture time (the trusted clock) */
+      tripPhotos.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), full, thumb, kind, ts:Date.now()});
     }
     input.value = '';
     renderFormThumbs();
@@ -1983,14 +1929,21 @@ async function fetchSheetDB(){
              name:row.name, type:'land', salesRep:'', sites:[], contacts:[], prices:{}};
         S.clients.push(c); added++;
       }
-      if(row.addr && !c.sites.some(s=>s.addr.toLowerCase() === row.addr.toLowerCase())){
-        c.sites.push({label:'Yard '+(c.sites.length+1), addr:row.addr}); added++;
+      let site = row.addr ? c.sites.find(s=>s.addr.toLowerCase() === row.addr.toLowerCase()) : null;
+      if(row.addr && !site){
+        site = {label:'Yard '+(c.sites.length+1), addr:row.addr, prices:{}};
+        c.sites.push(site); added++;
       }
       if(row.contact || row.phone){
         if(!c.contacts.some(p=>p.name===(row.contact||'') && p.phone===(row.phone||'')))
           c.contacts.push({name:row.contact||'', phone:row.phone||''});
       }
-      if(row.prices && Object.keys(row.prices).length) c.prices = row.prices; /* customer charge per job type */
+      /* pricing is per SITE (same client can charge differently at different addresses) —
+         falls back to the client level only for a row with no address on file */
+      if(row.prices && Object.keys(row.prices).length){
+        if(site) site.prices = row.prices;
+        else c.prices = row.prices;
+      }
     });
     if(added && remoteReady) api('replaceClients', {clients:S.clients}).catch(()=>{});
     /* merge bin numbers + sizes from the "Bin DB" tab — never touches live status/location,
