@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v25';
+const APP_VERSION = 'v26';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -722,7 +722,8 @@ function driverJobCard(j){
   </div>`;
 }
 function vMyJobs(){
-  const mine = driverJobs(S.role.driverId).filter(j=>j.status!=='void').slice().reverse();
+  /* a job scheduled for a future date stays out of the driver's list until that date arrives */
+  const mine = driverJobs(S.role.driverId).filter(j=>j.status!=='void' && j.date<=TODAY).slice().reverse();
   const open = mine.filter(j=>j.status!=='done');
   const done = mine.filter(j=>j.status==='done');
   $('#main').innerHTML = `
@@ -853,6 +854,8 @@ async function voidJob(id){
 function openJobForm(presetClientId){
   openSheet(sheetTitle('Assign a job') + `
     <p class="muted">This replaces the WhatsApp message to the driver. Client, yard and contact pull from the CRM database.</p>
+    <label class="f">JOB DATE <span style="font-weight:600">(defaults to today — pick ahead to schedule in advance)</span></label>
+    <input type="date" id="jf-date" value="${TODAY}">
     <label class="f">CLIENT</label>
     <select id="jf-client" onchange="jfClientChanged()">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClientId?'selected':''}>${esc(c.name)}${c.salesRep?' · '+c.salesRep:''}</option>`).join('')}</select>
     <label class="f">YARD / ADDRESS</label>
@@ -935,7 +938,7 @@ async function saveJob(){
     distance: Number($('#jf-dist').value) || 0,
     instructions: $('#jf-notes').value.trim(),
     driverId,
-    status:'assigned', date: TODAY, createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
+    status:'assigned', date: $('#jf-date').value || TODAY, createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
   };
   /* denormalised display fields for the Google Sheet "Jobs" tab */
   j._client = c ? c.name : ''; j._addr = cSite(c, j.siteIdx).addr;

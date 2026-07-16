@@ -337,10 +337,8 @@ function tsDate_(ms) { return ms ? new Date(Number(ms)) : ''; }
 function mins_(a, b) { return (a && b && b >= a) ? Math.round((b - a) / 60000) : ''; }
 function tripRow_(t, st) {
   var jobIdCell = t.jobId ? t.jobId : ('T' + t.id);
-  if (t.jobId && st) {
-    var linkedJob = (st.jobs || []).filter(function (x) { return x.id === t.jobId; })[0];
-    if (linkedJob && linkedJob.status === 'void') jobIdCell = jobIdCell + ' (VOID)';
-  }
+  var linkedJob = (t.jobId && st) ? (st.jobs || []).filter(function (x) { return x.id === t.jobId; })[0] : null;
+  if (linkedJob && linkedJob.status === 'void') jobIdCell = jobIdCell + ' (VOID)';
   var total = Math.round(((Number(t.tonnage) || 0) + (Number(t.tonnAdj) || 0)) * 100) / 100;
   var w = t.weight || {};
   var wNet = (w.gross || w.gross === 0) && (w.tare || w.tare === 0)
@@ -371,6 +369,20 @@ function tripRow_(t, st) {
   if (t.tServer && lastPhoto) {
     if (lastPhoto > t.tServer + 120000) flag = '⚠️ photo time ahead of server';
     else if (t.tServer - lastPhoto > 12 * 3600000) flag = '⚠️ large sync gap — verify';
+  }
+  /* a photo (esp. one picked from the gallery rather than shot live) whose own capture date
+     doesn't match the job's scheduled date — office should double-check it's the right job */
+  var jobDate = linkedJob ? linkedJob.date : t.date;
+  if (jobDate) {
+    var mismatched = [];
+    var checkDate_ = function (ms, label) {
+      if (!ms) return;
+      var d = new Date(Number(ms));
+      var ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      if (ds !== jobDate) mismatched.push(label);
+    };
+    checkDate_(t.tDO, 'DO'); checkDate_(t.tBinIn, 'Bin In'); checkDate_(t.tBinOut, 'Bin Out'); checkDate_(t.tEnd, 'Finish');
+    if (mismatched.length) flag = (flag ? flag + ' · ' : '') + '⚠️ photo date≠job date (' + mismatched.join(', ') + ')';
   }
   var noDO = (t.jobType === 'Sell' || t.jobType === 'Dump');
   var doCell = noDO ? '—' : (t.doNo ? ((t.doType === 'vessel' ? 'V ' : 'DO ') + t.doNo) : 'PENDING');
