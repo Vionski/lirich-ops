@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v38';
+const APP_VERSION = 'v39';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -282,6 +282,28 @@ function lastVehicleForDriver(driverId){
   const d = driver(driverId);
   return d ? (d.truck||'') : '';
 }
+/* ---- photo date/time stamps -------------------------------------------------
+   A photo picked from the gallery carries its real EXIF capture time, so a shot from
+   another day keeps that day's clock. Showing only HH:MM hid that completely — an old
+   photo read as a perfectly normal time. These helpers surface the DATE and mark any
+   photo whose day doesn't match the job's, on the phone and in the Sheet. */
+const MONTHS_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function ymdOf(ms){
+  const d = new Date(Number(ms));
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtStamp(ms){ /* "17 Jul, 10:32 AM" */
+  if(!ms) return '—';
+  const d = new Date(Number(ms));
+  return d.getDate()+' '+MONTHS_ABBR[d.getMonth()]+', '+fmtTime12(msToHM(ms));
+}
+/* the date this form's job is for — the yardstick every photo is measured against */
+function formJobDate(){
+  const el = $('#tf-job');
+  const job = (el && el.value) ? S.jobs.find(j=>j.id===Number(el.value)) : null;
+  return job ? job.date : TODAY;
+}
+function tsOffDay(ms){ return !!(ms && ymdOf(ms) !== formJobDate()); }
 /* earliest capture time (ms) among the tripPhotos of a given kind */
 function firstTs(kind){ const ts = tripPhotos.filter(p=>p.kind===kind && p.ts).map(p=>p.ts); return ts.length ? Math.min.apply(null, ts) : 0; }
 function msToHM(ms){ if(!ms) return ''; const d = new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
@@ -1322,26 +1344,39 @@ function updateTimesDisplay(){
   const box = $('#tf-times'); if(!box) return;
   const job = ($('#tf-job') && $('#tf-job').value) ? S.jobs.find(j=>j.id===Number($('#tf-job').value)) : null;
   const flow = jobFlow(job);
-  const t12 = ms=> ms ? fmtTime12(msToHM(ms)) : '—';
+  /* always show the DATE alongside the time: a gallery photo from another day used to
+     render as a perfectly ordinary "10:00 AM" with nothing to give it away */
+  const t12 = ms => {
+    if(!ms) return '—';
+    const off = tsOffDay(ms);
+    return `<b${off?' style="color:var(--red)"':''}>${fmtStamp(ms)}</b>${off?' <span class="chip st-void">OTHER DAY</span>':''}`;
+  };
   const acc = job && job.acceptedAtMs ? job.acceptedAtMs : 0;
-  let rows = [`<div>▶️ Accepted: <b>${t12(acc)}</b></div>`];
+  let rows = [`<div>▶️ Accepted: ${t12(acc)}</div>`];
   if(flow.start){ /* Exchange: whichever kind is start/end drives the label */
     const kLabel = k => k==='in' ? 'bin in' : 'bin out';
-    rows.push(`<div>🟢 Start (${kLabel(flow.start)}): <b>${t12(firstTs(flow.start))}</b></div>`);
-    rows.push(`<div>🔴 End (${kLabel(flow.end)}): <b>${t12(firstTs(flow.end))}</b></div>`);
+    rows.push(`<div>🟢 Start (${kLabel(flow.start)}): ${t12(firstTs(flow.start))}</div>`);
+    rows.push(`<div>🔴 End (${kLabel(flow.end)}): ${t12(firstTs(flow.end))}</div>`);
   }else if(flow.mark){ /* Collect / Delivery */
-    rows.push(`<div>⏺️ ${flow.markLabel}: <b>${t12(firstTs(flow.mark))}</b></div>`);
+    rows.push(`<div>⏺️ ${flow.markLabel}: ${t12(firstTs(flow.mark))}</div>`);
   }else if(flow.fixed){ /* Sell / Dump — no DO, bin-on-site photo = finish */
-    rows.push(`<div>✅ Finish (bin photo): <b>${t12(firstTs('bin'))}</b> <span class="muted">· fixed price, no wait/OT</span></div>`);
+    rows.push(`<div>✅ Finish (bin photo): ${t12(firstTs('bin'))} <span class="muted">· fixed price, no wait/OT</span></div>`);
   }
   const tw = Math.min(firstTs('gross')||Infinity, firstTs('tare')||Infinity);
-  if(tw !== Infinity) rows.push(`<div>⚖️ Weighed: <b>${t12(tw)}</b></div>`);
-  box.innerHTML = `<div style="font-weight:700; margin-bottom:4px">⏱️ Logged times (from photos — locked)</div>${rows.join('')}`;
+  if(tw !== Infinity) rows.push(`<div>⚖️ Weighed: ${t12(tw)}</div>`);
+  /* one loud banner if ANY attached photo was taken on a different day to the job */
+  const offCount = tripPhotos.filter(p=>tsOffDay(p.ts)).length;
+  const banner = offCount ? `<div class="edo-daywarn">⚠️ ${offCount} photo${offCount===1?'':'s'} taken on a different day to this job (${fmtDate(formJobDate())}). The office will see this flagged.</div>` : '';
+  box.innerHTML = `<div style="font-weight:700; margin-bottom:4px">⏱️ Logged times (from the photos — locked)</div>${rows.join('')}${banner}`;
 }
 function photoThumbHTML(p){
-  return `<div style="position:relative">
-      <img src="${p.thumb}" alt="photo">
-      <button class="icon-btn" style="position:absolute; top:-9px; right:-9px; background:var(--card); border-radius:50%; box-shadow:var(--shadow); font-size:10px; padding:3px 7px" onclick="removePhoto('${p.id}')">✕</button>
+  const off = tsOffDay(p.ts);
+  return `<div class="thumb-cell">
+      <div style="position:relative">
+        <img src="${p.thumb}" alt="photo" ${off?'style="outline:2px solid var(--red); outline-offset:-2px"':''}>
+        <button class="icon-btn" style="position:absolute; top:-9px; right:-9px; background:var(--card); border-radius:50%; box-shadow:var(--shadow); font-size:10px; padding:3px 7px" onclick="removePhoto('${p.id}')">✕</button>
+      </div>
+      <div class="thumb-stamp ${off?'off':''}">${off?'⚠️ ':''}${fmtStamp(p.ts)}</div>
     </div>`;
 }
 function removePhoto(id){ tripPhotos = tripPhotos.filter(p=>p.id!==id); renderFormThumbs(); updateTimesDisplay(); }
@@ -1654,7 +1689,7 @@ async function saveTrip(final){
       const k = PFX[p.kind]||'DO'; cnt[k]=(cnt[k]||0)+1;
       try{
         const rec = await api('addPhoto', {b64:p.full.split(',')[1], name:k+'-'+jobtag+'-'+cnt[k]+'.jpg'});
-        if(rec && rec.id){ rec.kind = p.kind; newPhotoRecords.push(rec);
+        if(rec && rec.id){ rec.kind = p.kind; rec.ts = p.ts || 0; newPhotoRecords.push(rec);
           PhotoDB.put({id:rec.id, full:p.full, thumb:p.thumb, clientId, driverId:draft.driverId, date:draft.date, createdAt:Date.now()}).catch(()=>{}); }
       }catch(e){}
     }
@@ -1703,6 +1738,7 @@ async function saveTrip(final){
   t._pay = tripPay(t);
   t.photosB64 = photosToUpload.map(p=>p.full.split(',')[1]);
   t.photoKinds = photosToUpload.map(p=>p.kind || 'do');
+  t.photoTs = photosToUpload.map(p=>p.ts || 0); /* keep each photo's own capture time on the record */
   toast(photosToUpload.length ? `Saving trip + ${photosToUpload.length} photo(s)…` : 'Saving trip to database…');
   const st = await api('addTrip', {trip:t, final});
   const saved = st.trips[st.trips.length-1];

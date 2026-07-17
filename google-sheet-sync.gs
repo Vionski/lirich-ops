@@ -204,6 +204,7 @@ function apply_(st, q) {
       if (t.photosB64 && t.photosB64.length) {
         var jobtag = t.jobId ? t.jobId : ('T' + t.id);
         var kinds = t.photoKinds || [];
+        var tsArr = t.photoTs || [];
         var PFX = { do: 'DO', out: 'BINOUT', in: 'BININ', bin: 'BIN', gross: 'GROSS', tare: 'TARE', signature: 'SIG' };
         var cnt = {};
         t.photos = [];
@@ -212,11 +213,14 @@ function apply_(st, q) {
           var pfx = PFX[kind] || 'DO';
           cnt[pfx] = (cnt[pfx] || 0) + 1;
           var nm = pfx + '-' + jobtag + '-' + cnt[pfx];
-          try { var rec = addPhoto_({ b64: t.photosB64[pi], name: nm + '.jpg' }); rec.kind = kind; t.photos.push(rec); } catch (perr) {}
+          /* rec.ts = the photo's OWN capture time (EXIF when it came from the gallery), kept on
+             the record so the office can audit each shot, not just the trip-level times */
+          try { var rec = addPhoto_({ b64: t.photosB64[pi], name: nm + '.jpg' }); rec.kind = kind; rec.ts = tsArr[pi] || 0; t.photos.push(rec); } catch (perr) {}
         }
       }
       delete t.photosB64;
       delete t.photoKinds;
+      delete t.photoTs; /* transport-only — the times now live on each photo record */
       /* Bin IN = empty bin arriving at client (status -> client). Bin OUT = full bin leaving client, back to yard (status -> yard).
          A bin no. the state has never seen before is created on the spot — a driver just stood in
          front of it, so it's verified from the moment it's created (status is never 'unknown' here). */
@@ -335,7 +339,7 @@ function tripHeader_() {
     'DO Photos', 'Bin Photos', 'Weight Photos', 'DO Photo Links', 'Bin Photo Links', 'Weight Photo Links', 'Remarks', 'Invoiced',
     /* --- photo-stamped times + tamper cross-check (office does OT formulas off these) --- */
     'Time Accept', 'Time DO Photo', 'Time Bin OUT', 'Time Bin IN', 'Time Finish', 'Time Weigh', 'Server Received',
-    'Travel (min)', 'Wait (min)', 'Job (min)', 'Accept→Finish (min)', 'Time Flag'];
+    'Travel (min)', 'Wait (min)', 'Job (min)', 'Accept→Finish (min)', 'Time Flag', 'Photo Day Flag'];
 }
 /* ms epoch -> real Date for the sheet (blank if 0/absent). Sheet timezone formats it. */
 function tsDate_(ms) { return ms ? new Date(Number(ms)) : ''; }
@@ -389,6 +393,20 @@ function tripRow_(t, st) {
     checkDate_(t.tDO, 'DO'); checkDate_(t.tBinIn, 'Bin In'); checkDate_(t.tBinOut, 'Bin Out'); checkDate_(t.tEnd, 'Finish');
     if (mismatched.length) flag = (flag ? flag + ' · ' : '') + '⚠️ photo date≠job date (' + mismatched.join(', ') + ')';
   }
+  /* per-photo day check: each uploaded photo carries its own capture time (rec.ts); list any
+     whose calendar day differs from the job's date. A gallery photo from another day lands here. */
+  var photoDayFlag = '';
+  if (jobDate && t.photos && t.photos.length) {
+    var offList = [];
+    var PK = { do: 'DO', out: 'Bin Out', in: 'Bin In', bin: 'Bin', gross: 'Gross', tare: 'Tare', signature: 'Sig' };
+    t.photos.forEach(function (p) {
+      if (!p || !p.ts) return;
+      var pd = new Date(Number(p.ts));
+      var pds = pd.getFullYear() + '-' + String(pd.getMonth() + 1).padStart(2, '0') + '-' + String(pd.getDate()).padStart(2, '0');
+      if (pds !== jobDate) offList.push((PK[p.kind] || p.kind || 'photo') + ' ' + pds);
+    });
+    if (offList.length) photoDayFlag = '⚠️ ' + offList.join('; ');
+  }
   var noDO = (t.jobType === 'Sell' || t.jobType === 'Dump');
   var doCell = noDO ? '—' : (t.doNo ? ((t.doType === 'vessel' ? 'V ' : 'DO ') + t.doNo) : 'PENDING');
   return [
@@ -403,7 +421,7 @@ function tripRow_(t, st) {
     sigP ? 'YES' : 'No', t.sigName || '', t.sigPosition || '',
     doP.length, binP.length, wP.length, doP.join('\n'), binP.join('\n'), wP.join('\n'), t.remarks || '', t.invoiced ? 'YES' : '',
     tsDate_(t.tAccept), tsDate_(t.tDO), tsDate_(t.tBinOut), tsDate_(t.tBinIn), tsDate_(t.tEnd), tsDate_(t.tWeight), tsDate_(t.tServer),
-    travel, wait, jobMin, totalMin, flag
+    travel, wait, jobMin, totalMin, flag, photoDayFlag
   ];
 }
 
@@ -419,6 +437,12 @@ function mirror_(st) {
   tSheet.getRange(1, 1, tRows.length, tRows[0].length).setValues(tRows);
   tSheet.getRange(1, 1, 1, tRows[0].length).setFontWeight('bold');
   tSheet.setFrozenRows(1);
+  /* the 7 photo/time-stamp columns (Time Accept … Server Received, cols 49-55) hold real
+     Dates — force a day+time format so a photo taken on another day is obvious at a glance,
+     not hidden behind a time-only cell format. Only if there are data rows to format. */
+  if (tRows.length > 1) {
+    tSheet.getRange(2, 49, tRows.length - 1, 7).setNumberFormat('dd/MM/yy HH:mm');
+  }
 
   var jSheet = ss.getSheetByName('Jobs') || ss.insertSheet('Jobs');
   var jRows = [['Job #', 'Date', 'Status', 'Customer', 'Service Location', 'Contact', 'Task', 'Bin Size',
