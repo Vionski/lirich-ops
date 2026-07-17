@@ -112,6 +112,49 @@ input.big, .big select, select.big{font-size:17px; padding:14px}
 label.f{display:block; font-size:11px; font-weight:800; color:var(--muted); margin:11px 0 4px; letter-spacing:.4px}
 .f-section{margin:20px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--line); font-size:12px; font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--muted)}
 .f-section:first-of-type{margin-top:4px}
+/* ---------- e-DO: the driver's job screen mirrors the paper Service Engagement Form ---------- */
+.edo{border:1px solid var(--line); border-radius:12px; background:#fff; padding:14px 14px 4px; margin:6px 0 14px}
+.edo-head{display:flex; gap:10px; align-items:flex-start; border-bottom:2.5px solid var(--ink); padding-bottom:9px}
+.edo-brand{flex:none}
+.edo-logo{font-size:22px; font-weight:900; color:var(--brand); line-height:1; letter-spacing:-.6px}
+.edo-tag{font-size:8px; font-style:italic; color:var(--muted); margin-top:3px}
+.edo-cn{font-size:8.5px; color:var(--muted); margin-top:1px}
+.edo-co{flex:1; text-align:right; min-width:0}
+.edo-co b{font-size:11px; font-weight:800; display:block; letter-spacing:.2px}
+.edo-co span{font-size:8px; color:var(--muted); display:block; line-height:1.5}
+.edo-nobar{display:flex; justify-content:flex-end; align-items:center; gap:6px; margin-top:8px}
+.edo-nobar .lbl{font-size:13px; font-weight:800; letter-spacing:.5px}
+.edo .edo-nobar input[type=number]{
+  border:none; border-bottom:1px dotted var(--muted); border-radius:0; background:transparent;
+  color:var(--red); font-size:20px; font-weight:900; width:104px; text-align:right;
+  padding:0 2px 1px; font-variant-numeric:tabular-nums;
+}
+.edo-field{display:flex; align-items:baseline; gap:7px; margin-top:9px}
+.edo-field .k{font-size:9.5px; font-weight:800; color:var(--muted); letter-spacing:.4px; white-space:nowrap; flex:none; width:104px}
+.edo-field .v{flex:1; border-bottom:1px dotted var(--muted); font-size:14px; font-weight:700; padding-bottom:3px; min-width:0; word-break:break-word}
+.edo .edo-field input[type=text]{
+  border:none; border-bottom:1px dotted var(--muted); border-radius:0; background:transparent;
+  font-size:14px; font-weight:700; padding:0 2px 3px; flex:1;
+}
+.edo-sef{font-size:10px; font-weight:800; color:var(--muted); letter-spacing:.5px; margin-top:14px}
+.edo-jd{background:var(--ink); color:#fff; text-align:center; font-weight:800; font-size:11.5px; letter-spacing:1.4px; padding:6px; margin-top:5px}
+.edo-body{border:1px solid var(--line); border-top:none; padding:12px 12px 14px}
+.edo-gd{font-size:11px; font-weight:800; letter-spacing:.4px}
+.edo-collected{font-size:13.5px; margin:9px 0 2px; line-height:1.75}
+.edo-collected b{border-bottom:1px dotted var(--muted); padding:0 6px; font-weight:800}
+.edo-bins{border:1.5px solid var(--ink); border-radius:6px; overflow:hidden; margin-top:13px; max-width:260px}
+.edo-bins-r{display:flex; align-items:stretch; border-bottom:1.5px solid var(--ink)}
+.edo-bins-r:last-child{border-bottom:none}
+.edo-bins-k{width:64px; flex:none; font-size:10.5px; font-weight:800; padding:10px 8px; border-right:1.5px solid var(--ink); background:var(--bg); display:flex; align-items:center}
+.edo-bins-v{flex:1; display:flex}
+.edo .edo-bins-v input[type=text]{
+  border:none; border-radius:0; background:transparent; text-transform:uppercase;
+  font-size:18px; font-weight:800; padding:7px 8px; width:100%;
+}
+.edo-confirm{font-size:11px; font-weight:800; letter-spacing:.4px; margin-top:15px}
+.edo-sig-cap{font-size:10px; color:var(--muted); text-align:center; margin-top:5px; letter-spacing:.2px}
+.edo-shot{margin-top:11px}
+.edo-foot{text-align:center; font-size:9.5px; color:var(--muted); letter-spacing:.5px; padding:9px 0 6px; margin-top:12px; border-top:1px solid var(--line)}
 input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{
   width:100%; border:1px solid var(--line); border-radius:10px; padding:10px;
   font-size:14.5px; font-family:inherit; background:var(--bg); color:var(--ink);

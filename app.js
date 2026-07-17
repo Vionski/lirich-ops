@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v32';
+const APP_VERSION = 'v33';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -1065,60 +1065,115 @@ function openTripForm(opts){
   const presetType = job ? job.task : 'col_m';
   const cli = client(presetClient);
 
-  /* ---- DRIVER: photos drive the clock — sections & times depend on job type ---- */
+  /* ---- DRIVER: the screen mirrors the paper Service Engagement Form (e-DO), so the
+     driver fills in the same boxes in the same order they already know from the pad.
+     Photos sit beside the field they evidence. Weight is NOT here — it stays phase 2. ---- */
   if(S.role.kind === 'driver'){
     const flow = jobFlow(job);
     if(draft) existingTripPhotos = draft.photos||[];
-    const photoSections = flow.photos.map(s=>`
-      <label class="f">${s.label} <span style="font-weight:600">· ${s.hint}</span></label>
-      <input type="file" accept="image/*" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
-      <div class="thumbs" id="tf-thumbs-${s.k}"></div>`).join('');
-    const binFields = flow.bins.length ? `<div class="grid2">
-      ${flow.bins.map(k=> k==='out'
-        ? `<div><label class="f">BIN OUT NO. <span style="font-weight:600">(full — from photo, fix if wrong)</span></label>
-        <input type="text" id="tf-binout" placeholder="e.g. 7022" style="text-transform:uppercase" autocapitalize="characters" value="${esc(draft?draft.binOut||'':'')}"></div>`
-        : `<div><label class="f">BIN IN NO. <span style="font-weight:600">(empty — from photo, fix if wrong)</span></label>
-        <input type="text" id="tf-binin" placeholder="e.g. R08" style="text-transform:uppercase" autocapitalize="characters" value="${esc(draft?draft.binIn||'':'')}"></div>`
-      ).join('')}
-    </div>` : '';
-    openSheet(sheetTitle(draft ? 'Continue trip' : 'Log trip — snap the DO') + `
+    /* photo blocks are placed next to the field they document; `placed` tracks which kinds
+       have been rendered so any kind not explicitly positioned still gets an input below —
+       a photo slot must never silently go missing for a job type. */
+    const placed = new Set();
+    const shot = (k) => {
+      const s = flow.photos.find(p=>p.k===k);
+      if(!s) return '';
+      placed.add(k);
+      return `<div class="edo-shot">
+        <label class="f" style="margin-top:0">${s.label} <span style="font-weight:600">· ${s.hint}</span></label>
+        <input type="file" accept="image/*" multiple id="tf-photo-${k}" onchange="onPhotoAdd(this,'${k}')">
+        <div class="thumbs" id="tf-thumbs-${k}"></div></div>`;
+    };
+    const doShot = shot('do');
+    const binInShot = shot('in');
+    const binOutShot = shot('out');
+    const restShots = flow.photos.filter(s=>!placed.has(s.k)).map(s=>`
+      <div class="edo-shot">
+        <label class="f" style="margin-top:0">${s.label} <span style="font-weight:600">· ${s.hint}</span></label>
+        <input type="file" accept="image/*" multiple id="tf-photo-${s.k}" onchange="onPhotoAdd(this,'${s.k}')">
+        <div class="thumbs" id="tf-thumbs-${s.k}"></div></div>`).join('');
+    const binRow = (k) => {
+      const isOut = k==='out';
+      return `<div class="edo-bins-r">
+        <div class="edo-bins-k">Bin ${isOut?'Out':'In'}</div>
+        <div class="edo-bins-v"><input type="text" id="tf-bin${isOut?'out':'in'}"
+          placeholder="${isOut?'7022':'R08'}" autocapitalize="characters"
+          value="${esc(draft?(isOut?draft.binOut:draft.binIn)||'':'')}"></div>
+      </div>`;
+    };
+    const isVessel = cli.type==='vessel';
+    openSheet(sheetTitle(draft ? 'Continue job' : 'Job — e-DO') + `
       <input type="hidden" id="tf-job" value="${job?job.id:''}">
       <input type="hidden" id="tf-draft" value="${draft?draft.id:''}">
       ${draft ? `<div class="muted" style="margin-bottom:8px">📝 Picking up where you left off — already-sent photos are marked SENT.</div>` : ''}
 
-      <div class="f-section">Collection</div>
-      ${job ? `
-      <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0; padding:10px 12px">
-        <div class="title" style="font-weight:800">${esc(cli.name)}</div>
-        <div class="muted">📍 ${esc(cSite(cli, job.siteIdx).addr)}</div>
-        <div class="muted">🛠️ ${esc(jobTypeLabel(job))}${job.price?` · 💵 <b>${money(jobPay(job))}</b>`:''}${job.dumpTo?` · ♻️ ${esc(job.dumpTo)}`:''}</div>
-      </div>` : `
-      <label class="f">CUSTOMER</label>
-      <select id="tf-client">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClient?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`}
-      ${flow.noDO ? '' : `
-      <label class="f">DO / V NUMBER <span style="font-weight:600">(read from photo below — fix if wrong)</span></label>
-      <input type="number" id="tf-dono" placeholder="from photo" value="${draft&&draft.doNo?draft.doNo:''}">
-      <label class="f">VEHICLE NO. <span style="font-weight:600">(remembers your last one — change if on a different truck today)</span></label>
-      <input type="text" id="tf-vehicle" placeholder="e.g. XE6221D" style="text-transform:uppercase" autocapitalize="characters" value="${esc((draft&&draft.vehicleNo)||lastVehicleForDriver(S.role.driverId))}">`}
+      <div class="edo">
+        <div class="edo-head">
+          <div class="edo-brand">
+            <div class="edo-logo">LIRICH</div>
+            <div class="edo-tag">( Lead Resources To Quality )</div>
+            <div class="edo-cn">利瑞资源私人有限公司</div>
+          </div>
+          <div class="edo-co">
+            <b>LIRICH RESOURCES PTE LTD</b>
+            <span>Warehouse: 23, Gul Drive Singapore 629471</span>
+            <span>Office: 18 Boon Lay Way #09-123 Tradehub 21 (S) 609966</span>
+            <span>Tel: 6717 6688 &nbsp;Fax: 6793 2309</span>
+          </div>
+        </div>
 
-      <div class="f-section">Job description — garbage disposal</div>
-      ${photoSections}
-      ${flow.noDO ? '' : `<div class="muted" id="tf-ocr" style="margin-top:6px">Snap the DO — the app reads the number and fills the box above. Please check it's correct.</div>`}
-      ${binFields}
-      ${(!flow.noDO && cli.type!=='vessel') ? `
-      <label class="f">WASTE TYPE COLLECTED <span style="font-weight:600">(tick all that apply)</span></label>
-      ${wasteChecksHTML('tf', draft ? (draft.wasteTypes&&draft.wasteTypes.length?draft.wasteTypes:[draft.waste||'']) : (job ? [job.waste||''] : []), draft?draft.wasteOther||'':'')}` : ''}
-      ${(!flow.noDO && cli.type==='vessel') ? `
-      <label class="f">🚢 VESSEL SEF — TYPE OF WASTE <span style="font-weight:600">(type volumes from the green DO)</span></label>
-      ${vesselFieldsHTML('tfv', draft?draft.vessel:null)}
-      <label class="f">REMARKS <span style="font-weight:600">(if any)</span></label>
-      <input type="text" id="tf-remarks" placeholder="Optional" value="${esc(draft?draft.remarks||'':'')}">` : ''}
+        ${flow.noDO ? '' : `
+        <div class="edo-nobar">
+          <span class="lbl">No. ${isVessel?'V':'DO'}</span>
+          <input type="number" id="tf-dono" placeholder="—" value="${draft&&draft.doNo?draft.doNo:''}">
+        </div>`}
 
-      ${flow.noDO ? '' : `
-      <div class="f-section">Customer confirmation</div>
-      <label class="f">✍️ SIGNATURE <span style="font-weight:600">(optional for now — paper copy is still official)</span></label>
-      <div class="thumbs" id="tf-thumbs-signature"></div>
-      ${signaturePadHTML('tf', draft?draft.sigName||'':'', draft?draft.sigPosition||'':'')}`}
+        <div class="edo-field"><span class="k">COMPANY NAME</span>
+          <span class="v">${esc(cli?cli.name:'—')}</span></div>
+        ${job ? `<div class="edo-field"><span class="k">SITE</span>
+          <span class="v">${esc(cSite(cli, job.siteIdx).addr||'—')}</span></div>` : `
+        <div class="edo-field"><span class="k">COMPANY</span>
+          <select id="tf-client" style="flex:1">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClient?'selected':''}>${esc(c.name)}</option>`).join('')}</select></div>`}
+        <div class="edo-field"><span class="k">DATE OF COLLECTION</span>
+          <span class="v">${fmtDate(job?job.date:TODAY)}</span></div>
+        ${flow.noDO ? '' : `
+        <div class="edo-field"><span class="k">VEHICLE NO.</span>
+          <input type="text" id="tf-vehicle" placeholder="XE6221D" autocapitalize="characters"
+            style="text-transform:uppercase" value="${esc((draft&&draft.vehicleNo)||lastVehicleForDriver(S.role.driverId))}"></div>`}
+
+        ${flow.noDO ? '' : `${doShot}
+        <div class="muted" id="tf-ocr" style="margin-top:6px">Snap the ${isVessel?'V':'DO'} slip — the app reads the number into the box above. Check it's right.</div>`}
+
+        <div class="edo-sef">SERVICE ENGAGEMENT FORM (SEF)</div>
+        <div class="edo-jd">JOB DESCRIPTION</div>
+        <div class="edo-body">
+          <div class="edo-gd">GARBAGE DISPOSAL :</div>
+          <div class="edo-collected">We have collected
+            <b>${job&&job.binSize?('1 × '+esc(job.binSize)):'—'}</b>
+            ${isVessel?'container of:':'open top container of:'}</div>
+
+          ${(!flow.noDO && !isVessel) ? wasteChecksHTML('tf',
+              draft ? (draft.wasteTypes&&draft.wasteTypes.length?draft.wasteTypes:[draft.waste||''])
+                    : (job ? [job.waste||''] : []),
+              draft?draft.wasteOther||'':'') : ''}
+
+          ${(!flow.noDO && isVessel) ? `
+          ${vesselFieldsHTML('tfv', draft?draft.vessel:null)}
+          <label class="f">REMARKS <span style="font-weight:600">(if any)</span></label>
+          <input type="text" id="tf-remarks" placeholder="Optional" value="${esc(draft?draft.remarks||'':'')}">` : ''}
+
+          ${flow.bins.length ? `<div class="edo-bins">${flow.bins.map(binRow).join('')}</div>` : ''}
+          ${binInShot}${binOutShot}${restShots}
+        </div>
+
+        ${flow.noDO ? '' : `
+        <div class="edo-confirm">Checked &amp; confirmed by:</div>
+        <div class="thumbs" id="tf-thumbs-signature"></div>
+        ${signaturePadHTML('tf', draft?draft.sigName||'':'', draft?draft.sigPosition||'':'')}
+        <div class="edo-sig-cap">Customer Signature and Company Stamp</div>`}
+
+        <div class="edo-foot">Lirich e-DO · logged from the driver's phone</div>
+      </div>
 
       <div class="card" id="tf-times" style="box-shadow:none; background:var(--bg); margin:12px 0 4px; padding:10px 12px; font-size:13px">
         ⏱️ Times are logged automatically from your photos — you can't change them.</div>
