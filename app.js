@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v29';
+const APP_VERSION = 'v30';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -1082,6 +1082,8 @@ function openTripForm(opts){
       <input type="hidden" id="tf-job" value="${job?job.id:''}">
       <input type="hidden" id="tf-draft" value="${draft?draft.id:''}">
       ${draft ? `<div class="muted" style="margin-bottom:8px">📝 Picking up where you left off — already-sent photos are marked SENT.</div>` : ''}
+
+      <div class="f-section">Collection</div>
       ${job ? `
       <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0; padding:10px 12px">
         <div class="title" style="font-weight:800">${esc(cli.name)}</div>
@@ -1090,13 +1092,15 @@ function openTripForm(opts){
       </div>` : `
       <label class="f">CUSTOMER</label>
       <select id="tf-client">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClient?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`}
-      ${photoSections}
       ${flow.noDO ? '' : `
-      <div class="muted" id="tf-ocr" style="margin-top:6px">Snap the DO — the app reads the number and fills the box below. Please check it's correct.</div>
-      <label class="f">DO / V NUMBER <span style="font-weight:600">(read from photo — fix if wrong)</span></label>
+      <label class="f">DO / V NUMBER <span style="font-weight:600">(read from photo below — fix if wrong)</span></label>
       <input type="number" id="tf-dono" placeholder="from photo" value="${draft&&draft.doNo?draft.doNo:''}">
       <label class="f">VEHICLE NO. <span style="font-weight:600">(remembers your last one — change if on a different truck today)</span></label>
       <input type="text" id="tf-vehicle" placeholder="e.g. XE6221D" style="text-transform:uppercase" autocapitalize="characters" value="${esc((draft&&draft.vehicleNo)||lastVehicleForDriver(S.role.driverId))}">`}
+
+      <div class="f-section">Job description — garbage disposal</div>
+      ${photoSections}
+      ${flow.noDO ? '' : `<div class="muted" id="tf-ocr" style="margin-top:6px">Snap the DO — the app reads the number and fills the box above. Please check it's correct.</div>`}
       ${binFields}
       ${(!flow.noDO && cli.type!=='vessel') ? `
       <label class="f">WASTE TYPE COLLECTED <span style="font-weight:600">(tick all that apply)</span></label>
@@ -1106,10 +1110,13 @@ function openTripForm(opts){
       ${vesselFieldsHTML('tfv', draft?draft.vessel:null)}
       <label class="f">REMARKS <span style="font-weight:600">(if any)</span></label>
       <input type="text" id="tf-remarks" placeholder="Optional" value="${esc(draft?draft.remarks||'':'')}">` : ''}
+
       ${flow.noDO ? '' : `
-      <label class="f">✍️ CUSTOMER SIGNATURE <span style="font-weight:600">(optional for now — paper copy is still official)</span></label>
+      <div class="f-section">Customer confirmation</div>
+      <label class="f">✍️ SIGNATURE <span style="font-weight:600">(optional for now — paper copy is still official)</span></label>
       <div class="thumbs" id="tf-thumbs-signature"></div>
       ${signaturePadHTML('tf', draft?draft.sigName||'':'', draft?draft.sigPosition||'':'')}`}
+
       <div class="card" id="tf-times" style="box-shadow:none; background:var(--bg); margin:12px 0 4px; padding:10px 12px; font-size:13px">
         ⏱️ Times are logged automatically from your photos — you can't change them.</div>
       ${job && job.price ? `<div class="payline"><span>Pay for this job</span><span>${money(jobPay(job))}</span></div>` : ''}
@@ -1495,14 +1502,10 @@ async function saveTrip(final){
   let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0;
   if(isDriver){
     /* driver: photos are the record AND the clock — times can never be typed.
-       "Save" skips this — a partial save is allowed to be partial. */
+       Neither Save nor Done requires a photo to be present yet — DO/bin photos can be
+       added later (gallery pick, EXIF-dated) without blocking the job from being finished.
+       Weighing (phase 2) still won't unlock until the required bin photos eventually exist. */
     const flow = jobFlow(job);
-    if(final){
-      for(const s of flow.photos){
-        const have = tripPhotos.some(p=>p.kind===s.k) || existingTripPhotos.some(p=>p.kind===s.k);
-        if(s.req && !have){ toast(`⚠️ ${s.label.replace(/^📷 /,'')} photo is needed 📷`); return; }
-      }
-    }
     doTypeV = (c && c.type==='vessel') ? 'vessel' : 'land';
     typeId = job ? job.task : (doTypeV==='vessel' ? 'psa' : 'col_m');
     surcharges = job ? (job.surcharges||[]) : []; /* surcharges are set by the office at job start */
