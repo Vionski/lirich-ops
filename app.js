@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v37';
+const APP_VERSION = 'v38';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -471,6 +471,12 @@ function binVerified(b){ return b.status !== 'unknown'; }
 /* trips + jobs helpers */
 function tripsOn(date){ return S.trips.filter(t=>t.date===date); }
 function driverTrips(id, date){ return S.trips.filter(t=>t.driverId===id && (!date || t.date===date)); }
+/* Test-account records are tagged `_test` when they're created and are stripped out of
+   everything that represents the real business: the Google Sheet (Trips/Jobs tabs), bin
+   inventory, earnings totals, dashboard KPIs and client history. They stay visible to the
+   operator inside the app so a test can actually be checked. */
+function isTestDriver(id){ const d = driver(id); return !!(d && d.test); }
+function realOnly(list){ return (list||[]).filter(x=>!x._test); }
 function driverJobs(id, date){ return S.jobs.filter(j=>j.driverId===id && (!date || j.date===date)); }
 function payOf(trips){ return trips.reduce((a,t)=>a+tripPay(t),0); }
 
@@ -692,9 +698,10 @@ function renderFab(){
    OPERATOR · DASHBOARD
    ============================================================ */
 function vDash(){
-  const jobsToday  = S.jobs.filter(j=>j.date===TODAY);
+  /* KPIs are the real business only — test-account activity never counts */
+  const jobsToday  = realOnly(S.jobs.filter(j=>j.date===TODAY));
   const openJobs   = jobsToday.filter(j=>j.status!=='done' && j.status!=='void');
-  const trToday    = tripsOn(TODAY);
+  const trToday    = realOnly(tripsOn(TODAY));
   const payToday   = payOf(trToday);
   const binsOut    = S.bins.filter(b=>b.status==='client').length;
   const counts = {};
@@ -752,7 +759,7 @@ function jobRow(j){
   const c = client(j.clientId), d = driver(j.driverId), ty = ttype(j.task);
   return `<div class="item tap" onclick="openJobDetail(${j.id})">
     <div class="grow">
-      <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span></div>
+      <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>${j._test?' <span class="chip st-void">TEST</span>':''}</div>
       <div class="sub">${esc(c?cSite(c,j.siteIdx).addr:'')}</div>
       <div class="sub">${esc(ty?ty.label:j.task)} · ${esc(j.binSize)} ${esc(j.waste)} · ${d?esc(d.name):'—'}</div>
     </div>
@@ -1028,6 +1035,7 @@ async function saveJob(){
   j._client = c ? c.name : ''; j._addr = cSite(c, j.siteIdx).addr;
   j._contact = (cContact(c, j.contactIdx)||{}).name || '';
   j._driver = driver(driverId).name; j._task = jobType;
+  if(isTestDriver(driverId)) j._test = true; /* keeps the test account out of the Sheet + reports */
   closeSheet(); toast('Saving job to database…');
   await api('addJob', {job:j});
   render();
@@ -1683,6 +1691,7 @@ async function saveTrip(final){
     jobBinSize: job ? (job.binSize||'') : '', jobSiteIdx: job ? (job.siteIdx||0) : 0,
     invoiced: false, jobId,
   };
+  if(isTestDriver(t.driverId)) t._test = true; /* keeps the test account out of the Sheet + reports */
   /* denormalised display fields for the Google Sheet "Trips" tab */
   const d = driver(t.driverId), ty = ttype(t.typeId);
   t._client = c ? c.name : ''; t._sales = c ? (c.salesRep||'') : '';
@@ -2359,8 +2368,8 @@ async function saveBin(no){
    ============================================================ */
 let earnDate = TODAY;
 function vEarnings(){
-  const trips = tripsOn(earnDate);
-  const total = payOf(trips);
+  const trips = tripsOn(earnDate);          /* per-driver sections — test driver still listed */
+  const total = payOf(realOnly(trips));     /* ...but the payable total is real trips only */
   $('#main').innerHTML = `
     <div class="card row">
       <div class="grow"><label class="f" style="margin-top:0">CONSOLIDATE DATE</label>
@@ -2473,7 +2482,7 @@ function vCRM(){
     <div class="card">
       ${list.map(c=>{
         const binsOn = S.bins.filter(b=>b.clientId===c.id).length;
-        const tr = S.trips.filter(t=>t.clientId===c.id).length;
+        const tr = realOnly(S.trips.filter(t=>t.clientId===c.id)).length;
         return `<div class="item tap" onclick="openClientDetail('${c.id}')">
           <div class="grow">
             <div class="title">${esc(c.name)} <span class="tag ${c.type}">${c.type.toUpperCase()}</span>
@@ -2489,8 +2498,8 @@ function vCRM(){
 function openClientDetail(id){
   const c = client(id);
   const binsOn = S.bins.filter(b=>b.clientId===id);
-  const tr = S.trips.filter(t=>t.clientId===id);
-  const jobs = S.jobs.filter(j=>j.clientId===id);
+  const tr = realOnly(S.trips.filter(t=>t.clientId===id)); /* client history is the real business only — */
+  const jobs = realOnly(S.jobs.filter(j=>j.clientId===id)); /* test-account jobs + trips are both excluded */
   const billable = payOf(tr);
   const tonnage = tr.reduce((a,t)=>a+tonnTotal(t),0);
   const timeline = [

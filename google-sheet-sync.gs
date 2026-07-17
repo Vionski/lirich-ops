@@ -226,8 +226,12 @@ function apply_(st, q) {
         if (!b.size && t.jobBinSize) b.size = t.jobBinSize;
         return b;
       };
-      if (t.binIn) { var bi = ensureBin_(t.binIn); bi.status = 'client'; bi.clientId = t.clientId; bi.siteIdx = t.jobSiteIdx || 0; }
-      if (t.binOut) { var bo = ensureBin_(t.binOut); bo.status = 'yard'; bo.clientId = null; bo.siteIdx = 0; }
+      /* a trip from the office test account must never move a real bin or invent a new one —
+         the bin inventory is live operational data, so test runs leave it untouched */
+      if (!t._test) {
+        if (t.binIn) { var bi = ensureBin_(t.binIn); bi.status = 'client'; bi.clientId = t.clientId; bi.siteIdx = t.jobSiteIdx || 0; }
+        if (t.binOut) { var bo = ensureBin_(t.binOut); bo.status = 'yard'; bo.clientId = null; bo.siteIdx = 0; }
+      }
       delete t.jobBinSize; delete t.jobSiteIdx;
       /* q.final === false = driver tapped "Save" (waiting on something, e.g. the DO) — the job
          stays open so they can resume it later. Anything else (incl. old clients with no flag) finalises as before. */
@@ -313,7 +317,8 @@ function autoArchive_(st) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName('Trips Archive') || ss.insertSheet('Trips Archive');
   if (sh.getLastRow() === 0) sh.appendRow(tripHeader_());
-  old.forEach(function (t) { sh.appendRow(tripRow_(t, st)); });
+  /* test-account trips are dropped on archive rather than written to the Sheet */
+  old.filter(function (t) { return !t._test; }).forEach(function (t) { sh.appendRow(tripRow_(t, st)); });
 }
 
 /* ---------------- Trips: rich report (one row per trip) ---------------- */
@@ -406,7 +411,10 @@ function tripRow_(t, st) {
 function mirror_(st) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tSheet = ss.getSheetByName('Trips') || ss.insertSheet('Trips');
-  var tRows = [tripHeader_()].concat(st.trips.map(function (t) { return tripRow_(t, st); }));
+  /* `_test` rows come from the office test account — they are deliberately never mirrored
+     into the Sheet, which is the real business record. They stay in the app for the operator. */
+  var realTrips = st.trips.filter(function (t) { return !t._test; });
+  var tRows = [tripHeader_()].concat(realTrips.map(function (t) { return tripRow_(t, st); }));
   tSheet.clearContents();
   tSheet.getRange(1, 1, tRows.length, tRows[0].length).setValues(tRows);
   tSheet.getRange(1, 1, 1, tRows[0].length).setFontWeight('bold');
@@ -415,7 +423,7 @@ function mirror_(st) {
   var jSheet = ss.getSheetByName('Jobs') || ss.insertSheet('Jobs');
   var jRows = [['Job #', 'Date', 'Status', 'Customer', 'Service Location', 'Contact', 'Task', 'Bin Size',
     'Waste', 'Dump To', 'Driver', 'Started At', 'Instructions']];
-  st.jobs.forEach(function (j) {
+  st.jobs.filter(function (j) { return !j._test; }).forEach(function (j) {
     jRows.push([j.id, j.date, j.status, j._client || '', j._addr || '', j._contact || '', j._task || j.task,
       j.binSize, j.waste, j.dumpTo || '', j._driver || '', j.startedAt || '', j.instructions || '']);
   });
