@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v35';
+const APP_VERSION = 'v36';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -131,15 +131,19 @@ function readExifDateMs(buf){
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
+/* `truck` = the driver's CURRENT plate — used only to pre-fill the vehicle box on the job.
+   `pin` is now stored explicitly and is deliberately NOT derived from the plate any more:
+   trucks get reassigned, and a plate change must never silently change a driver's login.
+   (These pins are the ones the drivers already use — do not edit without telling them.) */
 const DRIVERS = [
-  {id:1, code:'D1', name:'Sathish', truck:'XE6221D', color:'#0f7a4d'},
-  {id:2, code:'D2', name:'Karthik', truck:'XE8496P', color:'#2563c4'},
-  {id:3, code:'D3', name:'Kumar',   truck:'XE5876P', color:'#c4860a'},
-  {id:4, code:'D4', name:'Liu',     truck:'XE7330L', color:'#7a3fc4'},
-  {id:5, code:'D5', name:'Yao Jun', truck:'XE9012K', color:'#c4362f'},
-  /* office test account — not a real driver. PIN comes from the plate digits (9999).
-     Grey avatar so it's obvious at a glance this isn't real fleet activity. */
-  {id:6, code:'TD', name:'Test Driver', truck:'XE9999T', color:'#6b7a72', test:true},
+  {id:1, code:'D1', name:'Sathish', truck:'XE6221D', pin:'6221', color:'#0f7a4d'},
+  {id:2, code:'D2', name:'Karthik', truck:'XE5457Y', pin:'8496', color:'#2563c4'},
+  {id:3, code:'D3', name:'Kumar',   truck:'XE4491D', pin:'5876', color:'#c4860a'},
+  {id:4, code:'D4', name:'Liu',     truck:'XE8496P', pin:'7330', color:'#7a3fc4'},
+  {id:5, code:'D5', name:'Yao Jun', truck:'XE7126P', pin:'9012', color:'#c4362f'},
+  /* office test account — not a real driver. Grey avatar so it's obvious at a glance
+     this isn't real fleet activity. */
+  {id:6, code:'TD', name:'Test Driver', truck:'X1234Y', pin:'9999', color:'#6b7a72', test:true},
 ];
 const BIN_SIZES = ['5ft','10ft','15ft','20ft','30ft'];
 const SALES = ['Marcus', 'Patrick'];
@@ -270,9 +274,13 @@ function readSignature(prefix){
   return {name, position, dataUrl: cv.toDataURL('image/png')};
 }
 /* driver's own most-recently-used vehicle plate — remembered so they don't retype it every job */
+/* the vehicle box on a job starts filled in: whatever they drove last, else the truck
+   they're assigned to. Either way it stays editable — drivers do swap trucks. */
 function lastVehicleForDriver(driverId){
   const mine = S.trips.filter(t=>t.driverId===driverId && t.vehicleNo).sort((a,b)=>b.id-a.id);
-  return mine.length ? mine[0].vehicleNo : '';
+  if(mine.length) return mine[0].vehicleNo;
+  const d = driver(driverId);
+  return d ? (d.truck||'') : '';
 }
 /* earliest capture time (ms) among the tripPhotos of a given kind */
 function firstTs(kind){ const ts = tripPhotos.filter(p=>p.kind===kind && p.ts).map(p=>p.ts); return ts.length ? Math.min.apply(null, ts) : 0; }
@@ -287,7 +295,7 @@ const OLD_SHEET_URLS = ['AKfycbztseCf6yQaEa0bFlp3omnGfSk', 'AKfycbzqzzB4f4XmggtB
 function truckPin(plate){ const m = String(plate||'').match(/\d{3,}/); return m ? m[0].slice(0,4) : '1111'; }
 const USERS = [
   {id:'op', role:'operator', name:'Office / Operator', pin:'1234', color:'#0A1B4D'},
-  ...DRIVERS.map(d=>({id:'d'+d.id, role:'driver', driverId:d.id, name:d.name, pin:truckPin(d.truck), color:d.color})),
+  ...DRIVERS.map(d=>({id:'d'+d.id, role:'driver', driverId:d.id, name:d.name, pin:d.pin||truckPin(d.truck), color:d.color})),
 ];
 
 /* ---- Driver's Trip Incentive (effective 01 May 2026) ---- */
@@ -1139,7 +1147,8 @@ function openTripForm(opts){
         ${flow.noDO ? '' : `
         <div class="edo-field"><span class="k">VEHICLE NO.</span>
           <input type="text" id="tf-vehicle" placeholder="XE6221D" autocapitalize="characters"
-            style="text-transform:uppercase" value="${esc((draft&&draft.vehicleNo)||lastVehicleForDriver(S.role.driverId))}"></div>`}
+            style="text-transform:uppercase" value="${esc((draft&&draft.vehicleNo)||lastVehicleForDriver(S.role.driverId))}"></div>
+        <div class="muted" style="font-size:10.5px; margin-top:3px">Your truck — change it if you're on a different one today.</div>`}
 
         ${flow.noDO ? '' : `${doShot}
         <div class="muted" id="tf-ocr" style="margin-top:6px">Snap the ${isVessel?'V':'DO'} slip — the app reads the number into the box above. Check it's right.</div>`}
