@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v36';
+const APP_VERSION = 'v37';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -132,9 +132,9 @@ const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
 /* `truck` = the driver's CURRENT plate — used only to pre-fill the vehicle box on the job.
-   `pin` is now stored explicitly and is deliberately NOT derived from the plate any more:
-   trucks get reassigned, and a plate change must never silently change a driver's login.
-   (These pins are the ones the drivers already use — do not edit without telling them.) */
+   `pin` is retained for drivers but is NO LONGER CHECKED (drivers sign in by tapping their
+   name — they each open their own personal link). Only the operator account is PIN-gated.
+   Kept here so driver PINs can be switched back on without re-deriving them from plates. */
 const DRIVERS = [
   {id:1, code:'D1', name:'Sathish', truck:'XE6221D', pin:'6221', color:'#0f7a4d'},
   {id:2, code:'D2', name:'Karthik', truck:'XE5457Y', pin:'8496', color:'#2563c4'},
@@ -555,12 +555,15 @@ function renderLogin(){
   if(lock && !loginSel) loginSel = lock.id;
   const list = lock ? [lock] : USERS;
   const u = USERS.find(x=>x.id===loginSel);
-  const skipPin = !!(lock && u && u.id===lock.id); /* personal link = the driver's identity proof, no PIN needed */
+  /* Drivers never enter a PIN — they open their own personal link, and a driver only ever
+     sees their own jobs and pay. The operator still does: that view holds every driver's
+     pay, client pricing and the void controls, and there is no personal link for it. */
+  const needsPin = !!(u && u.role==='operator');
   $('#main').innerHTML = `
     <div class="card" style="text-align:center; padding:24px 18px">
       <img src="logo.png" alt="Lirich Resources" style="width:132px; max-width:60%; height:auto; display:block; margin:0 auto 10px">
       <h2 style="justify-content:center; font-size:19px">Sign in to Lirich Resources</h2>
-      <p class="muted" style="margin:4px 0 0">${lock ? 'This device is set up for '+esc(lock.name)+'.' : 'Pick your account, then enter your PIN.'}</p>
+      <p class="muted" style="margin:4px 0 0">${lock ? 'This device is set up for '+esc(lock.name)+'.' : 'Tap your name to start.'}</p>
     </div>
     <div class="card">
       ${list.map(x=>`
@@ -571,11 +574,11 @@ function renderLogin(){
           ${loginSel===x.id ? '<span class="tag">SELECTED</span>' : ''}
         </div>`).join('')}
     </div>
-    ${u && skipPin ? `
+    ${u && !needsPin ? `
     <div class="card">
-      <div style="margin-top:2px"><button class="btn" onclick="doLogin()">🔓 Sign in as ${esc(u.name)}</button></div>
+      <div style="margin-top:2px"><button class="btn" onclick="doLogin()">🔓 Start — ${esc(u.name)}</button></div>
     </div>` : ''}
-    ${u && !skipPin ? `
+    ${u && needsPin ? `
     <div class="card">
       <label class="f">PIN — ${esc(u.name).toUpperCase()}</label>
       <input type="password" inputmode="numeric" id="login-pin" placeholder="••••" maxlength="6"
@@ -583,9 +586,9 @@ function renderLogin(){
       <div style="margin-top:12px"><button class="btn" onclick="doLogin()">🔓 Sign in</button></div>
     </div>` : ''}
     ${lock
-      ? `<div class="card muted" style="text-align:center">This device is linked to ${esc(lock.name)} — no PIN needed.<br><a href="#" onclick="unlockDevice(); return false">Unlock this device</a> (operator PIN needed)</div>`
-      : `<div class="card muted" style="text-align:center">Operator PIN <b>1234</b> · each driver's PIN = the 4 numbers in their vehicle plate</div>`}`;
-  if(u && !skipPin){ const el = $('#login-pin'); if(el) el.focus(); }
+      ? `<div class="card muted" style="text-align:center">This device is linked to ${esc(lock.name)}.<br><a href="#" onclick="unlockDevice(); return false">Unlock this device</a> (operator PIN needed)</div>`
+      : `<div class="card muted" style="text-align:center">Drivers: just tap your name — no PIN.<br>Office/Operator PIN <b>1234</b></div>`}`;
+  if(u && needsPin){ const el = $('#login-pin'); if(el) el.focus(); }
 }
 function unlockDevice(){
   const pin = prompt('Operator PIN to unlock this device:');
@@ -597,8 +600,8 @@ function unlockDevice(){
 function doLogin(){
   const u = USERS.find(x=>x.id===loginSel);
   if(!u) return;
-  const skipPin = S.settings.lockUser === u.id && u.role==='driver'; /* personal link already proves identity */
-  if(!skipPin && ((($('#login-pin')||{}).value)||'').trim() !== u.pin){ toast('❌ Wrong PIN — try again'); return; }
+  /* only the operator account is PIN-gated — see renderLogin for why */
+  if(u.role==='operator' && ((($('#login-pin')||{}).value)||'').trim() !== u.pin){ toast('❌ Wrong PIN — try again'); return; }
   S.auth = {userId:u.id};
   S.role = u.role==='operator' ? {kind:'operator', driverId:null} : {kind:'driver', driverId:u.driverId};
   loginSel = null;
@@ -2738,8 +2741,12 @@ async function seedDemoPhoto(){
    the lock is remembered so it survives Add to Home Screen */
 try{
   const uParam = new URLSearchParams(location.search).get('u');
-  if(uParam && USERS.some(x=>x.id===uParam && x.role==='driver')){
+  const lu = uParam ? USERS.find(x=>x.id===uParam && x.role==='driver') : null;
+  if(lu){
     S.settings.lockUser = uParam;
+    /* the personal link IS the sign-in now that drivers have no PIN — open it and you're
+       straight into your own jobs. An existing session is left alone rather than hijacked. */
+    if(!S.auth){ S.auth = {userId:lu.id}; S.role = {kind:'driver', driverId:lu.driverId}; }
     persist();
   }
 }catch(e){}
