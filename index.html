@@ -7,8 +7,8 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#050A30">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
   /* Lirich brand: navy carries structure (header, chrome, money), orange is reserved
@@ -33,6 +33,8 @@ header{
 }
 .hrow{display:flex; align-items:center; justify-content:space-between; max-width:680px; margin:0 auto}
 .htitle{font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px}
+.hlogo{height:26px; width:auto; flex:none; display:block}
+body.big-ui .hlogo{height:30px}
 .hsub{font-size:11.5px; opacity:.85; margin-top:2px; font-weight:600}
 .role-pill{
   display:flex; align-items:center; gap:7px; border:none; cursor:pointer;
@@ -116,7 +118,7 @@ label.f{display:block; font-size:11px; font-weight:800; color:var(--muted); marg
 .edo{border:1px solid var(--line); border-radius:12px; background:#fff; padding:14px 14px 4px; margin:6px 0 14px}
 .edo-head{display:flex; gap:10px; align-items:flex-start; border-bottom:2.5px solid var(--ink); padding-bottom:9px}
 .edo-brand{flex:none}
-.edo-logo{font-size:22px; font-weight:900; color:var(--brand); line-height:1; letter-spacing:-.6px}
+.edo-logo{height:38px; width:auto; display:block}
 .edo-tag{font-size:8px; font-style:italic; color:var(--muted); margin-top:3px}
 .edo-cn{font-size:8.5px; color:var(--muted); margin-top:1px}
 .edo-co{flex:1; text-align:right; min-width:0}

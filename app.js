@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v33';
+const APP_VERSION = 'v34';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -539,7 +539,7 @@ function exitViewAs(){
 /* ---------------- login ---------------- */
 let loginSel = null;
 function renderLogin(){
-  $('#header').innerHTML = `<div><div class="htitle">♻️ Lirich Ops</div><div class="hsub">Lirich Resources Pte Ltd · 23 Gul Drive</div></div>`;
+  $('#header').innerHTML = `<div><div class="htitle"><img src="logo.png" alt="" class="hlogo">Lirich Ops</div><div class="hsub">Lirich Resources Pte Ltd · 23 Gul Drive</div></div>`;
   $('#nav').innerHTML = '';
   $('#fab').style.display = 'none';
   /* a personal link (?u=d3) locks this device to one driver's account */
@@ -550,7 +550,7 @@ function renderLogin(){
   const skipPin = !!(lock && u && u.id===lock.id); /* personal link = the driver's identity proof, no PIN needed */
   $('#main').innerHTML = `
     <div class="card" style="text-align:center; padding:24px 18px">
-      <div style="font-size:42px">♻️</div>
+      <img src="logo.png" alt="Lirich Resources" style="width:132px; max-width:60%; height:auto; display:block; margin:0 auto 10px">
       <h2 style="justify-content:center; font-size:19px">Sign in to Lirich Ops</h2>
       <p class="muted" style="margin:4px 0 0">${lock ? 'This device is set up for '+esc(lock.name)+'.' : 'Pick your account, then enter your PIN.'}</p>
     </div>
@@ -661,7 +661,7 @@ function renderHeader(){
     pill = `${avatarHTML(d)} ${esc(d.name)} ▾`;
   }
   $('#header').innerHTML = `
-    <div><div class="htitle">♻️ Lirich Ops</div><div class="hsub">${sub}</div></div>
+    <div><div class="htitle"><img src="logo.png" alt="" class="hlogo">Lirich Ops</div><div class="hsub">${sub}</div></div>
     <button class="role-pill" onclick="openRoleSheet()">${pill}</button>`;
 }
 function renderNav(){
@@ -1110,7 +1110,7 @@ function openTripForm(opts){
       <div class="edo">
         <div class="edo-head">
           <div class="edo-brand">
-            <div class="edo-logo">LIRICH</div>
+            <img src="logo.png" alt="Lirich Resources" class="edo-logo">
             <div class="edo-tag">( Lead Resources To Quality )</div>
             <div class="edo-cn">利瑞资源私人有限公司</div>
           </div>
@@ -1842,9 +1842,12 @@ async function saveTripEdit(id){
 /* ============================================================
    DIGITAL DELIVERY ORDER — printable copy matching the paper forms
    ============================================================ */
+/* the print window is written into a blank tab, so it has no base URL of its own —
+   the logo must be an absolute href or it silently renders as a broken image */
+const LOGO_URL = new URL('logo.png', location.href).href;
 const DO_LETTERHEAD = `
   <div class="doh">
-    <div class="doh-logo">L<span>&hearts;</span></div>
+    <img class="doh-logo" src="${LOGO_URL}" alt="Lirich Resources">
     <div class="doh-co">
       <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
       <div class="doh-tag">(Lead Resources To Quality)</div>
@@ -1905,7 +1908,7 @@ function doPrintHTML(t){
   <style>
     body{font-family:Arial,Helvetica,sans-serif; color:#1a1a1a; max-width:720px; margin:20px auto; padding:0 16px}
     .doh{display:flex; align-items:flex-start; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px}
-    .doh-logo{font-size:30px; font-weight:900; color:#050A30}
+    .doh-logo{height:52px; width:auto; flex:none}
     .doh-name{font-weight:800; font-size:16px}
     .doh-tag{font-size:11px; font-style:italic; color:#444}
     .doh-addr{font-size:11px; color:#333; margin-top:2px}
