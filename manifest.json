@@ -1,6 +1,6 @@
 {
-  "name": "Lirich Ops — Waste Logistics CRM",
-  "short_name": "Lirich Ops",
+  "name": "Lirich Resources — Waste Logistics CRM",
+  "short_name": "Lirich Resources",
   "description": "Job assignment, driver job cards, delivery orders, bin inventory and earnings for Lirich Resources Pte Ltd.",
   "start_url": "./index.html",
   "scope": "./",
