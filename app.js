@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -137,6 +137,9 @@ const DRIVERS = [
   {id:3, code:'D3', name:'Kumar',   truck:'XE5876P', color:'#c4860a'},
   {id:4, code:'D4', name:'Liu',     truck:'XE7330L', color:'#7a3fc4'},
   {id:5, code:'D5', name:'Yao Jun', truck:'XE9012K', color:'#c4362f'},
+  /* office test account — not a real driver. PIN comes from the plate digits (9999).
+     Grey avatar so it's obvious at a glance this isn't real fleet activity. */
+  {id:6, code:'TD', name:'Test Driver', truck:'XE9999T', color:'#6b7a72', test:true},
 ];
 const BIN_SIZES = ['5ft','10ft','15ft','20ft','30ft'];
 const SALES = ['Marcus', 'Patrick'];
@@ -699,7 +702,7 @@ function vDash(){
 
     <div class="card">
       <h2>🚛 Fleet today</h2>
-      ${DRIVERS.map(d=>{
+      ${DRIVERS.filter(d=>!d.test || driverJobs(d.id, TODAY).length || driverTrips(d.id, TODAY).length).map(d=>{
         const jobs = driverJobs(d.id, TODAY).filter(j=>j.status!=='void');
         const done = jobs.filter(j=>j.status==='done').length;
         const onJob = jobs.some(j=>j.status==='in_progress');
@@ -2294,7 +2297,7 @@ function vEarnings(){
         <input type="date" value="${earnDate}" onchange="earnDate=this.value; render()"></div>
       <div class="kpi green" style="box-shadow:none; padding:6px 10px"><div class="num">${money(total)}</div><div class="lbl">GRAND TOTAL</div></div>
     </div>
-    ${DRIVERS.map(d=>{
+    ${DRIVERS.filter(d=>!d.test || trips.some(t=>t.driverId===d.id)).map(d=>{
       const tr = trips.filter(t=>t.driverId===d.id);
       return `<details class="drv" ${tr.length?'open':''}>
         <summary>${avatarHTML(d)}
