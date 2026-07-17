@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v31';
+const APP_VERSION = 'v32';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -286,7 +286,7 @@ const OLD_SHEET_URLS = ['AKfycbztseCf6yQaEa0bFlp3omnGfSk', 'AKfycbzqzzB4f4XmggtB
 /* user accounts — driver PIN = the 4 numbers in their vehicle plate (e.g. XE5876P → 5876) */
 function truckPin(plate){ const m = String(plate||'').match(/\d{3,}/); return m ? m[0].slice(0,4) : '1111'; }
 const USERS = [
-  {id:'op', role:'operator', name:'Office / Operator', pin:'1234', color:'#0b5d3a'},
+  {id:'op', role:'operator', name:'Office / Operator', pin:'1234', color:'#0A1B4D'},
   ...DRIVERS.map(d=>({id:'d'+d.id, role:'driver', driverId:d.id, name:d.name, pin:truckPin(d.truck), color:d.color})),
 ];
 
@@ -1850,7 +1850,7 @@ function doPrintHTML(t){
   <style>
     body{font-family:Arial,Helvetica,sans-serif; color:#1a1a1a; max-width:720px; margin:20px auto; padding:0 16px}
     .doh{display:flex; align-items:flex-start; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px}
-    .doh-logo{font-size:30px; font-weight:900; color:#0f7a4d}
+    .doh-logo{font-size:30px; font-weight:900; color:#050A30}
     .doh-name{font-weight:800; font-size:16px}
     .doh-tag{font-size:11px; font-style:italic; color:#444}
     .doh-addr{font-size:11px; color:#333; margin-top:2px}
@@ -1872,7 +1872,7 @@ function doPrintHTML(t){
     .do-sig-meta{font-size:12px; margin-top:6px}
     .do-actions{margin:18px 0; display:flex; gap:10px}
     .do-actions button{padding:10px 16px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer}
-    .do-print-btn{background:#0f7a4d; color:#fff}
+    .do-print-btn{background:#050A30; color:#fff}
     .do-close-btn{background:#eee; color:#333}
     @media print{ .do-actions{display:none} body{margin:0; max-width:none} }
   </style></head>

@@ -5,16 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lirich Ops — Waste Logistics CRM</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f7a4d">
+<meta name="theme-color" content="#050A30">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
 :root{
-  --brand:#0f7a4d; --brand-dark:#0b5d3a; --brand-soft:#e2f0e9;
-  --bg:#eef2f0; --card:#ffffff; --ink:#1b2620; --muted:#6b7a72; --line:#e2e8e4;
-  --amber:#c4860a; --blue:#2563c4; --red:#c4362f; --violet:#7a3fc4;
-  --radius:16px; --shadow:0 2px 10px rgba(27,38,32,.07);
+  /* Lirich brand: navy carries structure (header, chrome, money), orange is reserved
+     for the one primary action on a screen — page stays white/near-white throughout */
+  --brand:#0A1B4D; --brand-dark:#050A30; --brand-soft:#E9EDF8;
+  --orange:#F4831F; --orange-dark:#D96E10; --orange-soft:#FEF1E4; --orange-ink:#8A4708;
+  --bg:#F5F6FA; --card:#ffffff; --ink:#0C1330; --muted:#6E7691; --line:#E3E6F0;
+  --amber:#c4860a; --blue:#2563c4; --red:#c4362f; --violet:#7a3fc4; --green:#0f7a4d;
+  --radius:16px; --shadow:0 2px 10px rgba(12,19,48,.07);
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html,body{margin:0; padding:0}
@@ -26,7 +29,7 @@ button{font-family:inherit}
 /* ---------- header ---------- */
 header{
   position:sticky; top:0; z-index:30; background:var(--brand); color:#fff;
-  padding:12px 16px; box-shadow:0 2px 8px rgba(11,93,58,.25);
+  padding:12px 16px; box-shadow:0 2px 8px rgba(5,10,48,.28);
 }
 .hrow{display:flex; align-items:center; justify-content:space-between; max-width:680px; margin:0 auto}
 .htitle{font-size:18px; font-weight:800; display:flex; align-items:center; gap:8px}
@@ -62,13 +65,13 @@ nav button{
   align-items:center; gap:2px; padding:5px 10px; border-radius:12px; min-width:60px;
 }
 nav button .ico{font-size:20px}
-nav button.active{color:var(--brand); background:var(--brand-soft)}
+nav button.active{color:var(--orange-ink); background:var(--orange-soft)}
 /* ---------- KPI tiles ---------- */
 .kpis{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px}
 .kpi{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 14px}
 .kpi .num{font-size:22px; font-weight:800}
 .kpi .lbl{font-size:11.5px; color:var(--muted); font-weight:700; margin-top:2px}
-.kpi.green .num{color:var(--brand)} .kpi.amber .num{color:var(--amber)}
+.kpi.green .num{color:var(--green)} .kpi.amber .num{color:var(--amber)}
 .kpi.blue .num{color:var(--blue)} .kpi.red .num{color:var(--red)}
 /* ---------- chips & tags ---------- */
 .chip{font-size:10.5px; font-weight:800; border-radius:999px; padding:3px 9px; white-space:nowrap}
@@ -85,7 +88,7 @@ nav button.active{color:var(--brand); background:var(--brand-soft)}
 .item .title{font-weight:700; font-size:13.5px}
 .item .sub{font-size:11.5px; color:var(--muted); margin-top:2px}
 .icon-btn{background:none; border:none; cursor:pointer; font-size:16px; color:var(--muted); padding:6px; border-radius:8px; flex:none}
-.pay{font-weight:800; color:var(--brand); font-size:13.5px; white-space:nowrap}
+.pay{font-weight:800; color:var(--green); font-size:13.5px; white-space:nowrap}
 .empty{padding:24px 10px; text-align:center; color:var(--muted); font-size:13.5px}
 /* ---------- filter tabs ---------- */
 .ftabs{display:flex; gap:7px; overflow-x:auto; padding:2px 0 8px; scrollbar-width:none}
@@ -116,11 +119,14 @@ input[type=text],input[type=number],input[type=date],input[type=time],select,tex
 textarea{resize:vertical}
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
 .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px}
+/* primary action = Lirich orange (the one thing on screen a driver must tap);
+   secondary actions fall back to the navy wash so the hierarchy stays obvious */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:6px;
-  background:var(--brand); color:#fff; border:none; border-radius:12px;
+  background:var(--orange); color:#241100; border:none; border-radius:12px;
   padding:11px 16px; font-size:13.5px; font-weight:800; cursor:pointer; width:100%;
 }
+.btn:active{background:var(--orange-dark); color:#fff}
 .btn.ghost{background:var(--brand-soft); color:var(--brand)}
 .btn.danger{background:#fae4e2; color:var(--red)}
 .btn.blue{background:#e3ebfa; color:var(--blue)}
@@ -164,7 +170,7 @@ body.big-ui table.jt{font-size:14.5px}
   position:fixed; right:max(16px, calc(50vw - 324px)); bottom:calc(84px + env(safe-area-inset-bottom)); z-index:29;
   background:var(--brand-dark); color:#fff; border:none; border-radius:999px;
   padding:14px 20px; font-size:14px; font-weight:800; cursor:pointer;
-  box-shadow:0 6px 18px rgba(11,93,58,.4);
+  box-shadow:0 6px 18px rgba(5,10,48,.4);
 }
 /* ---------- sheet / overlay ---------- */
 .overlay{position:fixed; inset:0; background:rgba(15,25,20,.5); z-index:50; display:none; align-items:flex-end; justify-content:center}
