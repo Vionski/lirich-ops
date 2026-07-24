@@ -39,6 +39,15 @@ const json = (o: unknown, status = 200) =>
     headers: { "content-type": "application/json", ...CORS },
   });
 
+/* Safe ISO timestamp — the app may store times as ms-epoch numbers, numeric
+   strings, or blanks; a bad value must NOT crash the mirror (it used to throw
+   RangeError and silently drop the whole trip). Returns null on anything unparseable. */
+function toISO(v: any): string | null {
+  if (v == null || v === "") return null;
+  const d = new Date(typeof v === "string" && /^-?\d+$/.test(v.trim()) ? Number(v) : v);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 /* ---------------- state blob ---------------- */
 async function getState(): Promise<any | null> {
   const { data } = await supa.from("app_state").select("state,rev").eq("id", 1).maybeSingle();
@@ -177,13 +186,22 @@ async function mirrorTrip(st: any, t: any) {
       if (b) row.bin_out = b.bin_id;
       else row.backfill_notes = [(row.backfill_notes || ""), `bin_out_raw=${t.binOut}`].filter(Boolean).join(" | ");
     }
-    await supa.from("collections").upsert(row, { onConflict: "do_no" });
+    let { error: colErr } = await supa.from("collections").upsert(row, { onConflict: "do_no" });
+    if (colErr && row.job_no) {
+      /* most likely a job_no FK failure (the job hasn't mirrored) — a trip must
+         never be silently dropped, so keep the linkage in notes and retry unlinked */
+      console.error("collections upsert error (retrying without job_no)", colErr);
+      row.backfill_notes = [(row.backfill_notes || ""), `job_no=${row.job_no}`].filter(Boolean).join(" | ");
+      row.job_no = null;
+      ({ error: colErr } = await supa.from("collections").upsert(row, { onConflict: "do_no" }));
+    }
+    if (colErr) console.error("collections upsert FAILED", colErr);
   } catch (e) { console.error("mirrorTrip failed", e); }
 }
 async function mirrorJob(j: any) {
   if (j._test) return;
   try {
-    await supa.from("jobs").upsert({
+    const { error: jobErr } = await supa.from("jobs").upsert({
       job_no: String(j.id),
       job_date: j.date || null,
       status: j.status || "assigned",
@@ -194,8 +212,9 @@ async function mirrorJob(j: any) {
       waste_type: j.waste || null,
       dump_to: j.dumpTo || null,
       driver_id: await driverIdFor(j._driver || ""),
-      started_at: j.startedAt ? new Date(j.startedAt).toISOString() : null,
+      started_at: toISO(j.startedAt),
     }, { onConflict: "job_no" });
+    if (jobErr) console.error("mirrorJob upsert error", jobErr);
   } catch (e) { console.error("mirrorJob failed", e); }
 }
 
