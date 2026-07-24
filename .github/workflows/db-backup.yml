@@ -1,0 +1,37 @@
+# Nightly Supabase backup - commits CSV + SQL dumps to this private repo.
+# Setup: repo Settings > Secrets and variables > Actions > New repository secret
+# SUPABASE_DB_URL = Supabase connection string (Project Settings > Database, pooler URI port 6543, with your DB password).
+name: db-backup
+on:
+  schedule:
+    - cron: "30 18 * * *"
+  workflow_dispatch: {}
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Dump full schema+data (SQL)
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backups
+          pg_dump "$DB" --no-owner --no-privileges -f backups/lirich_ssot.sql
+      - name: Dump each table to CSV
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backups/csv
+          for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts; do
+            psql "$DB" -c "\\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
+          done
+      - name: Commit snapshot
+        run: |
+          git config user.name  "lirich-backup-bot"
+          git config user.email "backup@lirichresources.sg"
+          git add backups
+          git commit -m "db backup $(date -u +%F)" || echo "no changes"
+          git push
+
