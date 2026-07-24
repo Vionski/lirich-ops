@@ -21,12 +21,15 @@ jobs:
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
         run: |
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          pg_dump --version
           mkdir -p backups
           pg_dump "$DB" --no-owner --no-privileges -f backups/lirich_ssot.sql
       - name: Dump each table to CSV
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
         run: |
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
           mkdir -p backups/csv
           for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts; do
             psql "$DB" -c "\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
