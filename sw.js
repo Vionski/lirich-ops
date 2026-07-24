@@ -1,4 +1,4 @@
-const CACHE = 'lirich-ops-v39';
+const CACHE = 'lirich-ops-v40'; /* v40 = Supabase backend */
 const ASSETS = ['./', './index.html', './app.js', './manifest.json',
   './logo.png', './icon-192.png', './icon-512.png'];
 

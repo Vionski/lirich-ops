@@ -308,10 +308,15 @@ function tsOffDay(ms){ return !!(ms && ymdOf(ms) !== formJobDate()); }
 function firstTs(kind){ const ts = tripPhotos.filter(p=>p.kind===kind && p.ts).map(p=>p.ts); return ts.length ? Math.min.apply(null, ts) : 0; }
 function msToHM(ms){ if(!ms) return ''; const d = new Date(ms); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 
-/* Central database (Apps Script web app on Michelle's Google Sheet) */
-const SHEET_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbzqN7RX1acurFiK4J86tVae-AjbwTk0jljqIQXZ8CByURbcUc28kRXV3mf-wv6OWOnq4A/exec';
-/* superseded deployments — devices still pointing at these are auto-migrated */
-const OLD_SHEET_URLS = ['AKfycbztseCf6yQaEa0bFlp3omnGfSk', 'AKfycbzqzzB4f4XmggtBgMi8XUoAq50', 'AKfycbw1a06s2CctmeUR6CtMzN5Zrm0', 'AKfycbxHk9mHMUCM_MoYAcVW1R1HP'];
+/* Central database — Supabase Edge Function (replaces the Apps Script bridge,
+   same protocol). The SSOT is Postgres; every trip also lands in `collections`. */
+const SHEET_URL_DEFAULT = 'https://zjtvrlbyfeirnrlqgefo.supabase.co/functions/v1/sync';
+const DEVICE_KEY = '3c55a26e60493d32504ab0a5d1cf898922396f399e27e2e8';
+/* superseded deployments — devices still pointing at these are auto-migrated
+   (incl. every old Apps Script URL: script.google.com matches AKfycb…) */
+const OLD_SHEET_URLS = ['AKfycb', 'AKfycbztseCf6yQaEa0bFlp3omnGfSk', 'AKfycbzqzzB4f4XmggtBgMi8XUoAq50', 'AKfycbw1a06s2CctmeUR6CtMzN5Zrm0', 'AKfycbxHk9mHMUCM_MoYAcVW1R1HP'];
+/* helper — GET endpoints with the device key attached */
+function dbGet(qs){ return (S.settings && S.settings.sheetUrl) + qs + '&key=' + DEVICE_KEY; }
 
 /* user accounts — driver PIN = the 4 numbers in their vehicle plate (e.g. XE5876P → 5876) */
 function truckPin(plate){ const m = String(plate||'').match(/\d{3,}/); return m ? m[0].slice(0,4) : '1111'; }
@@ -2057,8 +2062,8 @@ async function api(action, payload){
   const url = S.settings && S.settings.sheetUrl;
   if(!url){ toast('⚠️ No database URL configured'); throw new Error('no url'); }
   if(!navigator.onLine){ toast('⚠️ You are offline — change NOT saved. Reconnect and try again.'); throw new Error('offline'); }
-  /* plain body (no headers) keeps this a "simple" request Apps Script accepts */
-  const res = await fetch(url, {method:'POST', body: JSON.stringify(Object.assign({action}, payload||{}))});
+  /* plain body (no headers) keeps this a "simple" request — no CORS preflight */
+  const res = await fetch(url, {method:'POST', body: JSON.stringify(Object.assign({action, key: DEVICE_KEY}, payload||{}))});
   const raw = await res.text();
   let d;
   try{ d = JSON.parse(raw); }
@@ -2072,7 +2077,7 @@ async function bootRemote(){
   const url = S.settings && S.settings.sheetUrl;
   if(!url || !navigator.onLine) return;
   try{
-    const st = await (await fetch(url + '?state=1')).json();
+    const st = await (await fetch(dbGet('?state=1'))).json();
     if(st.empty){
       /* first device online initialises the central database with its local data */
       await api('initState', {state: sharedOf(S)});
@@ -2087,9 +2092,9 @@ async function pollRemote(){
   try{
     const url = S.settings && S.settings.sheetUrl;
     if(!url || !S.auth || !navigator.onLine) return;
-    const r = await (await fetch(url + '?rev=1')).json();
+    const r = await (await fetch(dbGet('?rev=1'))).json();
     if(r.rev && r.rev !== S.rev){
-      const st = await (await fetch(url + '?state=1')).json();
+      const st = await (await fetch(dbGet('?state=1'))).json();
       if(st.rev){ adoptShared(st); render(); }
     }
   }catch(e){}
@@ -2100,7 +2105,7 @@ async function fetchSheetDB(){
   const url = S.settings && S.settings.sheetUrl;
   if(!url) return false;
   try{
-    const res = await fetch(url + '?db=1');
+    const res = await fetch(dbGet('?db=1'));
     if(!res.ok) throw 0;
     const d = await res.json();
     if(!d || !Array.isArray(d.clients)) throw 0;
@@ -2456,7 +2461,7 @@ function vEarnings(){
       <div style="margin-top:8px"><button class="btn" onclick="openDOArchive()">📁 DO photo archive</button></div>
     </div>
     <div class="card">
-      <h2>📊 Central database (Google Sheets)</h2>
+      <h2>📊 Central database (Supabase)</h2>
       <p class="muted">All jobs, trips, bins and clients live in one shared database — every phone reads and writes it.
       The spreadsheet's <b>Trips</b> and <b>Jobs</b> tabs are always-current views for filtering and reports;
       DO photos are in the Drive folder "Lirich Ops DO Photos".</p>
