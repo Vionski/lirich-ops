@@ -47,9 +47,22 @@ async function clientReport(clientId: string) {
 
   const months: Record<string, any> = {};
   const vessels: Record<string, any> = {};
+  /* per-collection rows in the PIL dashboard's DATA shape, so the front-end can
+     drop them in unchanged. Cat mapping: garbage = A plastics + B food + C domestic
+     + F operational; oily = D cooking oil; ash = E ashes. Vessel jobs have no
+     separate sludge field in the SSOT, so reqS/actS = 0 (was manual on the old DO). */
+  const data: Record<string, any[]> = {};
+  const sn: Record<string, number> = {};
   let totVol = 0, totNet = 0, totDos = 0;
   for (const r of (rows || []) as any[]) {
     const mk = (r.do_date || "").slice(0, 7) || "unknown";
+    const garbage = (Number(r.vol_cat_a) || 0) + (Number(r.vol_cat_b) || 0) + (Number(r.vol_cat_c) || 0) + (Number(r.vol_cat_f) || 0);
+    const oily = Number(r.vol_cat_d) || 0;
+    const ash = Number(r.vol_cat_e) || 0;
+    (data[mk] = data[mk] || []).push({
+      sn: (sn[mk] = (sn[mk] || 0) + 1), date: r.do_date, vessel: r.vessel_name || "", port: r.berth || "",
+      voy: "", garbage: n2(garbage), oily: n2(oily), ash: n2(ash), reqS: 0, actS: 0,
+    });
     const m = months[mk] || (months[mk] = { month: mk, dos: 0, volume_m3: 0, net_t: 0, vessels: new Set(),
       cat_a: 0, cat_b: 0, cat_c: 0, cat_d: 0, cat_e: 0, cat_f: 0 });
     m.dos++; totDos++;
@@ -77,6 +90,8 @@ async function clientReport(clientId: string) {
     monthly,
     vessels: Object.values(vessels).map((v: any) => ({ vessel: v.vessel, dos: v.dos, volume_m3: n2(v.volume_m3) }))
       .sort((a, b) => b.volume_m3 - a.volume_m3),
+    /* month -> per-collection rows, matching the dashboard's hardcoded DATA shape */
+    data,
   };
 }
 
