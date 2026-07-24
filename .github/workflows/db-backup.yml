@@ -1,18 +1,22 @@
 # Nightly Supabase backup - commits CSV + SQL dumps to this private repo.
 # Setup: repo Settings > Secrets and variables > Actions > New repository secret
-# SUPABASE_DB_URL = Supabase connection string (Project Settings > Database, pooler URI port 6543, with your DB password).
+# SUPABASE_DB_URL = Supabase connection string (Project Settings > Database, pooler URI port 6543, with password filled in).
 name: db-backup
 on:
   schedule:
-    - cron: "30 18 * * *"
-  workflow_dispatch: {}
+    - cron: "30 18 * * *"   # 18:30 UTC = 02:30 SGT nightly
+  workflow_dispatch: {}      # manual run button
 jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install postgres client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install postgres client 17 (server is PG17; default client 16 refuses to dump)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
       - name: Dump full schema+data (SQL)
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
@@ -25,7 +29,7 @@ jobs:
         run: |
           mkdir -p backups/csv
           for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts; do
-            psql "$DB" -c "\\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
+            psql "$DB" -c "\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
           done
       - name: Commit snapshot
         run: |
@@ -34,4 +38,3 @@ jobs:
           git add backups
           git commit -m "db backup $(date -u +%F)" || echo "no changes"
           git push
-
