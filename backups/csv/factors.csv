@@ -1,1 +1,8 @@
 id,domain,key,route,value,unit,basis,source_ref,valid_from
+1,fuel,diesel,,2.678000,kgCO2e/L,indicative - verify before external reporting,,2026-07-24
+2,grid,sg_grid,,0.402000,kgCO2e/kWh,EMA 2024 - verify,,2026-07-24
+3,waste,general_waste,WtE,0.350000,tCO2e/t,indicative - verify,,2026-07-24
+4,avoided,general_waste,recovery,0.460000,tCO2e/t,indicative - verify,,2026-07-24
+5,avoided,paper,recovery,0.900000,tCO2e/t,indicative - verify,,2026-07-24
+6,avoided,plastics,recovery,1.100000,tCO2e/t,indicative - verify,,2026-07-24
+7,avoided,metals,recovery,1.500000,tCO2e/t,indicative - verify,,2026-07-24

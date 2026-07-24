@@ -1,1 +1,5 @@
 facility_id,name,route
+TUAS_WTE,Tuas Waste-to-Energy Plant,WtE
+SEMAKAU,Semakau Landfill,landfill
+TRS,TRS Environment,recovery
+LIRICH_YARD,Lirich Yard (sort/store),recovery

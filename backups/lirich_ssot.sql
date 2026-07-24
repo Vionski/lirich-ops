@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0eCFhFexV9Z8ieam9miIwPKUzNwCCRstdZ66CaffhMSK7aExjePK76xlVK3QVQv
+\restrict Hf1bXP79njgH7Yx1frOa8HcRwVVHPg5Rgde3TkUzUPikv6tyH6HZ9l7iiF8xZLt
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Ubuntu 17.10-1.pgdg24.04+1)
@@ -3218,6 +3218,19 @@ ALTER TABLE public.adjustments ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY 
 
 
 --
+-- Name: app_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.app_state (
+    id integer DEFAULT 1 NOT NULL,
+    state jsonb NOT NULL,
+    rev bigint DEFAULT 0 NOT NULL,
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT app_state_id_check CHECK ((id = 1))
+);
+
+
+--
 -- Name: approved_domains; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3612,6 +3625,16 @@ ALTER TABLE public.rate_card ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     NO MINVALUE
     NO MAXVALUE
     CACHE 1
+);
+
+
+--
+-- Name: ref_lists; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.ref_lists (
+    kind text NOT NULL,
+    value text NOT NULL
 );
 
 
@@ -4118,6 +4141,17 @@ COPY auth.webauthn_credentials (id, user_id, credential_id, public_key, attestat
 --
 
 COPY public.adjustments (id, do_no, field, old_value, new_value, reason, adjusted_by, adjusted_at) FROM stdin;
+1	23636	do_date	\N	2026-06-09	Re-OCR of scan p3: date clearly reads 09/06/26 (was blank in backfill)	claude re-ocr 24Jul2026	2026-07-24 15:45:07.605862+00
+2	23947	do_date	2026-06-30	2026-06-20	Re-OCR of scan p15: date reads 20/06/26, original backfill had 30/06/26 - verify against invoice	claude re-ocr 24Jul2026	2026-07-24 15:45:07.605862+00
+\.
+
+
+--
+-- Data for Name: app_state; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.app_state (id, state, rev, updated_at) FROM stdin;
+1	{"rev": 9, "seq": {"do": 1, "job": 45, "vdo": 17921, "trip": 25, "ticket": 15}, "bins": [{"no": "5028", "size": "5 ft", "source": "seed", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5038", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5044", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5046", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5047", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5051", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5056", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5057", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5058", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5060", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5064", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5069", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5073", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5079", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5081", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5083", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5084", "size": "5 ft", "source": "seed", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5086", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5089", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5092", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5096", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5106", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5108", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5116", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5123", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5135", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5142", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5147", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5151", "size": "5 ft", "source": "seed", "status": "client", "siteIdx": 0, "clientId": "cmrkt9187zx3", "firstSeen": "2026-07-14"}, {"no": "5153", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5160", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5162", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5169", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5176", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5194", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5196", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5197", "size": "5 ft", "source": "seed", "status": "client", "siteIdx": 0, "clientId": "c1", "firstSeen": "2026-07-14"}, {"no": "5198", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5199", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5203", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5204", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5210", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5211", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5213", "size": "5 ft", "source": "seed", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5217", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5220", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5221", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5222", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5232", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5239", "size": "5 ft", "source": "seed", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5240", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "5245", "size": "5 ft", "source": "seed", "status": "client", "siteIdx": 0, "clientId": "cmrkt918auof", "firstSeen": "2026-07-14"}, {"no": "5247", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "7006", "size": "7 ft", "source": "seed", "status": "client", "siteIdx": 0, "clientId": "cmrkt9187ws7", "firstSeen": "2026-07-14"}, {"no": "7016", "size": "7 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "7017", "size": "7 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "7022", "size": "7 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "8007", "size": "7 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "L802", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "L806", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "L807", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "L808", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "L809", "size": "5 ft", "source": "seed", "status": "unknown", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "R08", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 0, "clientId": "c1", "firstSeen": "2026-07-14"}, {"no": "Y111", "size": "5 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-14"}, {"no": "L801", "size": "", "source": "driver", "status": "client", "siteIdx": 0, "clientId": "cmrkt91878od", "firstSeen": "2026-07-15"}, {"no": "L805", "size": "", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-15"}, {"no": "L53", "size": "", "source": "driver", "status": "client", "siteIdx": 0, "clientId": "cmrkt91878od", "firstSeen": "2026-07-15"}, {"no": "5109", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 2, "clientId": "cmrkt918ag06", "firstSeen": "2026-07-15"}, {"no": "5072", "size": "5 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-15"}, {"no": "5070", "size": "5 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-15"}, {"no": "R13", "size": "7 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-15"}, {"no": "5033", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 0, "clientId": "cmrkt9187x1k", "firstSeen": "2026-07-15"}, {"no": "5070号", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 1, "clientId": "cmrkt9189v5w", "firstSeen": "2026-07-15"}, {"no": "5193", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 1, "clientId": "cmrkt9189v5w", "firstSeen": "2026-07-15"}, {"no": "R21", "size": "7 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-15"}, {"no": "8005", "size": "7 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-16"}, {"no": "L57", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 0, "clientId": "cmrkt9189j9t", "firstSeen": "2026-07-16"}, {"no": "5132", "size": "5 ft", "source": "driver", "status": "client", "siteIdx": 1, "clientId": "cmrkt9189v5w", "firstSeen": "2026-07-16"}, {"no": "6002", "size": "5 ft", "source": "driver", "status": "yard", "siteIdx": 0, "clientId": null, "firstSeen": "2026-07-20"}], "jobs": [{"id": 3, "date": "2026-07-15", "_addr": "48 Pandan Road L3", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "", "status": "done", "_client": "Poh Tiong Choon Logistics Ltd", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 2, "_contact": "", "clientId": "cmrkt918ag06", "distance": 0, "driverId": 5, "createdAt": "2026-07-15T10:45", "startedAt": "10:46", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784083566810, "instructions": ""}, {"id": 4, "date": "2026-07-14", "_addr": "79 Anson Road", "_task": "Exchange", "price": 18, "waste": "Wood Waste", "dumpTo": "", "status": "done", "_client": "HCG", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "", "clientId": "cmrkt9189v5w", "distance": 0, "driverId": 5, "createdAt": "2026-07-14T13:07", "startedAt": "13:10", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784092230111, "instructions": ""}, {"id": 5, "date": "2026-07-15", "_addr": "26 Loyang Drive", "_task": "Load", "price": 31, "waste": "General Waste", "dumpTo": "", "status": "done", "_client": "B&C Waste", "_driver": "Yao Jun", "binSize": "7 ft", "jobType": "Load", "siteIdx": 6, "_contact": "", "clientId": "cmrkt91878od", "distance": 0, "driverId": 5, "createdAt": "2026-07-15T14:47", "startedAt": "15:14", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784099668422, "instructions": ""}, {"id": 6, "date": "2026-07-15", "_addr": "47A Jalan Buroh", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "", "status": "done", "_client": "Advanced Substrate Technologies Pte Ltd", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187x1k", "distance": 0, "driverId": 5, "createdAt": "2026-07-15T15:10", "startedAt": "17:53", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784109223975, "instructions": ""}, {"id": 7, "date": "2026-07-15", "_addr": "79 Anson Road", "_task": "Exchange", "price": 18, "waste": "General Waste", "dumpTo": "", "status": "done", "_client": "HCG", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "", "clientId": "cmrkt9189v5w", "distance": 0, "driverId": 5, "createdAt": "2026-07-15T15:13", "startedAt": "18:52", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784112771627, "instructions": ""}, {"id": 8, "date": "2026-07-15", "_addr": "54 Senoko Road", "_task": "Exchange", "price": 18, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "Calvary Carpentry Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt91889mm", "distance": 30, "driverId": 1, "createdAt": "2026-07-15T21:21", "contactIdx": 0, "surcharges": [], "instructions": "7:30-8:00am\\nContact - 86807640"}, {"id": 9, "date": "2026-07-15", "_addr": "46 Gul Drive", "_task": "Delivery", "price": 8, "waste": "Carton Boxes", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "Haid Biotechnology Industry (Singapore) Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Delivery", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9189g55", "distance": 1.1, "driverId": 1, "createdAt": "2026-07-15T21:23", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 10, "date": "2026-07-15", "_addr": "46 Gul Drive", "_task": "Collect", "price": 13, "waste": "Carton Boxes", "dumpTo": "Lirich Resources Pte Ltd", "status": "in_progress", "_client": "Haid Biotechnology Industry (Singapore) Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Collect", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9189g55", "distance": 1.1, "driverId": 1, "createdAt": "2026-07-15T21:24", "startedAt": "17:51", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784281884954, "instructions": "Collect bin 10:00am"}, {"id": 11, "date": "2026-07-15", "_addr": "Benoi", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "in_progress", "_client": "ST", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "", "clientId": "cmrkt918dn4k", "distance": 2.3, "driverId": 1, "createdAt": "2026-07-15T21:26", "startedAt": "19:21", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784287270474, "instructions": ""}, {"id": 12, "date": "2026-07-15", "_addr": "6 Chin Bee Ave L5", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "in_progress", "_client": "Shin Ya O Ya Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918dq77", "distance": 0, "driverId": 1, "createdAt": "2026-07-15T21:28", "startedAt": "14:41", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 13, "date": "2026-07-15", "_addr": "6 Chin Bee Ave L5", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "done", "_client": "Shin Ya O Ya Pte Ltd", "_driver": "Yao Jun", "binSize": "7 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918dq77", "distance": 0, "driverId": 5, "createdAt": "2026-07-15T22:25", "startedAt": "22:59", "contactIdx": 0, "surcharges": ["after7v"], "acceptedAtMs": 1784127557628, "instructions": ""}, {"id": 14, "date": "2026-07-15", "_addr": "8 Pandan Crescent", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "done", "_client": "ASL Proworld Solution Pte Ltd", "_driver": "Yao Jun", "binSize": "7 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187ws7", "distance": 13.1, "driverId": 5, "createdAt": "2026-07-15T22:46", "startedAt": "08:45", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784162742439, "instructions": "PIC - Jun Hong 88894769"}, {"id": 15, "date": "2026-07-15", "_addr": "60 Benoi Road", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "done", "_client": "EverTeam Pte Ltd", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9189j9t", "distance": 1.9, "driverId": 5, "createdAt": "2026-07-15T22:48", "startedAt": "09:59", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784167147780, "instructions": "PIC - Anwar 80792542"}, {"id": 16, "date": "2026-07-15", "_addr": "5 Jalan Samulun", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "PaxOcean Singapore Pte Ltd", "_driver": "Liu", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918askd", "distance": 4.6, "driverId": 4, "createdAt": "2026-07-15T22:52", "contactIdx": 0, "surcharges": [], "instructions": "Morning \\nMuthu- 84553465"}, {"id": 17, "date": "2026-07-15", "_addr": "5 Jalan Samulun", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "PaxOcean Singapore Pte Ltd", "_driver": "Liu", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918askd", "distance": 4.6, "driverId": 4, "createdAt": "2026-07-15T22:53", "contactIdx": 0, "surcharges": [], "instructions": "Afternoon\\nMuthu- 84553465"}, {"id": 18, "date": "2026-07-15", "_addr": "6 Tuas South Street 15", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "ST", "_driver": "Liu", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918dn4k", "distance": 8.4, "driverId": 4, "createdAt": "2026-07-15T22:55", "contactIdx": 0, "surcharges": [], "instructions": "Rate will change in the system $19.50"}, {"id": 19, "date": "2026-07-15", "_addr": "Peck Seah Street", "_task": "Exchange", "price": 23, "waste": "General Waste", "dumpTo": "", "status": "assigned", "_client": "B&C Waste", "_driver": "Liu", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 4, "_contact": "", "clientId": "cmrkt91878od", "distance": 26.7, "driverId": 4, "createdAt": "2026-07-15T22:58", "contactIdx": 0, "surcharges": [], "instructions": "Call 1 hour before go\\nAvoid.lunch time 12pm-1pm\\nAnamul- 85236820"}, {"id": 20, "date": "2026-07-16", "_addr": "79 Anson Road", "_task": "Exchange", "price": 18, "waste": "General Waste", "dumpTo": "HCG Environmental Pte Ltd", "status": "done", "_client": "HCG", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "", "clientId": "cmrkt9189v5w", "distance": 32, "driverId": 5, "createdAt": "2026-07-16T09:35", "startedAt": "14:32", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784183568667, "instructions": "Trip rate is $23"}, {"id": 21, "date": "2026-07-16", "_addr": "79 Anson Road", "_task": "Exchange", "price": 18, "waste": "General Waste", "dumpTo": "HCG Environmental Pte Ltd", "status": "done", "_client": "HCG", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "", "clientId": "cmrkt9189v5w", "distance": 32, "driverId": 5, "createdAt": "2026-07-16T09:37", "startedAt": "10:43", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784169791187, "instructions": "Trip rate is $23"}, {"id": 22, "date": "2026-07-16", "_addr": "13 Kian Teck Crescent", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "in_progress", "_client": "WIKA Instrumentation Pte Ltd", "_driver": "Kumar", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918fsbo", "distance": 3.8, "driverId": 3, "createdAt": "2026-07-16T13:56", "startedAt": "22:35", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784212514524, "instructions": ""}, {"id": 23, "date": "2026-07-17", "_addr": "9 Gul Circle", "_task": "Exchange", "price": 13, "waste": "Carton Boxes", "dumpTo": "", "status": "void", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 1, "createdAt": "2026-07-17T17:35", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 24, "date": "2026-07-17", "_addr": "9 Gul Circle", "_task": "Exchange", "price": 13, "waste": "Carton Boxes", "dumpTo": "", "status": "void", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 1, "createdAt": "2026-07-17T19:21", "startedAt": "19:22", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784287355671, "instructions": ""}, {"id": 25, "date": "2026-07-17", "_addr": "9 Gul Circle", "_task": "Exchange", "price": 13, "waste": "Carton Boxes", "dumpTo": "", "status": "in_progress", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Test Driver", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 6, "createdAt": "2026-07-17T20:52", "startedAt": "20:52", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784292770918, "instructions": ""}, {"id": 26, "date": "2026-07-17", "_addr": "15 Tuas Ave 8", "_task": "Exchange", "price": 13, "waste": "Carton Boxes", "dumpTo": "", "status": "in_progress", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Test Driver", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 6, "createdAt": "2026-07-17T21:25", "startedAt": "21:25", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784294732895, "instructions": ""}, {"id": 27, "date": "2026-07-17", "_addr": "9 Gul Circle", "_task": "Exchange", "price": 13, "waste": "Carton Boxes", "dumpTo": "Asia Recycling Resources Pte Ltd", "status": "void", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 1.2, "driverId": 1, "createdAt": "2026-07-17T21:36", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 28, "date": "2026-07-17", "_addr": "9 Gul Circle", "_task": "Exchange", "price": 13, "waste": "Carton Boxes", "dumpTo": "", "status": "in_progress", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Test Driver", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 6, "createdAt": "2026-07-17T21:37", "startedAt": "21:38", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784295480487, "instructions": ""}, {"id": 29, "date": "2026-07-18", "_addr": "5 Sungei Kadut Street 6", "_task": "Dump", "price": 18, "waste": "Wood Waste", "dumpTo": "Bee Joo", "status": "assigned", "_client": "Beejoo", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Dump", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187viy", "distance": 0, "driverId": 1, "createdAt": "2026-07-17T22:00", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 30, "date": "2026-07-20", "_addr": "5 Sungei Kadut Street 6", "_task": "Dump", "price": 18, "waste": "Wood Waste", "dumpTo": "Bee Joo", "status": "assigned", "_client": "Beejoo", "_driver": "Liu", "binSize": "7 ft", "jobType": "Dump", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187viy", "distance": 0, "driverId": 4, "createdAt": "2026-07-19T20:46", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 31, "date": "2026-07-20", "_addr": "1 Tuas View Place, Westlink One, #02-01", "_task": "Delivery", "price": 8, "waste": "General Waste", "dumpTo": "", "status": "assigned", "_client": "Epont Building Services Pte Ltd", "_driver": "Liu", "binSize": "5 ft", "jobType": "Delivery", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9189ewq", "distance": 0, "driverId": 4, "createdAt": "2026-07-19T20:48", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 32, "date": "2026-07-19", "_addr": "5 Sungei Kadut Street 6", "_task": "Dump", "price": 18, "waste": "Wood Waste", "dumpTo": "Bee Joo", "status": "done", "_client": "Beejoo", "_driver": "Yao Jun", "binSize": "7 ft", "jobType": "Dump", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187viy", "distance": 0, "driverId": 5, "createdAt": "2026-07-19T20:49", "startedAt": "07:50", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784505051464, "instructions": ""}, {"id": 33, "date": "2026-07-20", "_addr": "Benoi", "_task": "Exchange", "price": 19.5, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "done", "_client": "ST", "_driver": "Yao Jun", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 1, "_contact": "", "clientId": "cmrkt918dn4k", "distance": 2.3, "driverId": 5, "createdAt": "2026-07-19T20:50", "startedAt": "09:21", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784510460438, "instructions": ""}, {"id": 34, "date": "2026-07-20", "_addr": "5 Sungei Kadut Street 6", "_task": "Dump", "price": 18, "waste": "Wood Waste", "dumpTo": "Bee Joo", "status": "assigned", "_client": "Beejoo", "_driver": "Kumar", "binSize": "7 ft", "jobType": "Dump", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187viy", "distance": 0, "driverId": 3, "createdAt": "2026-07-19T20:52", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 35, "date": "2026-07-20", "_addr": "118 Pioneer Rd L1", "_task": "Delivery", "price": 8, "waste": "General Waste", "dumpTo": "", "status": "assigned", "_client": "Radha Exports Pte Ltd", "_driver": "Kumar", "binSize": "7 ft", "jobType": "Delivery", "siteIdx": 0, "_contact": "Radha", "clientId": "c2", "distance": 0, "driverId": 3, "createdAt": "2026-07-19T20:53", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 36, "date": "2026-07-20", "_addr": "61a Tuas Nexus Drive", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "ST", "_driver": "Kumar", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 3, "_contact": "", "clientId": "cmrkt918dn4k", "distance": 7, "driverId": 3, "createdAt": "2026-07-19T20:54", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 37, "date": "2026-07-20", "_addr": "5 Sungei Kadut Street 6", "_task": "Dump", "price": 18, "waste": "Wood Waste", "dumpTo": "Bee Joo", "status": "assigned", "_client": "Beejoo", "_driver": "Sathish", "binSize": "7 ft", "jobType": "Dump", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187viy", "distance": 0, "driverId": 1, "createdAt": "2026-07-19T20:56", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 38, "date": "2026-07-20", "_addr": "5 Jalan Samulun", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "PaxOcean Singapore Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918askd", "distance": 4.6, "driverId": 1, "createdAt": "2026-07-19T20:57", "contactIdx": 0, "surcharges": [], "instructions": "Morning"}, {"id": 39, "date": "2026-07-20", "_addr": "5 Jalan Samulun", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "PaxOcean Singapore Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt918askd", "distance": 4.6, "driverId": 1, "createdAt": "2026-07-19T20:58", "contactIdx": 0, "surcharges": [], "instructions": "Afternoon"}, {"id": 40, "date": "2026-07-20", "_addr": "5 Sungei Kadut Street 6", "_task": "Dump", "price": 18, "waste": "Wood Waste", "dumpTo": "Bee Joo", "status": "assigned", "_client": "Beejoo", "_driver": "Karthik", "binSize": "5 ft", "jobType": "Dump", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9187viy", "distance": 0, "driverId": 2, "createdAt": "2026-07-19T20:59", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 41, "date": "2026-07-20", "_addr": "46 Gul Drive", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "Haid Biotechnology Industry (Singapore) Pte Ltd", "_driver": "Karthik", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "", "clientId": "cmrkt9189g55", "distance": 1.1, "driverId": 2, "createdAt": "2026-07-19T21:01", "contactIdx": 0, "surcharges": [], "instructions": "Exchange 660L Bin"}, {"id": 42, "date": "2026-07-20", "_addr": "Gul", "_task": "Exchange", "price": 19.5, "waste": "General Waste", "dumpTo": "Lirich Resources Pte Ltd", "status": "assigned", "_client": "ST", "_driver": "Karthik", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 2, "_contact": "", "clientId": "cmrkt918dn4k", "distance": 0.4, "driverId": 2, "createdAt": "2026-07-19T21:02", "contactIdx": 0, "surcharges": [], "instructions": ""}, {"id": 43, "date": "2026-07-25", "_addr": "9 Gul Circle", "_task": "Exchange", "_test": true, "price": 13, "waste": "General Waste", "dumpTo": "", "status": "done", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Test Driver", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 6, "createdAt": "2026-07-25T03:04", "startedAt": "03:04", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784919884770, "instructions": ""}, {"id": 44, "date": "2026-07-25", "_addr": "9 Gul Circle", "_task": "Exchange", "price": 13, "waste": "General Waste", "dumpTo": "", "status": "done", "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "binSize": "5 ft", "jobType": "Exchange", "siteIdx": 0, "_contact": "Jacky", "clientId": "c1", "distance": 0, "driverId": 1, "createdAt": "2026-07-25T03:35", "startedAt": "03:35", "contactIdx": 0, "surcharges": [], "acceptedAtMs": 1784921751375, "instructions": "testing"}], "trips": [{"id": 1, "tDO": 1784043316345, "_pay": 13, "date": "2026-07-14", "doNo": 2222, "tEnd": 1784043310829, "_addr": "9 Gul Circle", "_type": "Exchange", "binIn": "R08", "jobId": 1, "price": 13, "waste": "Carton Boxes", "_sales": "Patrick", "_surch": "", "binOut": "5239", "doType": "land", "photos": [{"id": "1tgLjlHKUm5ozfJk0IirMSAiTJH9hsYXy", "url": "https://drive.google.com/uc?export=view&id=1tgLjlHKUm5ozfJk0IirMSAiTJH9hsYXy", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1tgLjlHKUm5ozfJk0IirMSAiTJH9hsYXy&sz=w240"}, {"id": "1nNhVZLTnxMbl7SymXuG1pSbtRaXcBn1u", "url": "https://drive.google.com/uc?export=view&id=1nNhVZLTnxMbl7SymXuG1pSbtRaXcBn1u", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1nNhVZLTnxMbl7SymXuG1pSbtRaXcBn1u&sz=w240"}, {"id": "1jU2lhFs_tSB04dr4OLqJyLdhvUwMvuVp", "url": "https://drive.google.com/uc?export=view&id=1jU2lhFs_tSB04dr4OLqJyLdhvUwMvuVp", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1jU2lhFs_tSB04dr4OLqJyLdhvUwMvuVp&sz=w240"}, {"id": "1g37CnCn4F9V53xxWtJ0ukpFRSGrQqBYt", "url": "https://drive.google.com/uc?export=view&id=1g37CnCn4F9V53xxWtJ0ukpFRSGrQqBYt", "kind": "signature", "thumb": "https://drive.google.com/thumbnail?id=1g37CnCn4F9V53xxWtJ0ukpFRSGrQqBYt&sz=w240"}], "tBinIn": 1784043299719, "vessel": null, "weight": {"net": 11, "tare": 1, "gross": 12, "ticket": "LR2"}, "_charge": 13, "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "jobType": "Exchange", "remarks": "", "sigName": "m", "tAccept": 1784043239862, "tBinOut": 1784043310829, "tServer": 1784043329809, "tWeight": 0, "timeEnd": "23:35", "tonnAdj": 0, "tonnage": 0, "clientId": "c1", "distance": 0, "driverId": 1, "invoiced": false, "disposeTo": "", "timeStart": "23:34", "vehicleNo": "1234", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": [], "sigPosition": "o"}, {"id": 2, "tDO": 1784043369307, "_pay": 13, "date": "2026-07-14", "doNo": 1233, "tEnd": 1784043363952, "_addr": "9 Gul Circle", "_type": "Exchange", "binIn": "5197", "jobId": 1, "price": 13, "waste": "Metal Waste", "_sales": "Patrick", "_surch": "", "binOut": "Y111", "doType": "land", "photos": [{"id": "1W5NA-QihPP2re3kzsnG7GaVEwTZxxJUR", "url": "https://drive.google.com/uc?export=view&id=1W5NA-QihPP2re3kzsnG7GaVEwTZxxJUR", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1W5NA-QihPP2re3kzsnG7GaVEwTZxxJUR&sz=w240"}, {"id": "1Fdvfh3ULw_38sOkADQVlNUICSe-gOH7B", "url": "https://drive.google.com/uc?export=view&id=1Fdvfh3ULw_38sOkADQVlNUICSe-gOH7B", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1Fdvfh3ULw_38sOkADQVlNUICSe-gOH7B&sz=w240"}, {"id": "14hohAWmRlA3sAES9ITVXKT1M2m2Gfa5E", "url": "https://drive.google.com/uc?export=view&id=14hohAWmRlA3sAES9ITVXKT1M2m2Gfa5E", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=14hohAWmRlA3sAES9ITVXKT1M2m2Gfa5E&sz=w240"}, {"id": "19JjJfTKn5IexrPNACe7UAWbZYtajLA7l", "url": "https://drive.google.com/uc?export=view&id=19JjJfTKn5IexrPNACe7UAWbZYtajLA7l", "kind": "signature", "thumb": "https://drive.google.com/thumbnail?id=19JjJfTKn5IexrPNACe7UAWbZYtajLA7l&sz=w240"}], "tBinIn": 1784043358329, "vessel": null, "weight": {"net": 61, "tare": 50, "gross": 111, "ticket": "LR1"}, "_charge": 13, "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "jobType": "Exchange", "remarks": "", "sigName": "1qq", "tAccept": 1784043239862, "tBinOut": 1784043363952, "tServer": 1784043423958, "tWeight": 0, "timeEnd": "23:36", "tonnAdj": 0, "tonnage": 0, "clientId": "c1", "distance": 0, "driverId": 1, "invoiced": false, "disposeTo": "", "timeStart": "23:35", "vehicleNo": "2234", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["Metal Waste"], "sigPosition": "999"}, {"id": 3, "tDO": 1784071515005, "_pay": 13, "date": "2026-07-15", "doNo": 26138, "tEnd": 1784071247206, "_addr": "16 Gul Crescent", "_type": "Collect / Exchange — Middle", "binIn": "L801", "jobId": null, "price": null, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5245", "doType": "land", "photos": [{"id": "1qFlDqwT8YofpcCAcfXCUKbLjQ1j5ySv7", "url": "https://drive.google.com/uc?export=view&id=1qFlDqwT8YofpcCAcfXCUKbLjQ1j5ySv7", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1qFlDqwT8YofpcCAcfXCUKbLjQ1j5ySv7&sz=w240"}, {"id": "1V7UfpThw3CZqRPaKyh_PF8EIW2m4yO0K", "url": "https://drive.google.com/uc?export=view&id=1V7UfpThw3CZqRPaKyh_PF8EIW2m4yO0K", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1V7UfpThw3CZqRPaKyh_PF8EIW2m4yO0K&sz=w240"}, {"id": "1SZoxdC0PYt-oNTBfbhzJlo-4Xrq4RYqk", "url": "https://drive.google.com/uc?export=view&id=1SZoxdC0PYt-oNTBfbhzJlo-4Xrq4RYqk", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1SZoxdC0PYt-oNTBfbhzJlo-4Xrq4RYqk&sz=w240"}], "tBinIn": 1784071231427, "typeId": "col_m", "vessel": null, "weight": {"net": 2350, "tare": 14100, "gross": 16450, "ticket": "LR6"}, "_charge": "", "_client": "Eng Leng Contractors Pte Ltd", "_driver": "Yao Jun", "jobType": "", "remarks": "", "sigName": "", "tAccept": 0, "tBinOut": 1784071247206, "tServer": 1784072079535, "tWeight": 0, "timeEnd": "07:20", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt91888e3", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "07:20", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 4, "tDO": 1784074542634, "_pay": 13, "date": "2026-07-15", "doNo": 26139, "tEnd": 1784074019313, "_addr": "11 Tuas Bay Close, #04-01/02", "_type": "Collect / Exchange — Middle", "binIn": "5245", "jobId": null, "price": null, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5151", "doType": "land", "photos": [{"id": "1xMrJ-p4atIc61RrIB2OPbcCEH1lwWvcE", "url": "https://drive.google.com/uc?export=view&id=1xMrJ-p4atIc61RrIB2OPbcCEH1lwWvcE", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1xMrJ-p4atIc61RrIB2OPbcCEH1lwWvcE&sz=w240"}, {"id": "1H7qG_zGX_aUeH7jQx7KTpN9TNm8ozY7V", "url": "https://drive.google.com/uc?export=view&id=1H7qG_zGX_aUeH7jQx7KTpN9TNm8ozY7V", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1H7qG_zGX_aUeH7jQx7KTpN9TNm8ozY7V&sz=w240"}, {"id": "1g_FGtC-FjZGGVDEwHB75vb0APek6EvtQ", "url": "https://drive.google.com/uc?export=view&id=1g_FGtC-FjZGGVDEwHB75vb0APek6EvtQ", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1g_FGtC-FjZGGVDEwHB75vb0APek6EvtQ&sz=w240"}], "tBinIn": 1784074010542, "typeId": "col_m", "vessel": null, "weight": {"net": 2370, "tare": 14050, "gross": 16420, "ticket": "LR4"}, "_charge": "", "_client": "LexBuild International Pte Ltd", "_driver": "Yao Jun", "jobType": "", "remarks": "", "sigName": "", "tAccept": 0, "tBinOut": 1784074019313, "tServer": 1784074555682, "tWeight": 0, "timeEnd": "08:06", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt918auof", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "08:06", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 5, "tDO": 1784076200794, "_pay": 13, "date": "2026-07-15", "doNo": 24436, "tEnd": 1784075742933, "_addr": "16 Gul Crescent", "_type": "Collect / Exchange — Middle", "binIn": "L805", "jobId": null, "price": null, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "L53", "doType": "land", "photos": [{"id": "1Vb1CWUVz51t5tfF_hZCj6SH5XxrwIRqO", "url": "https://drive.google.com/uc?export=view&id=1Vb1CWUVz51t5tfF_hZCj6SH5XxrwIRqO", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1Vb1CWUVz51t5tfF_hZCj6SH5XxrwIRqO&sz=w240"}, {"id": "1vHghJ-AqSLjYQm7RBpY6-5IveejK09zj", "url": "https://drive.google.com/uc?export=view&id=1vHghJ-AqSLjYQm7RBpY6-5IveejK09zj", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1vHghJ-AqSLjYQm7RBpY6-5IveejK09zj&sz=w240"}, {"id": "1JgZ4XwuS7NQ1dpvXJTx-CHO3P-q5pUwK", "url": "https://drive.google.com/uc?export=view&id=1JgZ4XwuS7NQ1dpvXJTx-CHO3P-q5pUwK", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1JgZ4XwuS7NQ1dpvXJTx-CHO3P-q5pUwK&sz=w240"}, {"id": "1T9vDX9FiLrGdDqH9lXssT5Gg4M4z8leq", "url": "https://drive.google.com/uc?export=view&id=1T9vDX9FiLrGdDqH9lXssT5Gg4M4z8leq", "kind": "gross", "thumb": "https://drive.google.com/thumbnail?id=1T9vDX9FiLrGdDqH9lXssT5Gg4M4z8leq&sz=w240"}, {"id": "1xmEMxQ9_zgOxLN5ZYPATfPaygFyDwQPd", "url": "https://drive.google.com/uc?export=view&id=1xmEMxQ9_zgOxLN5ZYPATfPaygFyDwQPd", "kind": "signature", "thumb": "https://drive.google.com/thumbnail?id=1xmEMxQ9_zgOxLN5ZYPATfPaygFyDwQPd&sz=w240"}], "tBinIn": 1784075733368, "typeId": "col_m", "vessel": null, "weight": null, "_charge": "", "_client": "B&C Waste", "_driver": "Liu", "jobType": "", "remarks": "", "sigName": "", "tAccept": 0, "tBinOut": 1784075742933, "tServer": 1784076241962, "tWeight": 1784076231052, "timeEnd": "08:35", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt91878od", "distance": 0, "driverId": 4, "invoiced": false, "disposeTo": "", "timeStart": "08:35", "vehicleNo": "XE8496P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 6, "tDO": 1784077013616, "_pay": 13, "date": "2026-07-15", "doNo": 26140, "tEnd": 1784076916734, "_addr": "14 Benoi Place", "_type": "Collect / Exchange — Middle", "binIn": "5151", "jobId": null, "price": null, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5109", "doType": "land", "photos": [{"id": "1UuOmAHMaagpi9UMdSCnQnGkO8qPsX9Y1", "url": "https://drive.google.com/uc?export=view&id=1UuOmAHMaagpi9UMdSCnQnGkO8qPsX9Y1", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1UuOmAHMaagpi9UMdSCnQnGkO8qPsX9Y1&sz=w240"}, {"id": "1RrkuoJNVT6YpB5uhK_pcrDrdOrRGprox", "url": "https://drive.google.com/uc?export=view&id=1RrkuoJNVT6YpB5uhK_pcrDrdOrRGprox", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1RrkuoJNVT6YpB5uhK_pcrDrdOrRGprox&sz=w240"}, {"id": "1hcfmrIjFaC0y6K5yw7HH-56xL9a7StIZ", "url": "https://drive.google.com/uc?export=view&id=1hcfmrIjFaC0y6K5yw7HH-56xL9a7StIZ", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1hcfmrIjFaC0y6K5yw7HH-56xL9a7StIZ&sz=w240"}], "tBinIn": 1784076911151, "typeId": "col_m", "vessel": null, "weight": {"net": 2180, "tare": 13900, "gross": 16080, "ticket": "LR5"}, "_charge": "", "_client": "Aver Asia (S) Pte Ltd", "_driver": "Yao Jun", "jobType": "", "remarks": "", "sigName": "", "tAccept": 0, "tBinOut": 1784076916734, "tServer": 1784077020268, "tWeight": 0, "timeEnd": "08:55", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9187zx3", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "08:55", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 7, "tDO": 1784079687110, "_pay": 13, "date": "2026-07-15", "doNo": 24437, "tEnd": 1784079351735, "_addr": "16 Gul Crescent", "_type": "Collect / Exchange — Middle", "binIn": "L53", "jobId": null, "price": null, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "L805", "doType": "land", "photos": [{"id": "1kVvuBCuKOorb_nsmiffYmiIuV9w9KJsc", "url": "https://drive.google.com/uc?export=view&id=1kVvuBCuKOorb_nsmiffYmiIuV9w9KJsc", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1kVvuBCuKOorb_nsmiffYmiIuV9w9KJsc&sz=w240"}, {"id": "1OpCe92IT-B0nMP72derqw3kS3MopnedW", "url": "https://drive.google.com/uc?export=view&id=1OpCe92IT-B0nMP72derqw3kS3MopnedW", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1OpCe92IT-B0nMP72derqw3kS3MopnedW&sz=w240"}, {"id": "1DAJiNSy0Ri877eCvQLsDO_lEp2ePg-xt", "url": "https://drive.google.com/uc?export=view&id=1DAJiNSy0Ri877eCvQLsDO_lEp2ePg-xt", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1DAJiNSy0Ri877eCvQLsDO_lEp2ePg-xt&sz=w240"}, {"id": "1vvTxGEOC5zH20IJLRKYEfYiGIyRs6tVr", "url": "https://drive.google.com/uc?export=view&id=1vvTxGEOC5zH20IJLRKYEfYiGIyRs6tVr", "kind": "gross", "thumb": "https://drive.google.com/thumbnail?id=1vvTxGEOC5zH20IJLRKYEfYiGIyRs6tVr&sz=w240"}, {"id": "1sug1rNwNtmyyJxKKTicGHI9iUe7HW4Ca", "url": "https://drive.google.com/uc?export=view&id=1sug1rNwNtmyyJxKKTicGHI9iUe7HW4Ca", "kind": "signature", "thumb": "https://drive.google.com/thumbnail?id=1sug1rNwNtmyyJxKKTicGHI9iUe7HW4Ca&sz=w240"}], "tBinIn": 1784079344671, "typeId": "col_m", "vessel": null, "weight": null, "_charge": "", "_client": "B&C Waste", "_driver": "Liu", "jobType": "", "remarks": "", "sigName": "", "tAccept": 0, "tBinOut": 1784079351735, "tServer": 1784079750044, "tWeight": 1784079740316, "timeEnd": "09:35", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt91878od", "distance": 0, "driverId": 4, "invoiced": false, "disposeTo": "", "timeStart": "09:35", "vehicleNo": "XE8496P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 8, "tDO": 1784083739701, "_pay": 13, "date": "2026-07-15", "doNo": 26141, "tEnd": 1784083734080, "_addr": "48 Pandan Road L3", "_type": "Exchange", "binIn": "5109", "jobId": 3, "price": 13, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5028", "doType": "land", "photos": [{"id": "19YTk0k2rnjHXzGglV37GqYja2f7y-I8N", "url": "https://drive.google.com/uc?export=view&id=19YTk0k2rnjHXzGglV37GqYja2f7y-I8N", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=19YTk0k2rnjHXzGglV37GqYja2f7y-I8N&sz=w240"}, {"id": "1xiSWQVckX3IhOkwZbeTW4SUH0s7GBPlL", "url": "https://drive.google.com/uc?export=view&id=1xiSWQVckX3IhOkwZbeTW4SUH0s7GBPlL", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1xiSWQVckX3IhOkwZbeTW4SUH0s7GBPlL&sz=w240"}, {"id": "1-XIrWYwbV7gABY5ubsMK542N7UXHNLK9", "url": "https://drive.google.com/uc?export=view&id=1-XIrWYwbV7gABY5ubsMK542N7UXHNLK9", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1-XIrWYwbV7gABY5ubsMK542N7UXHNLK9&sz=w240"}], "tBinIn": 1784083726402, "typeId": "send", "vessel": null, "weight": {"net": 2770, "tare": 14100, "gross": 16870, "ticket": "LR3"}, "_charge": 13, "_client": "Poh Tiong Choon Logistics Ltd", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784083566810, "tBinOut": 1784083734080, "tServer": 1784083789210, "tWeight": 0, "timeEnd": "10:48", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt918ag06", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "10:48", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 9, "tDO": 1784083822099, "_pay": 0, "date": "2026-07-15", "doNo": 26141, "tEnd": 1784083818920, "_addr": "48 Pandan Road L3", "_type": "Exchange", "binIn": "5109", "jobId": 3, "price": 0, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5028", "doType": "land", "photos": [{"id": "12fNbQQoIi-uZ0KvTs-oGaRqUiRkPIS2Y", "url": "https://drive.google.com/uc?export=view&id=12fNbQQoIi-uZ0KvTs-oGaRqUiRkPIS2Y", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=12fNbQQoIi-uZ0KvTs-oGaRqUiRkPIS2Y&sz=w240"}, {"id": "1tOsRtuWobrSWnGrUfy9KqvDlHwA6lPdw", "url": "https://drive.google.com/uc?export=view&id=1tOsRtuWobrSWnGrUfy9KqvDlHwA6lPdw", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1tOsRtuWobrSWnGrUfy9KqvDlHwA6lPdw&sz=w240"}, {"id": "1i2KSiWHMwClaTfeVdFRaI7kjarrcoJ2J", "url": "https://drive.google.com/uc?export=view&id=1i2KSiWHMwClaTfeVdFRaI7kjarrcoJ2J", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1i2KSiWHMwClaTfeVdFRaI7kjarrcoJ2J&sz=w240"}], "tBinIn": 1784083815170, "vessel": null, "weight": null, "_charge": 0, "_client": "Poh Tiong Choon Logistics Ltd", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "DUPLICATE of Trip #8 (same Job #3 / DO 26141) — voided by office, no pay/charge", "sigName": "", "tAccept": 1784083566810, "tBinOut": 1784083818920, "tServer": 1784083842987, "tWeight": 0, "timeEnd": "10:50", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt918ag06", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "10:50", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 10, "tDO": 1784092488976, "_pay": 18, "date": "2026-07-15", "doNo": 130351, "tEnd": 1784093095025, "_addr": "79 Anson Road", "_type": "Exchange", "binIn": "5072", "jobId": 4, "price": 18, "waste": "Wood Waste", "_sales": "", "_surch": "", "binOut": "5070", "doType": "land", "photos": [{"id": "10vmRrXWJF4TA3IeMvYRKzYA2MDFG7HTZ", "url": "https://drive.google.com/uc?export=view&id=10vmRrXWJF4TA3IeMvYRKzYA2MDFG7HTZ", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=10vmRrXWJF4TA3IeMvYRKzYA2MDFG7HTZ&sz=w240"}, {"id": "1XNcbU-Umw02k_OAUdsjGPIroIZQbwCQi", "url": "https://drive.google.com/uc?export=view&id=1XNcbU-Umw02k_OAUdsjGPIroIZQbwCQi", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1XNcbU-Umw02k_OAUdsjGPIroIZQbwCQi&sz=w240"}, {"id": "1cV2ElhMxZMaqJBqGctop7WFdW4eyNxS1", "url": "https://drive.google.com/uc?export=view&id=1cV2ElhMxZMaqJBqGctop7WFdW4eyNxS1", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1cV2ElhMxZMaqJBqGctop7WFdW4eyNxS1&sz=w240"}], "tBinIn": 1784093090592, "typeId": "send", "vessel": null, "weight": {"net": 2560, "tare": 14810, "gross": 17370, "ticket": "LR7"}, "_charge": 18, "_client": "HCG", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784092230111, "tBinOut": 1784093095025, "tServer": 1784092560713, "tWeight": 0, "timeEnd": "13:24", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9189v5w", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "13:24", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["Wood Waste"], "sigPosition": ""}, {"id": 11, "tDO": 1784092777431, "_pay": 0, "date": "2026-07-15", "doNo": 130351, "tEnd": 1784093066201, "_addr": "79 Anson Road", "_type": "Exchange", "binIn": "5072", "jobId": 4, "price": 0, "waste": "Wood Waste", "_sales": "", "_surch": "", "binOut": "5070", "doType": "land", "photos": [{"id": "1hX3uiC98aNawe_rMVCijSs5zOpCsUrJI", "url": "https://drive.google.com/uc?export=view&id=1hX3uiC98aNawe_rMVCijSs5zOpCsUrJI", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1hX3uiC98aNawe_rMVCijSs5zOpCsUrJI&sz=w240"}, {"id": "1KjuYwJCPwMX793jzhttYKtONraoZXE-6", "url": "https://drive.google.com/uc?export=view&id=1KjuYwJCPwMX793jzhttYKtONraoZXE-6", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1KjuYwJCPwMX793jzhttYKtONraoZXE-6&sz=w240"}, {"id": "1CoZdMsbdT9CP8-S-DhQPaDjcTDscWMC8", "url": "https://drive.google.com/uc?export=view&id=1CoZdMsbdT9CP8-S-DhQPaDjcTDscWMC8", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1CoZdMsbdT9CP8-S-DhQPaDjcTDscWMC8&sz=w240"}], "tBinIn": 1784093061131, "vessel": null, "weight": null, "_charge": 0, "_client": "HCG", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "DUPLICATE of Trip #10 (same Job #4 / DO 130351) — voided by office, no pay/charge", "sigName": "", "tAccept": 1784092230111, "tBinOut": 1784093066201, "tServer": 1784093074379, "tWeight": 0, "timeEnd": "13:24", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9189v5w", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "13:24", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["Wood Waste"], "sigPosition": ""}, {"id": 12, "tDO": 1784101592533, "_pay": 31, "date": "2026-07-15", "doNo": 41767, "tEnd": 1784101577412, "_addr": "26 Loyang Drive", "_type": "Load", "binIn": "R13", "jobId": 5, "price": 31, "waste": "Wood Waste", "_sales": "", "_surch": "", "binOut": "R13", "doType": "land", "photos": [{"id": "1PEcHHSrsgmdw_FYGmwz2SXf_YQIkItmt", "url": "https://drive.google.com/uc?export=view&id=1PEcHHSrsgmdw_FYGmwz2SXf_YQIkItmt", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1PEcHHSrsgmdw_FYGmwz2SXf_YQIkItmt&sz=w240"}, {"id": "1rENbGVPDnU17thW_8d7IvoIsCzn7s8os", "url": "https://drive.google.com/uc?export=view&id=1rENbGVPDnU17thW_8d7IvoIsCzn7s8os", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1rENbGVPDnU17thW_8d7IvoIsCzn7s8os&sz=w240"}, {"id": "1FjqgXtP6_HEjulcsh5XRY624R0ZLCABz", "url": "https://drive.google.com/uc?export=view&id=1FjqgXtP6_HEjulcsh5XRY624R0ZLCABz", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1FjqgXtP6_HEjulcsh5XRY624R0ZLCABz&sz=w240"}], "tBinIn": 1784101561860, "vessel": null, "weight": null, "_charge": 31, "_client": "B&C Waste", "_driver": "Yao Jun", "jobType": "Load", "remarks": "", "sigName": "", "tAccept": 1784099668422, "tBinOut": 1784101577412, "tServer": 1784101625150, "tWeight": 0, "timeEnd": "15:46", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt91878od", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "15:46", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["Wood Waste"], "sigPosition": ""}, {"id": 13, "tDO": 1784111702513, "_pay": 13, "date": "2026-07-15", "doNo": 26143, "tEnd": 1784111098580, "_addr": "47A Jalan Buroh", "_type": "Exchange", "binIn": "5033", "jobId": 6, "price": 13, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5084", "doType": "land", "photos": [{"id": "1rXel9yA366uv2L-HZinhFWS-oR6ms0o_", "url": "https://drive.google.com/uc?export=view&id=1rXel9yA366uv2L-HZinhFWS-oR6ms0o_", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1rXel9yA366uv2L-HZinhFWS-oR6ms0o_&sz=w240"}, {"id": "1WgF0l6sHzhrXvHuKlhwvATkp4WhkyUio", "url": "https://drive.google.com/uc?export=view&id=1WgF0l6sHzhrXvHuKlhwvATkp4WhkyUio", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1WgF0l6sHzhrXvHuKlhwvATkp4WhkyUio&sz=w240"}, {"id": "1kzwOoTewqvBR5Kn9oY-izITJsqgi7meO", "url": "https://drive.google.com/uc?export=view&id=1kzwOoTewqvBR5Kn9oY-izITJsqgi7meO", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1kzwOoTewqvBR5Kn9oY-izITJsqgi7meO&sz=w240"}], "tBinIn": 1784111092703, "vessel": null, "weight": {"net": 1180, "tare": 14100, "gross": 15280, "ticket": "LR8"}, "_charge": 13, "_client": "Advanced Substrate Technologies Pte Ltd", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784109223975, "tBinOut": 1784111098580, "tServer": 1784111729097, "tWeight": 0, "timeEnd": "18:24", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9187x1k", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "18:24", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 14, "tDO": 1784116479514, "_pay": 18, "date": "2026-07-15", "doNo": 130352, "tEnd": 1784116593955, "_addr": "79 Anson Road", "_type": "Exchange", "binIn": "5070号", "jobId": 7, "price": 18, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5193", "doType": "land", "photos": [{"id": "18ZwPbi7_6RWP8GelyM2jj_v9C7O9yyMf", "url": "https://drive.google.com/uc?export=view&id=18ZwPbi7_6RWP8GelyM2jj_v9C7O9yyMf", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=18ZwPbi7_6RWP8GelyM2jj_v9C7O9yyMf&sz=w240"}, {"id": "1_ujAtz5uxQsJBsui_YII3hBEoUSl5luo", "url": "https://drive.google.com/uc?export=view&id=1_ujAtz5uxQsJBsui_YII3hBEoUSl5luo", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1_ujAtz5uxQsJBsui_YII3hBEoUSl5luo&sz=w240"}, {"id": "1Ep2VBalTd9LvuG-sgK2WQM-XndKvkaeF", "url": "https://drive.google.com/uc?export=view&id=1Ep2VBalTd9LvuG-sgK2WQM-XndKvkaeF", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1Ep2VBalTd9LvuG-sgK2WQM-XndKvkaeF&sz=w240"}], "tBinIn": 1784116504583, "vessel": null, "weight": null, "_charge": 18, "_client": "HCG", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784112771627, "tBinOut": 1784116593955, "tServer": 1784116628918, "tWeight": 0, "timeEnd": "19:56", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9189v5w", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "", "timeStart": "19:55", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 15, "tDO": 1784127628883, "_pay": 18, "date": "2026-07-15", "doNo": 26144, "tEnd": 1784127597933, "_addr": "6 Chin Bee Ave L5", "_type": "Exchange", "binIn": "R21", "jobId": 13, "price": 13, "waste": "General Waste", "_sales": "", "_surch": "After 7pm (Vessel)", "binOut": "R21", "doType": "land", "photos": [{"id": "1lfk9MOCXXDDDuHDnxXrHJVNny9-yf1ou", "url": "https://drive.google.com/uc?export=view&id=1lfk9MOCXXDDDuHDnxXrHJVNny9-yf1ou", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1lfk9MOCXXDDDuHDnxXrHJVNny9-yf1ou&sz=w240"}, {"id": "1tmhM2nspeUP1UwWxAgN-P_o4W2z9UCuv", "url": "https://drive.google.com/uc?export=view&id=1tmhM2nspeUP1UwWxAgN-P_o4W2z9UCuv", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1tmhM2nspeUP1UwWxAgN-P_o4W2z9UCuv&sz=w240"}, {"id": "1c_btJQYx-ktkRL5ka8IqE9sRrag6XB0k", "url": "https://drive.google.com/uc?export=view&id=1c_btJQYx-ktkRL5ka8IqE9sRrag6XB0k", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1c_btJQYx-ktkRL5ka8IqE9sRrag6XB0k&sz=w240"}], "tBinIn": 1784127593575, "vessel": null, "weight": {"net": 1300, "tare": 14050, "gross": 15350, "ticket": "LR9"}, "_charge": 13, "_client": "Shin Ya O Ya Pte Ltd", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784127557628, "tBinOut": 1784127597933, "tServer": 1784127668045, "tWeight": 0, "timeEnd": "22:59", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt918dq77", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "Lirich Resources Pte Ltd", "timeStart": "22:59", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": ["after7v"], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 16, "tDO": 1784163115843, "_pay": 13, "date": "2026-07-16", "doNo": 26145, "tEnd": 1784163061350, "_addr": "8 Pandan Crescent", "_type": "Exchange", "binIn": "7006", "jobId": 14, "price": 13, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "8005", "doType": "land", "photos": [{"id": "18mGbQqsLMEDnKkwLGo7e2yJQD3188dkX", "url": "https://drive.google.com/uc?export=view&id=18mGbQqsLMEDnKkwLGo7e2yJQD3188dkX", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=18mGbQqsLMEDnKkwLGo7e2yJQD3188dkX&sz=w240"}, {"id": "1O26ckVh6NLtPzOPMUpM323OyFQ1rr75m", "url": "https://drive.google.com/uc?export=view&id=1O26ckVh6NLtPzOPMUpM323OyFQ1rr75m", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=1O26ckVh6NLtPzOPMUpM323OyFQ1rr75m&sz=w240"}, {"id": "1mLurR3mtqgY0cmYLUIgUWSwsxuEAVGDL", "url": "https://drive.google.com/uc?export=view&id=1mLurR3mtqgY0cmYLUIgUWSwsxuEAVGDL", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1mLurR3mtqgY0cmYLUIgUWSwsxuEAVGDL&sz=w240"}], "tBinIn": 1784163053131, "vessel": null, "weight": {"net": 2130, "tare": 14650, "gross": 16780, "ticket": "LR10"}, "_charge": 13, "_client": "ASL Proworld Solution Pte Ltd", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784162742439, "tBinOut": 1784163061350, "tServer": 1784163151992, "tWeight": 0, "timeEnd": "08:51", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9187ws7", "distance": 13.1, "driverId": 5, "invoiced": false, "disposeTo": "Lirich Resources Pte Ltd", "timeStart": "08:50", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 17, "tDO": 1784167594817, "_pay": 13, "date": "2026-07-16", "doNo": 26146, "tEnd": 1784167171816, "_addr": "60 Benoi Road", "_type": "Exchange", "binIn": "L57", "jobId": 15, "price": 13, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5213", "doType": "land", "photos": [{"id": "1AHAR0zEKuGBzXVNQ1bpGQeAnNQPw8bVY", "url": "https://drive.google.com/uc?export=view&id=1AHAR0zEKuGBzXVNQ1bpGQeAnNQPw8bVY", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1AHAR0zEKuGBzXVNQ1bpGQeAnNQPw8bVY&sz=w240"}, {"id": "10my5iLMP6bf3h6_hdxSB9ZGpGpxKfS_L", "url": "https://drive.google.com/uc?export=view&id=10my5iLMP6bf3h6_hdxSB9ZGpGpxKfS_L", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=10my5iLMP6bf3h6_hdxSB9ZGpGpxKfS_L&sz=w240"}, {"id": "1tsvTulFhjZpII0jjDYAFFDIq8OhpDJbt", "url": "https://drive.google.com/uc?export=view&id=1tsvTulFhjZpII0jjDYAFFDIq8OhpDJbt", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1tsvTulFhjZpII0jjDYAFFDIq8OhpDJbt&sz=w240"}], "tBinIn": 1784167164967, "vessel": null, "weight": {"net": 15965, "tare": 1395, "gross": 17360, "ticket": "LR11"}, "_charge": 13, "_client": "EverTeam Pte Ltd", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784167147780, "tBinOut": 1784167171816, "tServer": 1784167619295, "tWeight": 0, "timeEnd": "09:59", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9189j9t", "distance": 1.9, "driverId": 5, "invoiced": false, "disposeTo": "Lirich Resources Pte Ltd", "timeStart": "09:59", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 18, "tDO": 1784172031973, "_pay": 18, "date": "2026-07-16", "doNo": 130353, "tEnd": 1784171589576, "_addr": "79 Anson Road", "_type": "Exchange", "binIn": "5193", "jobId": 21, "price": 18, "waste": "Wood Waste", "_sales": "", "_surch": "", "binOut": "5132", "doType": "land", "photos": [{"id": "1ATztqAtb0SB81wvu9WFUVIhAYfyn7-Nt", "url": "https://drive.google.com/uc?export=view&id=1ATztqAtb0SB81wvu9WFUVIhAYfyn7-Nt", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1ATztqAtb0SB81wvu9WFUVIhAYfyn7-Nt&sz=w240"}, {"id": "17lqHyCkKkt3gRNlwNvAPsLe7QrWmDxcn", "url": "https://drive.google.com/uc?export=view&id=17lqHyCkKkt3gRNlwNvAPsLe7QrWmDxcn", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=17lqHyCkKkt3gRNlwNvAPsLe7QrWmDxcn&sz=w240"}, {"id": "1B-1uZfGzmgynG8FVhsGnZyZL1AZ24IPa", "url": "https://drive.google.com/uc?export=view&id=1B-1uZfGzmgynG8FVhsGnZyZL1AZ24IPa", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1B-1uZfGzmgynG8FVhsGnZyZL1AZ24IPa&sz=w240"}], "tBinIn": 1784171582853, "vessel": null, "weight": null, "_charge": 18, "_client": "HCG", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784169791187, "tBinOut": 1784171589576, "tServer": 1784172041720, "tWeight": 0, "timeEnd": "11:13", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9189v5w", "distance": 32, "driverId": 5, "invoiced": false, "disposeTo": "HCG Environmental Pte Ltd", "timeStart": "11:13", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["Wood Waste"], "sigPosition": ""}, {"id": 19, "tDO": 1784184620264, "_pay": 18, "date": "2026-07-16", "doNo": 130354, "tEnd": 1784184586430, "_addr": "79 Anson Road", "_type": "Exchange", "binIn": "5132", "jobId": 20, "price": 18, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "5072", "doType": "land", "photos": [{"id": "1AGLyIHSUjlboegCEa3HWSyYsxX7hPiZJ", "url": "https://drive.google.com/uc?export=view&id=1AGLyIHSUjlboegCEa3HWSyYsxX7hPiZJ", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1AGLyIHSUjlboegCEa3HWSyYsxX7hPiZJ&sz=w240"}, {"id": "14C5rcRXjWYFSWgdgu1mjR-d8Ar_0zXtg", "url": "https://drive.google.com/uc?export=view&id=14C5rcRXjWYFSWgdgu1mjR-d8Ar_0zXtg", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=14C5rcRXjWYFSWgdgu1mjR-d8Ar_0zXtg&sz=w240"}, {"id": "1u3CpdU1tSn2qsNIbCRvfqw4ser-eHTZe", "url": "https://drive.google.com/uc?export=view&id=1u3CpdU1tSn2qsNIbCRvfqw4ser-eHTZe", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1u3CpdU1tSn2qsNIbCRvfqw4ser-eHTZe&sz=w240"}], "tBinIn": 1784184554590, "vessel": null, "weight": null, "_charge": 18, "_client": "HCG", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784183568667, "tBinOut": 1784184586430, "tServer": 1784184652222, "tWeight": 0, "timeEnd": "14:49", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9189v5w", "distance": 32, "driverId": 5, "invoiced": false, "disposeTo": "HCG Environmental Pte Ltd", "timeStart": "14:49", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 20, "tDO": 1784296282125, "_pay": 13, "date": "2026-07-17", "doNo": 26218, "tEnd": 0, "_addr": "9 Gul Circle", "_type": "Exchange", "binIn": "", "jobId": 28, "price": 13, "waste": "General Waste", "_sales": "Patrick", "_surch": "", "binOut": "", "doType": "land", "photos": [{"id": "1-CyxHvyBN_IBRTt5dvT_6HqpxvGX75qx", "url": "https://drive.google.com/uc?export=view&id=1-CyxHvyBN_IBRTt5dvT_6HqpxvGX75qx", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1-CyxHvyBN_IBRTt5dvT_6HqpxvGX75qx&sz=w240"}, {"id": "1CyfT6Af8Q0HOzu_fAEJQEzXufiF9Rki6", "url": "https://drive.google.com/uc?export=view&id=1CyfT6Af8Q0HOzu_fAEJQEzXufiF9Rki6", "kind": "signature", "thumb": "https://drive.google.com/thumbnail?id=1CyfT6Af8Q0HOzu_fAEJQEzXufiF9Rki6&sz=w240"}], "tBinIn": 0, "vessel": null, "weight": null, "_charge": 13, "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Test Driver", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784295480487, "tBinOut": 0, "tServer": 1784296361691, "tWeight": 0, "timeEnd": "", "tonnAdj": 0, "tonnage": 0, "clientId": "c1", "distance": 0, "driverId": 6, "invoiced": false, "disposeTo": "", "timeStart": "", "vehicleNo": "X1234Y", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 21, "tDO": 0, "_pay": 18, "date": "2026-07-20", "doNo": 0, "tEnd": 1784506951000, "_addr": "5 Sungei Kadut Street 6", "_type": "Dump", "binIn": "", "jobId": 32, "price": 18, "waste": "Wood Waste", "_sales": "", "_surch": "", "binOut": "", "doType": "land", "photos": [{"id": "1vju9VBTIMjv-VqYyv0DmoLe_KWPfoVT5", "ts": 1784506957000, "url": "https://drive.google.com/uc?export=view&id=1vju9VBTIMjv-VqYyv0DmoLe_KWPfoVT5", "kind": "bin", "thumb": "https://drive.google.com/thumbnail?id=1vju9VBTIMjv-VqYyv0DmoLe_KWPfoVT5&sz=w240"}, {"id": "1xYyxvfoFVRxF-drM1skSojB-f4f6JfUY", "ts": 1784506951000, "url": "https://drive.google.com/uc?export=view&id=1xYyxvfoFVRxF-drM1skSojB-f4f6JfUY", "kind": "bin", "thumb": "https://drive.google.com/thumbnail?id=1xYyxvfoFVRxF-drM1skSojB-f4f6JfUY&sz=w240"}], "tBinIn": 0, "vessel": null, "weight": {"net": 5170, "tare": 15640, "gross": 20810, "ticket": "LR12"}, "_charge": 18, "_client": "Beejoo", "_driver": "Yao Jun", "jobType": "Dump", "remarks": "", "sigName": "", "tAccept": 1784505051464, "tBinOut": 0, "tServer": 1784507031650, "tWeight": 0, "timeEnd": "08:22", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt9187viy", "distance": 0, "driverId": 5, "invoiced": false, "disposeTo": "Bee Joo", "timeStart": "07:50", "vehicleNo": "", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": [], "sigPosition": ""}, {"id": 22, "tDO": 1784510392000, "_pay": 19.5, "date": "2026-07-20", "doNo": 0, "tEnd": 1784509583000, "_addr": "Benoi", "_type": "Exchange", "binIn": "6002", "jobId": 33, "price": 19.5, "waste": "General Waste", "_sales": "", "_surch": "", "binOut": "6002", "doType": "land", "photos": [{"id": "1p_VkTnz1WRtmY4rssV6Rq0TK9JBlYTFO", "ts": 1784509583000, "url": "https://drive.google.com/uc?export=view&id=1p_VkTnz1WRtmY4rssV6Rq0TK9JBlYTFO", "kind": "in", "thumb": "https://drive.google.com/thumbnail?id=1p_VkTnz1WRtmY4rssV6Rq0TK9JBlYTFO&sz=w240"}, {"id": "133wnotINTbCw8ooglK5xZmstd46QZxlp", "ts": 1784509583000, "url": "https://drive.google.com/uc?export=view&id=133wnotINTbCw8ooglK5xZmstd46QZxlp", "kind": "out", "thumb": "https://drive.google.com/thumbnail?id=133wnotINTbCw8ooglK5xZmstd46QZxlp&sz=w240"}, {"id": "1I3c4p7BgTju6vffkDPM7x6s1uBJ26gCw", "ts": 1784510392000, "url": "https://drive.google.com/uc?export=view&id=1I3c4p7BgTju6vffkDPM7x6s1uBJ26gCw", "kind": "do", "thumb": "https://drive.google.com/thumbnail?id=1I3c4p7BgTju6vffkDPM7x6s1uBJ26gCw&sz=w240"}], "tBinIn": 1784509583000, "vessel": null, "weight": {"net": 4430, "tare": 14100, "gross": 18530, "ticket": "LR13"}, "_charge": 19.5, "_client": "ST", "_driver": "Yao Jun", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784510460438, "tBinOut": 1784509583000, "tServer": 1784510504417, "tWeight": 0, "timeEnd": "09:06", "tonnAdj": 0, "tonnage": 0, "clientId": "cmrkt918dn4k", "distance": 2.3, "driverId": 5, "invoiced": false, "disposeTo": "Lirich Resources Pte Ltd", "timeStart": "09:06", "vehicleNo": "XE7126P", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 23, "tDO": 1784920014000, "_pay": 13, "date": "2026-07-25", "doNo": 0, "tEnd": 1784920014000, "_addr": "9 Gul Circle", "_test": true, "_type": "Exchange", "binIn": "", "jobId": 43, "price": 13, "waste": "General Waste", "_sales": "Patrick", "_surch": "", "binOut": "", "doType": "land", "photos": [{"id": "mrzbayza-BININ-43-1.jpg", "ts": 1784920014000, "url": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzbayza-BININ-43-1.jpg", "kind": "in", "thumb": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzbayza-BININ-43-1.jpg"}, {"id": "mrzbaz6l-BINOUT-43-1.jpg", "ts": 1784920014000, "url": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzbaz6l-BINOUT-43-1.jpg", "kind": "out", "thumb": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzbaz6l-BINOUT-43-1.jpg"}, {"id": "mrzbazaa-DO-43-1.jpg", "ts": 1784920014000, "url": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzbazaa-DO-43-1.jpg", "kind": "do", "thumb": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzbazaa-DO-43-1.jpg"}], "tBinIn": 1784920014000, "vessel": null, "weight": null, "_charge": 13, "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Test Driver", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784919884770, "tBinOut": 1784920014000, "tServer": 1784920037014, "tWeight": 0, "timeEnd": "03:06", "tonnAdj": 0, "tonnage": 0, "clientId": "c1", "distance": 0, "driverId": 6, "invoiced": false, "disposeTo": "", "timeStart": "03:06", "vehicleNo": "X1234Y", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}, {"id": 24, "tDO": 1784920014000, "_pay": 13, "date": "2026-07-25", "doNo": 99999, "tEnd": 0, "_addr": "9 Gul Circle", "_type": "Exchange", "binIn": "", "jobId": 44, "price": 13, "waste": "General Waste", "_sales": "Patrick", "_surch": "", "binOut": "", "doType": "land", "photos": [{"id": "mrzcgqcw-DO-44-1.jpg", "ts": 1784920014000, "url": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzcgqcw-DO-44-1.jpg", "kind": "do", "thumb": "https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mrzcgqcw-DO-44-1.jpg"}], "tBinIn": 0, "vessel": null, "weight": {"net": 100, "tare": 900, "gross": 1000, "ticket": "LR14"}, "_charge": 13, "_client": "Eng Lee Logistics Pte Ltd", "_driver": "Sathish", "jobType": "Exchange", "remarks": "", "sigName": "", "tAccept": 1784921751375, "tBinOut": 0, "tServer": 1784921985392, "tWeight": 0, "timeEnd": "", "tonnAdj": 0, "tonnage": 0, "clientId": "c1", "distance": 0, "driverId": 1, "invoiced": false, "disposeTo": "", "timeStart": "", "vehicleNo": "2234", "weightAdj": 0, "surcharges": [], "wasteOther": "", "wasteTypes": ["General Waste"], "sigPosition": ""}], "clients": [{"id": "c1", "name": "Eng Lee Logistics Pte Ltd", "type": "land", "sites": [{"addr": "9 Gul Circle", "label": "Gul Circle yard", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "15 Tuas Ave 8", "label": "Tuas yard"}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [{"name": "Jacky", "phone": "84118884"}, {"name": "Mei Ling", "phone": "91234567"}], "salesRep": "Patrick"}, {"id": "c2", "name": "Radha Exports Pte Ltd", "type": "land", "sites": [{"addr": "118 Pioneer Rd L1", "label": "Pioneer Rd"}, {"addr": "118 Pioneer Road L1", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "118 Pioneer Road L4", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "118 Pioneer Road L7", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "6 Fishery Port, L5M", "label": "Yard 5", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [{"name": "Radha", "phone": ""}], "salesRep": "Marcus"}, {"id": "c3", "name": "Aspiration City", "type": "land", "sites": [{"addr": "Boon Lay Ave", "label": "Main"}], "contacts": [], "salesRep": "Patrick"}, {"id": "c4", "name": "SLG Construction", "type": "land", "sites": [{"addr": "Tuas South Ave 10", "label": "Main"}], "contacts": [], "salesRep": "Patrick"}, {"id": "c5", "name": "Tian Heng Eng", "type": "land", "sites": [{"addr": "Tractor Rd", "label": "Main"}], "contacts": [], "salesRep": "Marcus"}, {"id": "c6", "name": "Pacific International Lines", "type": "vessel", "sites": [{"addr": "PSA, BT Gate 2 Commercial Lane", "label": "PSA"}, {"addr": "PSA berths - vessel operations", "label": "Yard 2", "prices": {}}], "contacts": [{"name": "Ops Desk", "phone": ""}], "salesRep": "Marcus"}, {"id": "cmrkt918745o", "name": "123 Express", "type": "land", "sites": [{"addr": "60 Kaki Bukit Place, #06-14 Eunos Techpark", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91876ld", "name": "Absolut Properties Pte Ltd", "type": "land", "sites": [{"addr": "163 Marine Parade Road, Marine Meadows Condo", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "173 Jalan Loyang Besar, Ocean Front Suites Condo", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187gpn", "name": "Acreation Group Pte Ltd", "type": "land", "sites": [{"addr": "19 Jalan Mesin", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "9 Raffles Boulevard", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Engku Aman Road", "label": "Yard 3", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Orchard Gateway, 277 Orchard Road", "label": "Yard 4", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187x1k", "name": "Advanced Substrate Technologies Pte Ltd", "type": "land", "sites": [{"addr": "47A Jalan Buroh", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187dcx", "name": "AJK", "type": "land", "sites": [{"addr": "24 Tuas Ave 8", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187ip5", "name": "Allalloy Dynaweld Pte Ltd", "type": "land", "sites": [{"addr": "10 Tuas Link 1", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91872y0", "name": "Allied Container Services Pte Ltd", "type": "land", "sites": [{"addr": "10 Tuas Ave 6", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "15 Pioneer Crescent", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "25 Penjuru Lane Yard 3", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187co1", "name": "Apex Sealing Technologies Pte Ltd", "type": "land", "sites": [{"addr": "19 Tuas South Street 5", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Tuas Basin Lane", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91871qf", "name": "Archibiz", "type": "land", "sites": [{"addr": "Blk A 30 Kranji Loop, #06-05 Timmac @ Kranji", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187obq", "name": "Artdecor Design Studio Pte Ltd", "type": "land", "sites": [{"addr": "2 Defu South Street 1, #05-03, JTC Industrial City", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187ws7", "name": "ASL Proworld Solution Pte Ltd", "type": "land", "sites": [{"addr": "8 Pandan Crescent", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187n05", "name": "Astore Pte Ltd", "type": "land", "sites": [{"addr": "43 Keppel Road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187zx3", "name": "Aver Asia (S) Pte Ltd", "type": "land", "sites": [{"addr": "14 Benoi Place", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91878od", "name": "B&C Waste", "type": "land", "sites": [{"addr": "16 Gul Crescent", "label": "Yard 1", "prices": {"Load": 21, "Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "513 Kampong Bahru Road Keppel Distripark", "label": "Yard 2", "prices": {"Load": 31, "Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Upper Changi Road, Summer Garden Condo", "label": "Yard 3", "prices": {"Load": 31, "Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "2 Mandai Link", "label": "Yard 4", "prices": {"Load": 26, "Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "Peck Seah Street", "label": "Yard 5", "prices": {"Load": 31, "Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "7 Changi South Street 2", "label": "Yard 6", "prices": {"Load": 31, "Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "26 Loyang Drive", "label": "Yard 7", "prices": {"Load": 31, "Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Load": 31, "Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187pck", "name": "Babu", "type": "land", "sites": [{"addr": "80 Mandai Lake Road", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "Blk 5 Haig Road #07-463", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "900 Bedok North Road", "label": "Yard 3", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "2 Stadium Walk", "label": "Yard 4", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187viy", "name": "Beejoo", "type": "land", "sites": [{"addr": "5 Sungei Kadut Street 6", "label": "Yard 1", "prices": {"Dump": 18}}], "prices": {"Dump": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9187nen", "name": "BNDC (Fairprice)", "type": "land", "sites": [{"addr": "1 Buroh Lane L4", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "28 Tuas Ave 13", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "5 Joo Koon Circle", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "7 Sunview Road", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188ra9", "name": "C & P Holdings Pte Ltd", "type": "land", "sites": [{"addr": "46 Penjuru Lane", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91889mm", "name": "Calvary Carpentry Pte Ltd", "type": "land", "sites": [{"addr": "54 Senoko Road", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188tnl", "name": "Cargo International", "type": "land", "sites": [{"addr": "20 Gul Way, #05-04", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91889d7", "name": "Caterpillar", "type": "land", "sites": [{"addr": "14 Tractor Road", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "7 Tractor Road", "label": "Yard 2", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188fou", "name": "CBM Pte Ltd", "type": "land", "sites": [{"addr": "501 Old Choa Chu Kang Road, Home Team Academy", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91889z2", "name": "Chateraise", "type": "land", "sites": [{"addr": "8 Jalan Besut L3", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188wm8", "name": "Chiong Construction", "type": "land", "sites": [{"addr": "10 Serangoon Ave 4", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "13 Serangoon Ave 3", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "60 Blk A Jurong West Street 42", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188jxn", "name": "Chuan Seng Leong", "type": "land", "sites": [{"addr": "21 Benoi Sector #03-03", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91886cl", "name": "Cleanis-Tee", "type": "land", "sites": [{"addr": "8 Jalan Papan", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188smd", "name": "CNCCS Engineering and Construction Pte Ltd", "type": "land", "sites": [{"addr": "15 Tembusu Crescent, #08-01, COGENT.", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188btv", "name": "CrestSA Marine & Offshore Pte Ltd", "type": "land", "sites": [{"addr": "15 Pandan Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9188ahz", "name": "DSV", "type": "land", "sites": [{"addr": "24 Penjuru Road, #09-05/06 (Loading Bay 2)", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91880wf", "name": "Dyna Cool", "type": "land", "sites": [{"addr": "2 Bukit Batok Street 24, #03-19 Skytech", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91888e3", "name": "Eng Leng Contractors Pte Ltd", "type": "land", "sites": [{"addr": "1 CleanTech Loop", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "1 Gul Circle, JTC Logistics Hub", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "16 Tuas Ave 1, JTC Space @ Tuas", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "2 Tukang Innovation Grove", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "28A Penjuru Close Bin Centre", "label": "Yard 5", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "8 Buroh Street", "label": "Yard 6", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "8 Jurong Town Hall Rd, JTC Summit Building", "label": "Yard 7", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Jalan Papan LP 15", "label": "Yard 8", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Pandan Loop, Blk K, (Phase 1), Bin Centre", "label": "Yard 9", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Pandan Loop, Blk X, (Phase 3), Bin Centre", "label": "Yard 10", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "15 Jalan Terusan", "label": "Yard 11", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918885s", "name": "Engie Services Singapore Pte Ltd", "type": "land", "sites": [{"addr": "1 Canning Rise Singapore 179868", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "1 Empress Place", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "1 Jurong East st 21, Ng Teng Fong Hospital", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "100 Victoria Street, Basement 2, Loading Bay", "label": "Yard 4", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "17 Woodlands Drive 17, Woodlands Health Campus", "label": "Yard 5", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "2 Simei Street 3, Changi General Hospital", "label": "Yard 6", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "20 Airport Boulevard Changi Airport", "label": "Yard 7", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "28 Irrawaddy Road, New Phoenix Park. (Ministry of Home Affairs)", "label": "Yard 8", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "32 Jurong Port Road, Heritage Center", "label": "Yard 9", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "4A Tuas Bay Street", "label": "Yard 10", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "65 Airport Boulevard, #B2-63, Changi Airport T3", "label": "Yard 11", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "9 Kallang Place", "label": "Yard 12", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "93 Stamford Road, National Museum of Singapore", "label": "Yard 13", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Changi Airport T2 Basement", "label": "Yard 14", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "2 Tuas Bay Street", "label": "Yard 15", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "1 Cove Grove", "label": "Yard 16", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "1 Media Link", "label": "Yard 17", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "30 Changi North Cresent", "label": "Yard 18", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189ewq", "name": "Epont Building Services Pte Ltd", "type": "land", "sites": [{"addr": "1 Tuas View Place, Westlink One, #02-01", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91893rb", "name": "Euro Pac Logistics Pte Ltd", "type": "land", "sites": [{"addr": "42 Tanjong Penjuru Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "52 Tanjong Penjuru #04-92", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189j9t", "name": "EverTeam Pte Ltd", "type": "land", "sites": [{"addr": "60 Benoi Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189chy", "name": "Faxolif Industries Pte Ltd", "type": "land", "sites": [{"addr": "75 Tech Park Crescent", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91891r8", "name": "Geoinnovations Pte Ltd", "type": "land", "sites": [{"addr": "5 Kwong Ming Road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189hjd", "name": "GS Engineering and Construction Corporation", "type": "land", "sites": [{"addr": "Nicoll Highway LP 120F", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Nicoll Highway LP 131F", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Nicoll Highway, LP 132F", "label": "Yard 3", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Ophir Road LP 14/1F", "label": "Yard 4", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Ophir Road, LP 30F", "label": "Yard 5", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Republic Boulevard LP 4F", "label": "Yard 6", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Victoria Street, LP 64F", "label": "Yard 7", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189rdg", "name": "GWC", "type": "land", "sites": [{"addr": "449 Clementi Ave 3, #01-259", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189clz", "name": "Gymsportz", "type": "land", "sites": [{"addr": "7, Block B Mandai Link, #05-27 Mandai Connection", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189uq4", "name": "H1 Projects Pte Ltd", "type": "land", "sites": [{"addr": "107 Jalan Pari Burong", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189g55", "name": "Haid Biotechnology Industry (Singapore) Pte Ltd", "type": "land", "sites": [{"addr": "46 Gul Drive", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189v5w", "name": "HCG", "type": "land", "sites": [{"addr": "8 Tuas View Circuit", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "79 Anson Road", "label": "Yard 2", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189qwx", "name": "He Ping Development Pte Ltd", "type": "land", "sites": [{"addr": "32 Tras Street", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "38 Beach Road, South Beach Tower", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "51 Tanjong Pagar Road", "label": "Yard 3", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189tvd", "name": "Hong Hang Hardware", "type": "land", "sites": [{"addr": "35 Pioneer Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189mv1", "name": "Hotel Royal Singapore", "type": "land", "sites": [{"addr": "36 Newton Road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt91895ny", "name": "Huationg Contractor", "type": "land", "sites": [{"addr": "Tanah Merah Coast Road LP 509", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189zdz", "name": "Huntsman (S) Pte Ltd", "type": "land", "sites": [{"addr": "10 Seraya Ave", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt9189166", "name": "Hydroproof", "type": "land", "sites": [{"addr": "The Aries, 51 Science Park", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918azpz", "name": "Hyundai Engineering & Construction Co., Ltd", "type": "land", "sites": [{"addr": "100 Beach Road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918as3h", "name": "INVX Asia Pacific Pte Ltd", "type": "land", "sites": [{"addr": "80 Tuas West Drive", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ap5c", "name": "Iwatech", "type": "land", "sites": [{"addr": "2 Kian Teck Drive", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918avdw", "name": "Lau Choy Seng Pte Ltd", "type": "land", "sites": [{"addr": "30 Tuas West Avenue", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918a2es", "name": "LCH Logistics Pte Ltd", "type": "land", "sites": [{"addr": "3 Pioneer Sector 3", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ao9s", "name": "Leng Aik Engineering", "type": "land", "sites": [{"addr": "17 Soon Lee Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918auof", "name": "LexBuild International Pte Ltd", "type": "land", "sites": [{"addr": "11 Tuas Bay Close, #04-01/02", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ar8i", "name": "Lirich", "type": "land", "sites": [{"addr": "Carton", "label": "Yard 1", "prices": {"Sell": 13, "Delivery": 8}}, {"addr": "Metal", "label": "Yard 2", "prices": {"Sell": 13, "Delivery": 8}}, {"addr": "Plastics", "label": "Yard 3", "prices": {"Sell": 13, "Delivery": 8}}, {"addr": "Wood Waste", "label": "Yard 4"}, {"addr": "Rubbish", "label": "Yard 5"}, {"addr": "Beejoo", "label": "Yard 6", "prices": {"Dump": 18}}, {"addr": "NEA Tuas", "label": "Yard 7", "prices": {"Dump": 13}}], "prices": {"Dump": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918abew", "name": "Lim Siang Huat Pte Ltd", "type": "land", "sites": [{"addr": "6 Fishery Port Road L3", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918a2xv", "name": "Matrix Cooling (Singapore) Pte Ltd", "type": "land", "sites": [{"addr": "10 Buroh Street, #07-01, Westconnect Building", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918aw4z", "name": "Mecom GreenBuild (Singapore) Pte Ltd", "type": "land", "sites": [{"addr": "23 Jurong Port Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ate4", "name": "NEA", "type": "land", "sites": [{"addr": "NEA Tuas", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918askd", "name": "PaxOcean Singapore Pte Ltd", "type": "land", "sites": [{"addr": "5 Jalan Samulun", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ag06", "name": "Poh Tiong Choon Logistics Ltd", "type": "land", "sites": [{"addr": "21 Ayer Merbau, Jurong Island", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "48 Pandan Road L1", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "48 Pandan Road L3", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "48 Pandan Road L6", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918auyz", "name": "PSA Port Ecosystem (Sea) Pte Ltd", "type": "land", "sites": [{"addr": "24 Penjuru Road. #05-06", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918a8k1", "name": "Qualicoat Pte Ltd", "type": "land", "sites": [{"addr": "5 Gul Drive", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918aitb", "name": "REMEX Minerals Singapore Pte Ltd", "type": "land", "sites": [{"addr": "98 Tuas South Ave 3 (Inside NEA building)", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918apvn", "name": "RJ Hydralics", "type": "land", "sites": [{"addr": "83 Tagore Lane", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918auhe", "name": "Savills Property Management Pte Ltd (Blue Hub)", "type": "land", "sites": [{"addr": "10 Sunview Road L109", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "10 Sunview Road L309", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "10 Sunview Road L407", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "10 Sunview Road L609", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918aco2", "name": "Savills Property Management Pte Ltd (Green Hub)", "type": "land", "sites": [{"addr": "11 Pioneer Turn L2", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "11 Pioneer Turn L401", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "11 Pioneer Turn L407", "label": "Yard 3", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "11 Pioneer Turn L601", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "11 Pioneer Turn L8", "label": "Yard 5", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918du9v", "name": "Seatrium Pte Ltd", "type": "land", "sites": [{"addr": "60 Admiralty Road West", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918dq77", "name": "Shin Ya O Ya Pte Ltd", "type": "land", "sites": [{"addr": "6 Chin Bee Ave L5", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "6 Chin Bee Ave L9", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918dmr4", "name": "Siew Kong Glass Makers Pte Ltd", "type": "land", "sites": [{"addr": "43 Joo Koon Circle", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918d2ww", "name": "Sin Hong Hardware Pte Ltd", "type": "land", "sites": [{"addr": "3 Kian Teck Crescent", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918devh", "name": "Sin Hong Poh Metal Trading", "type": "land", "sites": [{"addr": "59 Tampines Industrial Ave", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918dvh6", "name": "Sindac Cleaning Services Pte Ltd", "type": "land", "sites": [{"addr": "1H Pine Grove, Pine Grove Condo", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "20 Woodlands Crescent, Northoaks Condo", "label": "Yard 2", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918diax", "name": "SLS", "type": "land", "sites": [{"addr": "No. 9 Tuas South Avenue 19, #01-99", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "VSMC site office Gate 3", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918dpo7", "name": "Snip Avenue Holdings", "type": "land", "sites": [{"addr": "9 Changi South Street 3, loading bay", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918dhx4", "name": "Springlife Maintenance Service Pte Ltd", "type": "land", "sites": [{"addr": "21 Ang Mo Kio Ave 9, Nuovo Condo", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "464 Corporation Road, Parc Vista Condo", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "88 Flora Road, Edelweiss Park Condo", "label": "Yard 3", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918dn4k", "name": "ST", "type": "land", "sites": [{"addr": "6 Tuas South Street 15", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Benoi", "label": "Yard 2", "prices": {"Collect": 19.5, "Delivery": 8, "Exchange": 19.5}}, {"addr": "Gul", "label": "Yard 3", "prices": {"Collect": 19.5, "Delivery": 8, "Exchange": 19.5}}, {"addr": "61a Tuas Nexus Drive", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918e1wj", "name": "Stamford Tyres", "type": "land", "sites": [{"addr": "19 Lok Yang Way", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918el54", "name": "STSM", "type": "land", "sites": [{"addr": "15 Pasir Ris Street 21", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "47 Hougang Avenue 1", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Blk 15 Toa Payoh Lorong 7", "label": "Yard 3", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "Blk 61 Jurong West Street 65, Jurong West Secondary School (JWSS)", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "Blk 64 Lorong 5 Toa Payoh - Lot no. 24", "label": "Yard 5", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "Blk 698 West Coast Road, Commonwealth Secondary School (CWSS)", "label": "Yard 6", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ehaz", "name": "Sumber Indah Pte Ltd", "type": "land", "sites": [{"addr": "1 Tuas View Close", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918em7e", "name": "Sun City Maintenance Pte Ltd", "type": "land", "sites": [{"addr": "300 Mandai Road, Mandai Crematorium and Columbarium", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "55 Changi South Ave 1", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "SUTD Building 2, 8 Somapah Road, loading bay", "label": "Yard 3", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "SUTD Building 3, 8 somapah Road , with access via the Changi Street carpark entrance", "label": "Yard 4", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "Yishun Columbarium, 569 Yishun Ring Road", "label": "Yard 5", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918eg0z", "name": "Sys-Mac Automation Engineering Pte Ltd", "type": "land", "sites": [{"addr": "2 Woodlands Sector 1, #05-18", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918efxl", "name": "System Foundation Pte Ltd", "type": "land", "sites": [{"addr": "21A Tuas South Place", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "45 Tuas View Place", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ejrl", "name": "T3 Reources Pte Ltd", "type": "land", "sites": [{"addr": "16 Gul Street 3", "label": "Yard 1", "prices": {"Sell": 13}}], "prices": {"Sell": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918enlk", "name": "Tai Lee Tong", "type": "land", "sites": [{"addr": "No 11, Lorong 21A Geylang", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918e77h", "name": "Technigroup Far East Pte Ltd", "type": "land", "sites": [{"addr": "Outram Road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918evff", "name": "Technicair Singapore Services Pte Ltd", "type": "land", "sites": [{"addr": "16 Jalan Tan Tock Seng", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918e0xf", "name": "Teck Sang Pte Ltd", "type": "land", "sites": [{"addr": "30A Quality Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918eczv", "name": "Toh Ban Seng", "type": "land", "sites": [{"addr": "Seletar Westlink LP 103", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918een0", "name": "Tong Carriage (S) Pte Ltd", "type": "land", "sites": [{"addr": "30 Toh Guan Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918ebot", "name": "Tong Hock Pte Ltd", "type": "land", "sites": [{"addr": "10 Pandan Crescent", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "1206A East Coast Park", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "14 Tractor Road", "label": "Yard 3", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "19 Tuas Street", "label": "Yard 4", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "2 Peach Garden, Peach Garden condo", "label": "Yard 5", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "2 Pioneer Sector 1", "label": "Yard 6", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "58 Woodlands Drive 16, La Casa Condo", "label": "Yard 7", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "7 Tractor Road", "label": "Yard 8", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "1 Woodlands Terrace", "label": "Yard 9", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fl15", "name": "Top Star Builder Pte Ltd", "type": "land", "sites": [{"addr": "50 Playfair road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fjc5", "name": "TSTL", "type": "land", "sites": [{"addr": "19 Tuas Street", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fzog", "name": "Tracebuild", "type": "land", "sites": [{"addr": "1 Woodlands Street 31, Fu Chun Community Club", "label": "Yard 1", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}], "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918f6wq", "name": "Urban Group Pte Ltd", "type": "land", "sites": [{"addr": "200 Netheravon Road", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918frwu", "name": "Wah & Hua Pte Ltd", "type": "land", "sites": [{"addr": "17 Kallang Junction, #01-01, Singapore 339274", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "19 Loyang Way", "label": "Yard 2", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "22 Woodlands Link", "label": "Yard 3", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "221 Kallang Bahru Lion Building", "label": "Yard 4", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "30 Kerong Lane", "label": "Yard 5", "prices": {"Collect": 18, "Delivery": 8, "Exchange": 18}}, {"addr": "76 Sungei Tengah Road", "label": "Yard 6", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "980 Upper Changi Road North Singapore 507708(Prison HQ)", "label": "Yard 7", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fkeq", "name": "WeBuild", "type": "land", "sites": [{"addr": "120 Hillview Ave", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fsbo", "name": "WIKA Instrumentation Pte Ltd", "type": "land", "sites": [{"addr": "13 Kian Teck Crescent", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918f38h", "name": "Wilkie Development Pte Ltd", "type": "land", "sites": [{"addr": "12 New Industrial Road", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fz34", "name": "World of Wood Pte Ltd", "type": "land", "sites": [{"addr": "35 Tannery Road, #01-07, Ruby Industrial Complex", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}], "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}, "contacts": [], "salesRep": ""}, {"id": "cmrkt918fh09", "name": "W'Ray Construction Pte Ltd", "type": "land", "sites": [{"addr": "22 Scotts Road, Goodwood Park Hotel", "label": "Yard 1", "prices": {"Collect": 23, "Delivery": 8, "Exchange": 23}}, {"addr": "25 Tuas Ave 4", "label": "Yard 2", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}, {"addr": "1 Cove Grove", "label": "Yard 3"}, {"addr": "1 Media Link", "label": "Yard 4"}, {"addr": "30 Changi North Cresent", "label": "Yard 5"}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}, {"id": "cmrmwaycfytt", "name": "Glory SIP Pte Ltd", "type": "land", "sites": [{"addr": "50 Tuas Avenue 11, 02-05", "label": "Yard 1", "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}}], "prices": {"Collect": 13, "Delivery": 8, "Exchange": 13}, "contacts": [], "salesRep": ""}]}	9	2026-07-24 19:40:01.305+00
 \.
 
 
@@ -4134,6 +4168,64 @@ COPY public.approved_domains (domain, client_id, account_limit, accounts_used, a
 --
 
 COPY public.bins (bin_id, bin_type, volume_m3, tare_kg, owner, purchase_cost, active) FROM stdin;
+5028	5 ft	\N	\N	Lirich	\N	t
+5038	5 ft	\N	\N	Lirich	\N	t
+5044	5 ft	\N	\N	Lirich	\N	t
+5046	5 ft	\N	\N	Lirich	\N	t
+5047	5 ft	\N	\N	Lirich	\N	t
+5051	5 ft	\N	\N	Lirich	\N	t
+5056	5 ft	\N	\N	Lirich	\N	t
+5057	5 ft	\N	\N	Lirich	\N	t
+5058	5 ft	\N	\N	Lirich	\N	t
+5060	5 ft	\N	\N	Lirich	\N	t
+5064	5 ft	\N	\N	Lirich	\N	t
+5069	5 ft	\N	\N	Lirich	\N	t
+5073	5 ft	\N	\N	Lirich	\N	t
+5079	5 ft	\N	\N	Lirich	\N	t
+5081	5 ft	\N	\N	Lirich	\N	t
+5083	5 ft	\N	\N	Lirich	\N	t
+5084	5 ft	\N	\N	Lirich	\N	t
+5086	5 ft	\N	\N	Lirich	\N	t
+5089	5 ft	\N	\N	Lirich	\N	t
+5092	5 ft	\N	\N	Lirich	\N	t
+5096	5 ft	\N	\N	Lirich	\N	t
+5106	5 ft	\N	\N	Lirich	\N	t
+5108	5 ft	\N	\N	Lirich	\N	t
+5116	5 ft	\N	\N	Lirich	\N	t
+5123	5 ft	\N	\N	Lirich	\N	t
+5135	5 ft	\N	\N	Lirich	\N	t
+5142	5 ft	\N	\N	Lirich	\N	t
+5147	5 ft	\N	\N	Lirich	\N	t
+5151	5 ft	\N	\N	Lirich	\N	t
+5153	5 ft	\N	\N	Lirich	\N	t
+5160	5 ft	\N	\N	Lirich	\N	t
+5162	5 ft	\N	\N	Lirich	\N	t
+5169	5 ft	\N	\N	Lirich	\N	t
+5176	5 ft	\N	\N	Lirich	\N	t
+5194	5 ft	\N	\N	Lirich	\N	t
+5196	5 ft	\N	\N	Lirich	\N	t
+5197	5 ft	\N	\N	Lirich	\N	t
+5198	5 ft	\N	\N	Lirich	\N	t
+5199	5 ft	\N	\N	Lirich	\N	t
+5203	5 ft	\N	\N	Lirich	\N	t
+5204	5 ft	\N	\N	Lirich	\N	t
+5210	5 ft	\N	\N	Lirich	\N	t
+5211	5 ft	\N	\N	Lirich	\N	t
+5213	5 ft	\N	\N	Lirich	\N	t
+5217	5 ft	\N	\N	Lirich	\N	t
+5220	5 ft	\N	\N	Lirich	\N	t
+5221	5 ft	\N	\N	Lirich	\N	t
+5222	5 ft	\N	\N	Lirich	\N	t
+5232	5 ft	\N	\N	Lirich	\N	t
+5239	5 ft	\N	\N	Lirich	\N	t
+5240	5 ft	\N	\N	Lirich	\N	t
+5245	5 ft	\N	\N	Lirich	\N	t
+5247	5 ft	\N	\N	Lirich	\N	t
+7006	7 ft	\N	\N	Lirich	\N	t
+7016	7 ft	\N	\N	Lirich	\N	t
+7017	7 ft	\N	\N	Lirich	\N	t
+7022	7 ft	\N	\N	Lirich	\N	t
+8007	7 ft	\N	\N	Lirich	\N	t
 \.
 
 
@@ -4142,6 +4234,136 @@ COPY public.bins (bin_id, bin_type, volume_m3, tare_kg, owner, purchase_cost, ac
 --
 
 COPY public.collections (do_no, source, job_no, do_date, do_type, trip_type, site_id, vessel_name, berth, vehicle_id, driver_id, job_type, waste_type, bin_in, bin_out, vol_cat_a, vol_cat_b, vol_cat_c, vol_cat_d, vol_cat_e, vol_cat_f, vol_total_m3, gross_kg, tare_kg, net_kg, weigh_ticket_no, weigh_location, weight_source, gps_lat, gps_lng, gps_accuracy_m, gps_captured_at, photo_do_ref, photo_sig_ref, photo_weigh_ref, receipt_ref, disposal_facility, xero_invoice_id, backfill_notes, synced_at) FROM stdin;
+24242	backfill	\N	2026-06-02	land	Exchange	SAV_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill from DO scan (Jun 2026) — DATE NOT LEGIBLE on DO — verify | DATE NOT LEGIBLE on DO — verify	2026-07-24 15:15:51.944859+00
+24191	backfill	\N	2026-06-08	land	Exchange	SAV_001	\N	\N	\N	\N	\N	General Waste	5197	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill from DO scan (Jun 2026) — Bin In/Out handwriting unclear — verify | Bin In/Out handwriting unclear — verify	2026-07-24 15:15:51.944859+00
+23636	backfill	\N	\N	land	Exchange	SAV_001	\N	\N	XE6221D	\N	\N	General Waste	\N	5240	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill from DO scan (Jun 2026) — Date 05 or 09 Jun — verify | Date 05 or 09 Jun — verify	2026-07-24 15:15:51.944859+00
+18791	backfill	\N	2026-06-27	vessel	PSA Vessel	PIL_001	KOTA KARIM	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.90	0.00	0.70	0.04	0.01	2.00	3.65	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill | rechecked	2026-07-24 15:15:51.944859+00
+18792	backfill	\N	2026-06-28	vessel	PSA Vessel	PIL_001	KOTA SURIA	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.80	0.02	0.40	0.01	0.00	\N	1.32	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; FADED scan — Cat values (incl F) unclear, verify | rechecked	2026-07-24 15:15:51.944859+00
+18917	backfill	\N	2026-04-04	vessel	PSA Vessel	PIL_001	KOTA KARIM	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.30	0.02	1.40	0.02	0.01	0.80	3.55	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Incl oily rags; DO marked ONLY FOR RECEIPT | rechecked	2026-07-24 15:15:51.944859+00
+18931	backfill	\N	2026-05-01	vessel	PSA Vessel	PIL_001	KOTA SURIA	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.80	0.02	0.40	0.02	0.02	0.00	1.26	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill | rechecked	2026-07-24 15:15:51.944859+00
+18932	backfill	\N	2026-05-02	vessel	PSA Vessel	PIL_001	KOTA NABIL	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.80	0.00	0.20	0.00	0.10	0.40	1.50	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill | rechecked	2026-07-24 15:15:51.944859+00
+18933	backfill	\N	2026-05-07	vessel	PSA Vessel	PIL_001	KOTA RUKUN	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.30	0.00	0.80	0.00	0.00	0.50	2.60	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill | rechecked	2026-07-24 15:15:51.944859+00
+18938	backfill	\N	2026-05-07	vessel	PSA Vessel	PIL_001	KOTA NAGA	P04	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.40	0.03	0.70	0.00	0.00	0.30	1.43	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill | rechecked	2026-07-24 15:15:51.944859+00
+18940	backfill	\N	2026-05-08	vessel	PSA Vessel	PIL_001	KOTA GAYA	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.70	0.00	0.70	0.01	0.00	0.59	2.00	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Incl 0.2 m3 oil rags | rechecked	2026-07-24 15:15:51.944859+00
+18943	backfill	\N	2026-05-13	vessel	PSA Vessel	PIL_001	KOTA MANIS	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.60	0.02	0.40	0.00	0.00	0.28	1.30	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill | rechecked	2026-07-24 15:15:51.944859+00
+18947	backfill	\N	2026-05-24	vessel	PSA Vessel	PIL_001	KOTA HAKIM	P08	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.00	0.00	0.00	0.02	0.00	1.10	1.12	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Mostly oily rags | rechecked	2026-07-24 15:15:51.944859+00
+18950	backfill	\N	2026-05-25	vessel	PSA Vessel	PIL_001	KOTA CANTIK	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.00	0.00	1.00	0.00	0.01	0.60	2.61	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Incl 0.1 m3 oily rags | rechecked	2026-07-24 15:15:51.944859+00
+23947	backfill	\N	2026-06-30	land	Exchange	SAV_001	\N	\N	XE6221D	\N	\N	General Waste	5079	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bin_out_raw=5032 | remarks=Backfill from DO scan (Jun 2026)	2026-07-24 15:15:51.944859+00
+24066	backfill	\N	2026-06-30	land	Exchange	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	5084	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill from DO scan (Jun 2026) — Bin In/Out unclear — verify | Bin In/Out unclear — verify	2026-07-24 15:15:51.944859+00
+26931	backfill	\N	2026-05-02	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	\N	5089	\N	\N	\N	\N	\N	\N	\N	14010.0	17630.0	3620.0	884	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MORTHY-K009910	2026-07-24 15:15:51.944859+00
+26932	backfill	\N	2026-05-02	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5089	5160	\N	\N	\N	\N	\N	\N	\N	14590.0	18910.0	4260.0	885	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902	2026-07-24 15:15:51.944859+00
+26934	backfill	\N	2026-05-02	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	\N	5089	\N	\N	\N	\N	\N	\N	\N	14410.0	21080.0	6670.0	887	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902; DO 26933 not in this batch (gap) | DO 26933 not in this batch (gap)	2026-07-24 15:15:51.944859+00
+26935	backfill	\N	2026-05-02	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5069	\N	\N	\N	\N	\N	\N	\N	\N	14730.0	17410.0	2690.0	891	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956	2026-07-24 15:15:51.944859+00
+25769	backfill	\N	2026-05-04	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14470.0	20550.0	6080.0	892	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956	2026-07-24 15:15:51.944859+00
+25770	backfill	\N	2026-05-04	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	5069	\N	\N	\N	\N	\N	\N	\N	14940.0	17460.0	2620.0	894	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by WILLIAM NG-K007671; Gross ~14,940 — verify | Gross ~14,940 — verify	2026-07-24 15:15:51.944859+00
+25774	backfill	\N	2026-05-05	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14860.0	16150.0	1290.0	898	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bin_in_raw=5224 | remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+25775	backfill	\N	2026-05-05	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14380.0	17370.0	2990.0	902	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+25778	backfill	\N	2026-05-06	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	5194	\N	\N	\N	\N	\N	\N	\N	\N	14400.0	17740.0	3340.0	908	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bin_out_raw=5224 | remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+25779	backfill	\N	2026-05-06	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14980.0	16220.0	1240.0	910	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bin_in_raw=5224 | remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+25783	backfill	\N	2026-05-07	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14790.0	17160.0	2370.0	916	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bin_out_raw=5224 | remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956	2026-07-24 15:15:51.944859+00
+25794	backfill	\N	2026-05-09	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	\N	5069	\N	\N	\N	\N	\N	\N	\N	14610.0	16810.0	2230.0	957	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902; Bin Out reading 5069/8069 — verify | Bin Out reading 5069/8069 — verify	2026-07-24 15:15:51.944859+00
+25790	backfill	\N	2026-05-08	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	5160	5194	\N	\N	\N	\N	\N	\N	\N	14790.0	16500.0	1710.0	952	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+25786	backfill	\N	2026-05-08	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	5160	5194	\N	\N	\N	\N	\N	\N	\N	14700.0	17240.0	2540.0	932	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; Same bins as DO 25790 — verify | Same bins as DO 25790 — verify	2026-07-24 15:15:51.944859+00
+25787	backfill	\N	2026-05-08	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	5194	\N	\N	\N	\N	\N	\N	\N	\N	14430.0	18700.0	4270.0	936	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; DO date blank; used weighbridge date | DO date blank; used weighbridge date	2026-07-24 15:15:51.944859+00
+25789	backfill	\N	2026-05-08	land	Exchange	PAX_001	\N	\N	XE4491D	\N	\N	General Waste	5069	5160	\N	\N	\N	\N	\N	\N	\N	15180.0	18960.0	3780.0	947	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+26789	backfill	\N	2026-05-11	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14010.0	16180.0	2170.0	970	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26790	backfill	\N	2026-05-11	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	5160	\N	\N	\N	\N	\N	\N	\N	14170.0	20880.0	6710.0	975	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26795	backfill	\N	2026-05-11	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14230.0	19450.0	5220.0	983	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26806	backfill	\N	2026-05-12	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5135	\N	\N	\N	\N	\N	\N	\N	\N	14080.0	16420.0	2340.0	994	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+26801	backfill	\N	2026-05-12	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14150.0	16920.0	2470.0	986	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+26802	backfill	\N	2026-05-12	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14190.0	16510.0	2320.0	988	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26813	backfill	\N	2026-05-13	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5135	\N	\N	\N	\N	\N	\N	\N	\N	14020.0	14310.0	290.0	1002	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26812	backfill	\N	2026-05-13	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	5135	\N	\N	\N	\N	\N	\N	\N	14100.0	17670.0	3570.0	1001	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26822	backfill	\N	2026-05-15	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	5204	\N	\N	\N	\N	\N	\N	\N	14250.0	16970.0	2720.0	1025	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MORTHY-K00910	2026-07-24 15:15:51.944859+00
+26826	backfill	\N	2026-05-16	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5194	5058	\N	\N	\N	\N	\N	\N	\N	14060.0	16080.0	2020.0	1031	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+26828	backfill	\N	2026-05-16	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5047	\N	\N	\N	\N	\N	\N	\N	\N	14730.0	15920.0	1110.0	1036	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23306	backfill	\N	2026-05-18	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	5047	\N	\N	\N	\N	\N	\N	\N	14710.0	21870.0	7130.0	1042	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23307	backfill	\N	2026-05-18	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	5194	\N	\N	\N	\N	\N	\N	\N	14850.0	17380.0	2530.0	1045	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; Bin In unclear — verify | Bin In unclear — verify	2026-07-24 15:15:51.944859+00
+23310	backfill	\N	2026-05-18	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	5108	\N	\N	\N	\N	\N	\N	\N	\N	14240.0	17650.0	3410.0	1052	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23312	backfill	\N	2026-05-19	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	5096	5108	\N	\N	\N	\N	\N	\N	\N	14710.0	17010.0	2300.0	1055	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by LOH MG-K001775	2026-07-24 15:15:51.944859+00
+23321	backfill	\N	2026-05-20	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	5046	5047	\N	\N	\N	\N	\N	\N	\N	14760.0	18580.0	3820.0	1081	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; Bin Out unclear — verify | Bin Out unclear — verify	2026-07-24 15:15:51.944859+00
+23318	backfill	\N	2026-05-20	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	5096	\N	\N	\N	\N	\N	\N	\N	11610.0	16690.0	5070.0	1070	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956	2026-07-24 15:15:51.944859+00
+23323	backfill	\N	2026-05-21	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14430.0	16620.0	2190.0	1087	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA; Bin In unclear — verify | Bin In unclear — verify	2026-07-24 15:15:51.944859+00
+23328	backfill	\N	2026-05-21	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14290.0	18110.0	3820.0	1089	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bin_out_raw=5040 | bin_in_raw=735 | remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; Bin In/Out unclear — verify | Bin In/Out unclear — verify	2026-07-24 15:15:51.944859+00
+23329	backfill	\N	2026-05-22	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14250.0	18470.0	4220.0	1091	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; Bin Out unclear — verify | Bin Out unclear — verify	2026-07-24 15:15:51.944859+00
+23330	backfill	\N	2026-05-22	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	5060	5135	\N	\N	\N	\N	\N	\N	\N	14750.0	17380.0	2630.0	1104	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23305	backfill	\N	2026-05-23	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	5060	\N	\N	\N	\N	\N	\N	\N	14170.0	17990.0	3820.0	1101	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902	2026-07-24 15:15:51.944859+00
+23334	backfill	\N	2026-05-23	land	Exchange	PAX_001	\N	\N	XE8496	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	15030.0	16240.0	1240.0	1107	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898; Bin In unclear — verify | Bin In unclear — verify	2026-07-24 15:15:51.944859+00
+23482	backfill	\N	2026-05-25	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5162	\N	\N	\N	\N	\N	\N	\N	\N	14510.0	17520.0	3010.0	1128	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+23483	backfill	\N	2026-05-25	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	14100.0	18190.0	4090.0	1130	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23486	backfill	\N	2026-05-25	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	\N	5162	\N	\N	\N	\N	\N	\N	\N	14470.0	19070.0	3600.0	1138	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23491	backfill	\N	2026-05-26	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5108	\N	\N	\N	\N	\N	\N	\N	\N	14240.0	16720.0	2480.0	1153	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23488	backfill	\N	2026-05-26	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5038	\N	\N	\N	\N	\N	\N	\N	\N	14790.0	17970.0	3190.0	1144	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898	2026-07-24 15:15:51.944859+00
+23493	backfill	\N	2026-05-28	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5056	5038	\N	\N	\N	\N	\N	\N	\N	14710.0	18950.0	4240.0	1175	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+23494	backfill	\N	2026-05-28	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5038	5108	\N	\N	\N	\N	\N	\N	\N	14650.0	16980.0	2330.0	1177	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956	2026-07-24 15:15:51.944859+00
+23496	backfill	\N	2026-05-28	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5044	5056	\N	\N	\N	\N	\N	\N	\N	14670.0	17450.0	2780.0	1179	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902	2026-07-24 15:15:51.944859+00
+23706	backfill	\N	2026-05-29	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5084	5232	\N	\N	\N	\N	\N	\N	\N	14730.0	17710.0	2980.0	1193	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956	2026-07-24 15:15:51.944859+00
+23499	backfill	\N	2026-05-29	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5232	5038	\N	\N	\N	\N	\N	\N	\N	14560.0	16550.0	1990.0	1184	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA	2026-07-24 15:15:51.944859+00
+23707	backfill	\N	2026-05-30	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	5232	5044	\N	\N	\N	\N	\N	\N	\N	14730.0	18310.0	3580.0	1196	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902; DO remark: SEND BIN | DO remark: SEND BIN	2026-07-24 15:15:51.944859+00
+23710	backfill	\N	2026-05-30	land	Exchange	PAX_001	\N	\N	XE5457Y	\N	\N	General Waste	\N	5084	\N	\N	\N	\N	\N	\N	\N	14180.0	19930.0	5750.0	1210	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by BALA-K009902	2026-07-24 15:15:51.944859+00
+26809	backfill	\N	2026-05-13	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	13990.0	14950.0	970.0	998	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898 | pt7 missing-middle	2026-07-24 15:15:51.944859+00
+26815	backfill	\N	2026-05-14	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5079	\N	\N	\N	\N	\N	\N	\N	\N	14390.0	14800.0	410.0	1003	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MURU-K001956 | pt7 missing-middle	2026-07-24 15:15:51.944859+00
+26816	backfill	\N	2026-05-14	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	\N	5135	\N	\N	\N	\N	\N	\N	\N	14300.0	16020.0	1720.0	1006	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898 | pt7 missing-middle	2026-07-24 15:15:51.944859+00
+26820	backfill	\N	2026-05-14	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5204	5079	\N	\N	\N	\N	\N	\N	\N	14420.0	15810.0	1390.0	1010	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MORTHY-K000910 | pt7 missing-middle	2026-07-24 15:15:51.944859+00
+26821	backfill	\N	2026-05-15	land	Exchange	PAX_001	\N	\N	XE6221D	\N	\N	General Waste	5058	\N	\N	\N	\N	\N	\N	\N	\N	14610.0	15610.0	1000.0	1023	\N	weighbridge	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA | pt7 missing-middle	2026-07-24 15:15:51.944859+00
+17902	backfill	\N	2026-05-28	vessel	PSA Vessel	PIL_001	KOTA LEKAS	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.80	0.06	0.60	0.02	0.00	0.80	2.40	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Cat I 0.12 m3; 0.20 m3 oily rags | Cat I 0.12 m3; 0.20 m3 oily rags	2026-07-24 15:15:51.944859+00
+17903	backfill	\N	2026-05-29	vessel	PSA Vessel	PIL_001	KOTA SAHABAT	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.30	0.04	0.30	0.00	0.00	0.40	1.04	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17904	backfill	\N	2026-05-30	vessel	PSA Vessel	PIL_001	KOTA SEGAR	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.40	0.00	0.40	0.02	0.00	0.20	1.02	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17906	backfill	\N	2026-05-31	vessel	PSA Vessel	PIL_001	KOTA CARUM	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.20	0.00	0.60	0.00	0.03	0.30	2.13	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17907	backfill	\N	2026-06-02	vessel	PSA Vessel	PIL_001	KOTA GANDING	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.50	0.02	0.40	0.01	0.00	0.40	1.34	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Cat I E-waste 0.01 m3 | Cat I E-waste 0.01 m3	2026-07-24 15:15:51.944859+00
+17911	backfill	\N	2026-06-05	vessel	PSA Vessel	PIL_001	KOTA RAJIN	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.20	0.02	0.20	0.02	0.00	0.20	0.66	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Cat I E-waste 0.02 m3 | Cat I E-waste 0.02 m3	2026-07-24 15:15:51.944859+00
+17919	backfill	\N	2026-06-13	vessel	PSA Vessel	PIL_001	KOTA LEMBAH	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.80	0.00	0.50	0.00	0.08	0.30	1.68	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17920	backfill	\N	2026-06-13	vessel	PSA Vessel	PIL_001	KOTA SETIA	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.20	0.00	0.30	0.02	0.00	0.40	1.92	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17921	backfill	\N	2026-06-14	vessel	PSA Vessel	PIL_001	KOTA MACHAN	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.40	0.00	0.40	0.01	0.00	0.20	1.01	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17925	backfill	\N	2026-06-18	vessel	PSA Vessel	PIL_001	KOTA RESTU	B06	XE5457Y	SATHISH	\N	Vessel Waste	\N	\N	0.50	0.02	0.40	0.00	0.00	0.30	1.22	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17927	backfill	\N	2026-06-20	vessel	PSA Vessel	PIL_001	KOTA JAYA	B05	XE5457Y	SATHISH	\N	Vessel Waste	\N	\N	0.50	0.00	0.50	0.02	0.00	0.40	1.42	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17930	backfill	\N	2026-06-22	vessel	PSA Vessel	PIL_001	KOTA HAKIM	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.00	0.00	0.20	0.00	0.10	0.70	1.00	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Total blank on DO (computed); Cat E incinerator ashes | Total blank on DO (computed); Cat E incinerator ashes	2026-07-24 15:15:51.944859+00
+17932	backfill	\N	2026-06-23	vessel	PSA Vessel	PIL_001	SELATAN DAMAI	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.60	0.02	0.20	0.02	0.00	0.40	1.24	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17933	backfill	\N	2026-06-24	vessel	PSA Vessel	PIL_001	KOTA DUNIA	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.00	0.04	0.30	0.00	0.00	0.10	1.44	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17934	backfill	\N	2026-06-24	vessel	PSA Vessel	PIL_001	KOTA NALURI	B06	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.80	0.00	0.40	0.02	0.01	0.50	1.73	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17935	backfill	\N	2026-06-25	vessel	PSA Vessel	PIL_001	KOTA EBONY	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.50	0.04	0.50	0.02	0.08	0.60	1.74	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17936	backfill	\N	2026-06-26	vessel	PSA Vessel	PIL_001	KOTA CARUM	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	1.20	0.00	0.60	0.01	0.03	0.30	2.14	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+17938	backfill	\N	2026-06-28	vessel	PSA Vessel	PIL_001	KOTA SALAM	B05	XE6221D	SATHISH	\N	Vessel Waste	\N	\N	0.80	0.04	0.40	0.02	0.04	0.80	2.10	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18039	backfill	\N	2026-05-10	vessel	PSA Vessel	PIL_001	KOTA GANDING	B08	XE7116D	YAO_JUN	\N	Vessel Waste	\N	\N	0.40	0.02	0.30	0.00	0.00	0.30	1.02	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18040	backfill	\N	2026-05-10	vessel	PSA Vessel	PIL_001	KOTA SELAMAT	B06	XE7116D	YAO_JUN	\N	Vessel Waste	\N	\N	0.60	0.00	0.50	0.01	0.00	0.30	1.41	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Oily rags in bags 0.25 m3 | Oily rags in bags 0.25 m3	2026-07-24 15:15:51.944859+00
+18044	backfill	\N	2026-05-16	vessel	PSA Vessel	PIL_001	KOTA PAHLAWAN	B05	XE7116D	YAO_JUN	\N	Vessel Waste	\N	\N	1.20	0.00	0.60	0.04	0.14	0.40	2.38	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18047	backfill	\N	2026-05-25	vessel	PSA Vessel	PIL_001	KOTA MAKMUR	B06	XE7116D	YAO_JUN	\N	Vessel Waste	\N	\N	0.80	0.00	0.60	0.02	0.00	0.80	2.22	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Oily rags 0.2 m3 | Oily rags 0.2 m3	2026-07-24 15:15:51.944859+00
+18049	backfill	\N	2026-05-26	vessel	PSA Vessel	PIL_001	KOTA SABAS	B05	XE7116D	YAO_JUN	\N	Vessel Waste	\N	\N	0.50	0.02	0.60	0.02	0.01	0.40	1.55	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18050	backfill	\N	2026-05-27	vessel	PSA Vessel	PIL_001	KOTA SELAMAT	B06	XE7116D	YAO_JUN	\N	Vessel Waste	\N	\N	0.60	0.00	0.40	0.01	0.00	0.20	1.21	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18622	backfill	\N	2026-04-28	vessel	PSA Vessel	PIL_001	KOTA DUNIA	B07	XE6221D	KARTHIK	\N	Vessel Waste	\N	\N	1.00	0.06	0.60	0.00	0.00	0.10	1.76	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18624	backfill	\N	2026-05-07	vessel	PSA Vessel	PIL_001	KOTA MACHAN	B07	XE5457Y	KARTHIK	\N	Vessel Waste	\N	\N	0.40	0.00	0.40	0.01	0.00	0.20	1.01	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18627	backfill	\N	2026-05-14	vessel	PSA Vessel	PIL_001	KOTA NEBULA	B08	XE5457Y	KARTHIK	\N	Vessel Waste	\N	\N	0.60	0.00	0.60	0.00	0.00	0.30	1.50	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18629	backfill	\N	2026-05-18	vessel	PSA Vessel	PIL_001	KOTA GADANG	B05	XE5457Y	KARTHIK	\N	Vessel Waste	\N	\N	0.30	0.00	0.30	0.00	0.00	0.10	0.70	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18630	backfill	\N	2026-05-19	vessel	PSA Vessel	PIL_001	KOTA NALURI	B05	XE5457Y	KARTHIK	\N	Vessel Waste	\N	\N	1.20	0.00	0.70	0.03	0.03	0.60	2.56	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18631	backfill	\N	2026-05-20	vessel	PSA Vessel	PIL_001	KOTA NEKAD	B06	XE5457Y	KARTHIK	\N	Vessel Waste	\N	\N	0.70	0.00	0.60	0.02	0.00	0.50	1.82	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Oily rags 0.2 m3 | Oily rags 0.2 m3	2026-07-24 15:15:51.944859+00
+18634	backfill	\N	2026-05-27	vessel	PSA Vessel	PIL_001	KOTA LARIS	B06	XE5457Y	KARTHIK	\N	Vessel Waste	\N	\N	1.20	0.00	0.80	0.02	0.01	0.50	2.53	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Incl 0.2 m3 oily rags | Incl 0.2 m3 oily rags	2026-07-24 15:15:51.944859+00
+18751	backfill	\N	2026-05-28	vessel	PSA Vessel	PIL_001	KOTA RAJIN	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.30	0.04	0.30	0.02	0.00	0.30	0.98	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Cat I E-waste 0.02 m3; plate verify | Cat I E-waste 0.02 m3; plate verify	2026-07-24 15:15:51.944859+00
+18752	backfill	\N	2026-05-29	vessel	PSA Vessel	PIL_001	KOTA RANCAK	B06	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.40	0.00	0.60	0.02	0.00	0.20	1.22	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; plate verify | plate verify	2026-07-24 15:15:51.944859+00
+18755	backfill	\N	2026-05-31	vessel	PSA Vessel	PIL_001	KOTA LAWA	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	1.10	0.00	1.10	0.02	0.00	1.10	3.32	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; plate verify | plate verify	2026-07-24 15:15:51.944859+00
+18757	backfill	\N	2026-06-01	vessel	PSA Vessel	PIL_001	KOTA RESTU	B06	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.50	0.03	0.40	0.02	0.00	0.40	1.35	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; plate verify | plate verify	2026-07-24 15:15:51.944859+00
+18758	backfill	\N	2026-06-02	vessel	PSA Vessel	PIL_001	KOTA CEPAT	B06	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.50	0.00	0.40	0.02	0.00	0.40	1.32	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Faded scan — verify; 0.25 m3 solid sludge | Faded scan — verify; 0.25 m3 solid sludge	2026-07-24 15:15:51.944859+00
+18760	backfill	\N	2026-06-03	vessel	PSA Vessel	PIL_001	KOTA LARIS	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.30	0.00	0.30	0.00	0.00	0.10	0.70	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; 0.05 m3 oily rags; plate verify | 0.05 m3 oily rags; plate verify	2026-07-24 15:15:51.944859+00
+18762	backfill	\N	2026-06-05	vessel	PSA Vessel	PIL_001	KOTA JOHAN	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.50	0.02	0.60	0.02	0.00	0.62	1.80	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Cat I 0.04 m3 | Cat I 0.04 m3	2026-07-24 15:15:51.944859+00
+18763	backfill	\N	2026-06-06	vessel	PSA Vessel	PIL_001	KOTA NAGA	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.45	0.03	0.95	0.00	0.00	0.40	1.83	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18767	backfill	\N	2026-06-09	vessel	PSA Vessel	PIL_001	KOTA CEMPAKA	B07	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.70	0.03	0.50	0.01	0.00	0.20	1.44	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18771	backfill	\N	2026-06-11	vessel	PSA Vessel	PIL_001	KOTA NABIL	B07	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.80	0.00	0.30	0.00	0.03	0.40	1.53	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18772	backfill	\N	2026-06-11	vessel	PSA Vessel	PIL_001	KOTA LOCENG	B06	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	1.50	0.03	1.10	0.02	0.01	0.50	3.16	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Cat A 1.1/1.5 unclear | Cat A 1.1/1.5 unclear	2026-07-24 15:15:51.944859+00
+18779	backfill	\N	2026-06-17	vessel	PSA Vessel	PIL_001	KOTA GANDING	B06	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.40	0.02	0.30	0.00	0.00	0.30	1.02	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18782	backfill	\N	2026-06-18	vessel	PSA Vessel	PIL_001	KOTA MAKMUR	B07	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.60	0.00	0.60	0.02	0.00	0.60	1.82	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18783	backfill	\N	2026-06-22	vessel	PSA Vessel	PIL_001	SALERNO EXPRESS	B07	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.40	0.00	0.40	0.00	0.00	0.50	1.30	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+18785	backfill	\N	2026-06-22	vessel	PSA Vessel	PIL_001	KOTA DUTA	B05	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.90	0.00	0.40	0.01	0.02	0.70	2.03	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill; Incl 0.5 m3 oily rags | Incl 0.5 m3 oily rags	2026-07-24 15:15:51.944859+00
+18790	backfill	\N	2026-06-26	vessel	PSA Vessel	PIL_001	KOTA SAHABAT	B06	XE7126P	YAO_JUN	\N	Vessel Waste	\N	\N	0.50	0.04	0.50	0.02	0.00	0.50	1.56	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	remarks=Vessel DO backfill	2026-07-24 15:15:51.944859+00
+23637	backfill	\N	2026-06-09	standard	\N	SAV_001	\N	\N	XE6221D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=L51 | bin_out_raw=L29 | location=Bay-109 | job=exchange	2026-07-24 15:45:07.605862+00
+24200	backfill	\N	2026-06-09	standard	\N	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5196? | bin_out_raw=L48 | location=L6 | date digit unclear (read 09/06/26) - verify	2026-07-24 15:45:07.605862+00
+25860	backfill	\N	2026-06-13	standard	\N	SAV_001	\N	\N	XE4491D	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5057? | bin_out_raw=5092? | location=Level-6-609 | job=exchange | bin digits unclear	2026-07-24 15:45:07.605862+00
+23748	backfill	\N	2026-06-15	standard	\N	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5147? | bin_out_raw=L29 | location=L3 | bin_in unclear	2026-07-24 15:45:07.605862+00
+24120	backfill	\N	2026-06-18	standard	\N	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5108? | bin_out_raw=5197? | location=L4 | bin digits unclear	2026-07-24 15:45:07.605862+00
+24121	backfill	\N	2026-06-18	standard	\N	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5197? | bin_out_raw=5055? | location=L6 | bin digits unclear	2026-07-24 15:45:07.605862+00
+23902	backfill	\N	2026-06-20	standard	\N	SAV_001	\N	\N	XE5457Y	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5032 | bin_out_raw=L51 | location=Bay-109 | job=exchange	2026-07-24 15:45:07.605862+00
+23528	backfill	\N	2026-06-22	standard	\N	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=L31? | bin_out_raw=5147? | location=L3 | bin_in unclear	2026-07-24 15:45:07.605862+00
+23905	backfill	\N	2026-06-22	standard	\N	SAV_001	\N	\N	XE6221D	\N	\N	General Waste	5213	5197	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5213 | bin_out_raw=5197 | location=Level-6 | job=exchange	2026-07-24 15:45:07.605862+00
+24301	backfill	\N	2026-06-24	standard	\N	SAV_001	\N	\N	\N	\N	\N	General Waste	\N	5213	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5054? | bin_out_raw=5213 | location=L6 | bin_in unclear	2026-07-24 15:45:07.605862+00
+24451	backfill	\N	2026-06-29	standard	\N	SAV_001	\N	\N	XE4491D	\N	\N	General Waste	5222	5108	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	volume_est	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=5222 | bin_out_raw=5108 | job=exchange	2026-07-24 15:45:07.605862+00
 \.
 
 
@@ -4150,6 +4372,113 @@ COPY public.collections (do_no, source, job_no, do_date, do_type, trip_type, sit
 --
 
 COPY public.customers (client_id, name, payment_terms, sales_rep, xero_contact_id, active, created_at) FROM stdin;
+EXP	123 Express	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ABS	Absolut Properties Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ACR	Acreation Group Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ADV	Advanced Substrate Technologies Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+AJK	AJK	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ALL	Allalloy Dynaweld Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ALLI	Allied Container Services Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+APE	Apex Sealing Technologies Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ARC	Archibiz	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ART	Artdecor Design Studio Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ASL	ASL Proworld Solution Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+AST	Astore Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+AVE	Aver Asia (S) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+BCW	B&C Waste	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+BAB	Babu	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+BEE	Beejoo	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+BND	BNDC (Fairprice)	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CPH	C & P Holdings Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CAL	Calvary Carpentry Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CAR	Cargo International	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CAT	Caterpillar	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CBM	CBM Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CHA	Chateraise	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CHI	Chiong Construction	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CHU	Chuan Seng Leong	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CLE	Cleanis-Tee	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CNC	CNCCS Engineering and Construction Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+CRE	CrestSA Marine & Offshore Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+DSV	DSV	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+DYN	Dyna Cool	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ENG	Eng Lee Logistics Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ENGL	Eng Leng Contractors Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+ENGI	Engie Services Singapore Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+EPO	Epont Building Services Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+EUR	Euro Pac Logistics Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+EVE	EverTeam Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+FAX	Faxolif Industries Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+GEO	Geoinnovations Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+GLO	Glory SIP Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+GSE	GS Engineering and Construction Corporation	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+GWC	GWC	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+GYM	Gymsportz	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HPR	H1 Projects Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HAI	Haid Biotechnology Industry (Singapore) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HCG	HCG	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HEP	He Ping Development Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HON	Hong Hang Hardware	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HOT	Hotel Royal Singapore	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HUA	Huationg Contractor	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HUN	Huntsman (S) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HYD	Hydroproof	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+HYU	Hyundai Engineering & Construction Co., Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+INV	INVX Asia Pacific Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+IWA	Iwatech	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+LAU	Lau Choy Seng Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+LCH	LCH Logistics Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+LEN	Leng Aik Engineering	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+LEX	LexBuild International Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+LIM	Lim Siang Huat Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+LIR	Lirich	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+MAT	Matrix Cooling (Singapore) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+MEC	Mecom GreenBuild (Singapore) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+NEA	NEA	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+PAX	PaxOcean Singapore Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+POH	Poh Tiong Choon Logistics Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+PSA	PSA Port Ecosystem (Sea) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+QUA	Qualicoat Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+RAD	Radha Exports Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+REM	REMEX Minerals Singapore Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+RJH	RJ Hydralics	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SAV	Savills Property Management Pte Ltd (Blue Hub)	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SAVI	Savills Property Management Pte Ltd (Green Hub)	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SEA	Seatrium Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SHI	Shin Ya O Ya Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SIE	Siew Kong Glass Makers Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SIN	Sin Hong Hardware Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SINH	Sin Hong Poh Metal Trading	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SIND	Sindac Cleaning Services Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SLS	SLS	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SNI	Snip Avenue Holdings	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SPR	Springlife Maintenance Service Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+STX	ST	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+STA	Stamford Tyres	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+STS	STSM	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SUM	Sumber Indah Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SUN	Sun City Maintenance Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SYS	Sys-Mac Automation Engineering Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+SYST	System Foundation Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TRE	T3 Reources Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TAI	Tai Lee Tong	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TEC	Technicair Singapore Services Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TECH	Technigroup Far East Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TECK	Teck Sang Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TOH	Toh Ban Seng	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TON	Tong Carriage (S) Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TONG	Tong Hock Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TOP	Top Star Builder Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TRA	Tracebuild	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+TST	TSTL	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+URB	Urban Group Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+WRA	W'Ray Construction Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+WAH	Wah & Hua Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+WEB	WeBuild	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+WIK	WIKA Instrumentation Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+WIL	Wilkie Development Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+WOR	World of Wood Pte Ltd	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
+PIL	Pacific International Lines	\N	\N	\N	t	2026-07-24 15:15:51.944859+00
 \.
 
 
@@ -4158,6 +4487,9 @@ COPY public.customers (client_id, name, payment_terms, sales_rep, xero_contact_i
 --
 
 COPY public.drivers (driver_id, name, phone, active) FROM stdin;
+YAO_JUN	Yao Jun	\N	t
+SATHISH	Sathish	\N	t
+KARTHIK	Karthik	\N	t
 \.
 
 
@@ -4166,6 +4498,10 @@ COPY public.drivers (driver_id, name, phone, active) FROM stdin;
 --
 
 COPY public.facilities (facility_id, name, route) FROM stdin;
+TUAS_WTE	Tuas Waste-to-Energy Plant	WtE
+SEMAKAU	Semakau Landfill	landfill
+TRS	TRS Environment	recovery
+LIRICH_YARD	Lirich Yard (sort/store)	recovery
 \.
 
 
@@ -4174,6 +4510,13 @@ COPY public.facilities (facility_id, name, route) FROM stdin;
 --
 
 COPY public.factors (id, domain, key, route, value, unit, basis, source_ref, valid_from) FROM stdin;
+1	fuel	diesel	\N	2.678000	kgCO2e/L	indicative - verify before external reporting	\N	2026-07-24
+2	grid	sg_grid	\N	0.402000	kgCO2e/kWh	EMA 2024 - verify	\N	2026-07-24
+3	waste	general_waste	WtE	0.350000	tCO2e/t	indicative - verify	\N	2026-07-24
+4	avoided	general_waste	recovery	0.460000	tCO2e/t	indicative - verify	\N	2026-07-24
+5	avoided	paper	recovery	0.900000	tCO2e/t	indicative - verify	\N	2026-07-24
+6	avoided	plastics	recovery	1.100000	tCO2e/t	indicative - verify	\N	2026-07-24
+7	avoided	metals	recovery	1.500000	tCO2e/t	indicative - verify	\N	2026-07-24
 \.
 
 
@@ -4230,6 +4573,669 @@ COPY public.portal_accounts (id, email, display_name, client_id, status, request
 --
 
 COPY public.rate_card (id, site_id, job_type, price, valid_from, created_by) FROM stdin;
+1	EXP_001	Exchange	23.00	2026-07-24	\N
+2	EXP_001	Collect	23.00	2026-07-24	\N
+3	EXP_001	Delivery	8.00	2026-07-24	\N
+4	ABS_001	Exchange	23.00	2026-07-24	\N
+5	ABS_001	Collect	23.00	2026-07-24	\N
+6	ABS_001	Delivery	8.00	2026-07-24	\N
+7	ABS_002	Exchange	23.00	2026-07-24	\N
+8	ABS_002	Collect	23.00	2026-07-24	\N
+9	ABS_002	Delivery	8.00	2026-07-24	\N
+10	ACR_001	Exchange	23.00	2026-07-24	\N
+11	ACR_001	Collect	23.00	2026-07-24	\N
+12	ACR_001	Delivery	8.00	2026-07-24	\N
+13	ACR_002	Exchange	23.00	2026-07-24	\N
+14	ACR_002	Collect	23.00	2026-07-24	\N
+15	ACR_002	Delivery	8.00	2026-07-24	\N
+16	ACR_003	Exchange	23.00	2026-07-24	\N
+17	ACR_003	Collect	23.00	2026-07-24	\N
+18	ACR_003	Delivery	8.00	2026-07-24	\N
+19	ACR_004	Exchange	23.00	2026-07-24	\N
+20	ACR_004	Collect	23.00	2026-07-24	\N
+21	ACR_004	Delivery	8.00	2026-07-24	\N
+22	ADV_001	Exchange	13.00	2026-07-24	\N
+23	ADV_001	Collect	13.00	2026-07-24	\N
+24	ADV_001	Delivery	8.00	2026-07-24	\N
+25	AJK_001	Exchange	13.00	2026-07-24	\N
+26	AJK_001	Collect	13.00	2026-07-24	\N
+27	AJK_001	Delivery	8.00	2026-07-24	\N
+28	ALL_001	Exchange	13.00	2026-07-24	\N
+29	ALL_001	Collect	13.00	2026-07-24	\N
+30	ALL_001	Delivery	8.00	2026-07-24	\N
+31	ALLI_001	Exchange	13.00	2026-07-24	\N
+32	ALLI_001	Collect	13.00	2026-07-24	\N
+33	ALLI_001	Delivery	8.00	2026-07-24	\N
+34	ALLI_002	Exchange	13.00	2026-07-24	\N
+35	ALLI_002	Collect	13.00	2026-07-24	\N
+36	ALLI_002	Delivery	8.00	2026-07-24	\N
+37	ALLI_003	Exchange	13.00	2026-07-24	\N
+38	ALLI_003	Collect	13.00	2026-07-24	\N
+39	ALLI_003	Delivery	8.00	2026-07-24	\N
+40	APE_001	Exchange	13.00	2026-07-24	\N
+41	APE_001	Collect	13.00	2026-07-24	\N
+42	APE_001	Delivery	8.00	2026-07-24	\N
+43	APE_002	Exchange	13.00	2026-07-24	\N
+44	APE_002	Collect	13.00	2026-07-24	\N
+45	APE_002	Delivery	8.00	2026-07-24	\N
+46	ARC_001	Exchange	18.00	2026-07-24	\N
+47	ARC_001	Collect	18.00	2026-07-24	\N
+48	ARC_001	Delivery	8.00	2026-07-24	\N
+49	ART_001	Exchange	23.00	2026-07-24	\N
+50	ART_001	Collect	23.00	2026-07-24	\N
+51	ART_001	Delivery	8.00	2026-07-24	\N
+52	ASL_001	Exchange	13.00	2026-07-24	\N
+53	ASL_001	Collect	13.00	2026-07-24	\N
+54	ASL_001	Delivery	8.00	2026-07-24	\N
+55	AST_001	Exchange	23.00	2026-07-24	\N
+56	AST_001	Collect	23.00	2026-07-24	\N
+57	AST_001	Delivery	8.00	2026-07-24	\N
+58	AVE_001	Exchange	13.00	2026-07-24	\N
+59	AVE_001	Collect	13.00	2026-07-24	\N
+60	AVE_001	Delivery	8.00	2026-07-24	\N
+61	BCW_001	Exchange	13.00	2026-07-24	\N
+62	BCW_001	Collect	13.00	2026-07-24	\N
+63	BCW_001	Delivery	8.00	2026-07-24	\N
+64	BCW_001	Load	21.00	2026-07-24	\N
+65	BCW_002	Exchange	23.00	2026-07-24	\N
+66	BCW_002	Collect	23.00	2026-07-24	\N
+67	BCW_002	Delivery	8.00	2026-07-24	\N
+68	BCW_002	Load	31.00	2026-07-24	\N
+69	BCW_003	Exchange	23.00	2026-07-24	\N
+70	BCW_003	Collect	23.00	2026-07-24	\N
+71	BCW_003	Delivery	8.00	2026-07-24	\N
+72	BCW_003	Load	31.00	2026-07-24	\N
+73	BCW_004	Exchange	18.00	2026-07-24	\N
+74	BCW_004	Collect	18.00	2026-07-24	\N
+75	BCW_004	Delivery	8.00	2026-07-24	\N
+76	BCW_004	Load	26.00	2026-07-24	\N
+77	BCW_005	Exchange	23.00	2026-07-24	\N
+78	BCW_005	Collect	23.00	2026-07-24	\N
+79	BCW_005	Delivery	8.00	2026-07-24	\N
+80	BCW_005	Load	31.00	2026-07-24	\N
+81	BCW_006	Exchange	23.00	2026-07-24	\N
+82	BCW_006	Collect	23.00	2026-07-24	\N
+83	BCW_006	Delivery	8.00	2026-07-24	\N
+84	BCW_006	Load	31.00	2026-07-24	\N
+85	BCW_007	Exchange	23.00	2026-07-24	\N
+86	BCW_007	Collect	23.00	2026-07-24	\N
+87	BCW_007	Delivery	8.00	2026-07-24	\N
+88	BCW_007	Load	31.00	2026-07-24	\N
+89	BAB_001	Exchange	18.00	2026-07-24	\N
+90	BAB_001	Collect	18.00	2026-07-24	\N
+91	BAB_001	Delivery	8.00	2026-07-24	\N
+92	BAB_002	Exchange	23.00	2026-07-24	\N
+93	BAB_002	Collect	23.00	2026-07-24	\N
+94	BAB_002	Delivery	8.00	2026-07-24	\N
+95	BAB_003	Exchange	23.00	2026-07-24	\N
+96	BAB_003	Collect	23.00	2026-07-24	\N
+97	BAB_003	Delivery	8.00	2026-07-24	\N
+98	BAB_004	Exchange	23.00	2026-07-24	\N
+99	BAB_004	Collect	23.00	2026-07-24	\N
+100	BAB_004	Delivery	8.00	2026-07-24	\N
+101	BEE_001	Dump	18.00	2026-07-24	\N
+102	BND_001	Exchange	13.00	2026-07-24	\N
+103	BND_001	Collect	13.00	2026-07-24	\N
+104	BND_001	Delivery	8.00	2026-07-24	\N
+105	BND_002	Exchange	13.00	2026-07-24	\N
+106	BND_002	Collect	13.00	2026-07-24	\N
+107	BND_002	Delivery	8.00	2026-07-24	\N
+108	BND_003	Exchange	13.00	2026-07-24	\N
+109	BND_003	Collect	13.00	2026-07-24	\N
+110	BND_003	Delivery	8.00	2026-07-24	\N
+111	BND_004	Exchange	13.00	2026-07-24	\N
+112	BND_004	Collect	13.00	2026-07-24	\N
+113	BND_004	Delivery	8.00	2026-07-24	\N
+114	CPH_001	Exchange	13.00	2026-07-24	\N
+115	CPH_001	Collect	13.00	2026-07-24	\N
+116	CPH_001	Delivery	8.00	2026-07-24	\N
+117	CAL_001	Exchange	18.00	2026-07-24	\N
+118	CAL_001	Collect	18.00	2026-07-24	\N
+119	CAL_001	Delivery	8.00	2026-07-24	\N
+120	CAR_001	Exchange	13.00	2026-07-24	\N
+121	CAR_001	Collect	13.00	2026-07-24	\N
+122	CAR_001	Delivery	8.00	2026-07-24	\N
+123	CAT_001	Exchange	18.00	2026-07-24	\N
+124	CAT_001	Collect	18.00	2026-07-24	\N
+125	CAT_001	Delivery	8.00	2026-07-24	\N
+126	CAT_002	Exchange	18.00	2026-07-24	\N
+127	CAT_002	Collect	18.00	2026-07-24	\N
+128	CAT_002	Delivery	8.00	2026-07-24	\N
+129	CBM_001	Exchange	18.00	2026-07-24	\N
+130	CBM_001	Collect	18.00	2026-07-24	\N
+131	CBM_001	Delivery	8.00	2026-07-24	\N
+132	CHA_001	Exchange	13.00	2026-07-24	\N
+133	CHA_001	Collect	13.00	2026-07-24	\N
+134	CHA_001	Delivery	8.00	2026-07-24	\N
+135	CHI_001	Exchange	23.00	2026-07-24	\N
+136	CHI_001	Collect	23.00	2026-07-24	\N
+137	CHI_001	Delivery	8.00	2026-07-24	\N
+138	CHI_002	Exchange	23.00	2026-07-24	\N
+139	CHI_002	Collect	23.00	2026-07-24	\N
+140	CHI_002	Delivery	8.00	2026-07-24	\N
+141	CHI_003	Exchange	13.00	2026-07-24	\N
+142	CHI_003	Collect	13.00	2026-07-24	\N
+143	CHI_003	Delivery	8.00	2026-07-24	\N
+144	CHU_001	Exchange	23.00	2026-07-24	\N
+145	CHU_001	Collect	23.00	2026-07-24	\N
+146	CHU_001	Delivery	8.00	2026-07-24	\N
+147	CLE_001	Exchange	13.00	2026-07-24	\N
+148	CLE_001	Collect	13.00	2026-07-24	\N
+149	CLE_001	Delivery	8.00	2026-07-24	\N
+150	CNC_001	Exchange	23.00	2026-07-24	\N
+151	CNC_001	Collect	23.00	2026-07-24	\N
+152	CNC_001	Delivery	8.00	2026-07-24	\N
+153	CRE_001	Exchange	13.00	2026-07-24	\N
+154	CRE_001	Collect	13.00	2026-07-24	\N
+155	CRE_001	Delivery	8.00	2026-07-24	\N
+156	DSV_001	Exchange	13.00	2026-07-24	\N
+157	DSV_001	Collect	13.00	2026-07-24	\N
+158	DSV_001	Delivery	8.00	2026-07-24	\N
+159	DYN_001	Exchange	13.00	2026-07-24	\N
+160	DYN_001	Collect	13.00	2026-07-24	\N
+161	DYN_001	Delivery	8.00	2026-07-24	\N
+162	ENG_001	Exchange	13.00	2026-07-24	\N
+163	ENG_001	Collect	13.00	2026-07-24	\N
+164	ENG_001	Delivery	8.00	2026-07-24	\N
+165	ENGL_001	Exchange	13.00	2026-07-24	\N
+166	ENGL_001	Collect	13.00	2026-07-24	\N
+167	ENGL_001	Delivery	8.00	2026-07-24	\N
+168	ENGL_002	Exchange	13.00	2026-07-24	\N
+169	ENGL_002	Collect	13.00	2026-07-24	\N
+170	ENGL_002	Delivery	8.00	2026-07-24	\N
+171	ENGL_003	Exchange	13.00	2026-07-24	\N
+172	ENGL_003	Collect	13.00	2026-07-24	\N
+173	ENGL_003	Delivery	8.00	2026-07-24	\N
+174	ENGL_004	Exchange	13.00	2026-07-24	\N
+175	ENGL_004	Collect	13.00	2026-07-24	\N
+176	ENGL_004	Delivery	8.00	2026-07-24	\N
+177	ENGL_005	Exchange	13.00	2026-07-24	\N
+178	ENGL_005	Collect	13.00	2026-07-24	\N
+179	ENGL_005	Delivery	8.00	2026-07-24	\N
+180	ENGL_006	Exchange	13.00	2026-07-24	\N
+181	ENGL_006	Collect	13.00	2026-07-24	\N
+182	ENGL_006	Delivery	8.00	2026-07-24	\N
+183	ENGL_007	Exchange	13.00	2026-07-24	\N
+184	ENGL_007	Collect	13.00	2026-07-24	\N
+185	ENGL_007	Delivery	8.00	2026-07-24	\N
+186	ENGL_008	Exchange	13.00	2026-07-24	\N
+187	ENGL_008	Collect	13.00	2026-07-24	\N
+188	ENGL_008	Delivery	8.00	2026-07-24	\N
+189	ENGL_009	Exchange	13.00	2026-07-24	\N
+190	ENGL_009	Collect	13.00	2026-07-24	\N
+191	ENGL_009	Delivery	8.00	2026-07-24	\N
+192	ENGL_010	Exchange	13.00	2026-07-24	\N
+193	ENGL_010	Collect	13.00	2026-07-24	\N
+194	ENGL_010	Delivery	8.00	2026-07-24	\N
+195	ENGL_011	Exchange	13.00	2026-07-24	\N
+196	ENGL_011	Collect	13.00	2026-07-24	\N
+197	ENGL_011	Delivery	8.00	2026-07-24	\N
+198	ENGI_001	Exchange	23.00	2026-07-24	\N
+199	ENGI_001	Collect	23.00	2026-07-24	\N
+200	ENGI_001	Delivery	8.00	2026-07-24	\N
+201	ENGI_002	Exchange	23.00	2026-07-24	\N
+202	ENGI_002	Collect	23.00	2026-07-24	\N
+203	ENGI_002	Delivery	8.00	2026-07-24	\N
+204	ENGI_003	Exchange	13.00	2026-07-24	\N
+205	ENGI_003	Collect	13.00	2026-07-24	\N
+206	ENGI_003	Delivery	8.00	2026-07-24	\N
+207	ENGI_004	Exchange	23.00	2026-07-24	\N
+208	ENGI_004	Collect	23.00	2026-07-24	\N
+209	ENGI_004	Delivery	8.00	2026-07-24	\N
+210	ENGI_005	Exchange	18.00	2026-07-24	\N
+211	ENGI_005	Collect	18.00	2026-07-24	\N
+212	ENGI_005	Delivery	8.00	2026-07-24	\N
+213	ENGI_006	Exchange	23.00	2026-07-24	\N
+214	ENGI_006	Collect	23.00	2026-07-24	\N
+215	ENGI_006	Delivery	8.00	2026-07-24	\N
+216	ENGI_007	Exchange	23.00	2026-07-24	\N
+217	ENGI_007	Collect	23.00	2026-07-24	\N
+218	ENGI_007	Delivery	8.00	2026-07-24	\N
+219	ENGI_008	Exchange	23.00	2026-07-24	\N
+220	ENGI_008	Collect	23.00	2026-07-24	\N
+221	ENGI_008	Delivery	8.00	2026-07-24	\N
+222	ENGI_009	Exchange	13.00	2026-07-24	\N
+223	ENGI_009	Collect	13.00	2026-07-24	\N
+224	ENGI_009	Delivery	8.00	2026-07-24	\N
+225	ENGI_010	Exchange	13.00	2026-07-24	\N
+226	ENGI_010	Collect	13.00	2026-07-24	\N
+227	ENGI_010	Delivery	8.00	2026-07-24	\N
+228	ENGI_011	Exchange	23.00	2026-07-24	\N
+229	ENGI_011	Collect	23.00	2026-07-24	\N
+230	ENGI_011	Delivery	8.00	2026-07-24	\N
+231	ENGI_012	Exchange	23.00	2026-07-24	\N
+232	ENGI_012	Collect	23.00	2026-07-24	\N
+233	ENGI_012	Delivery	8.00	2026-07-24	\N
+234	ENGI_013	Exchange	23.00	2026-07-24	\N
+235	ENGI_013	Collect	23.00	2026-07-24	\N
+236	ENGI_013	Delivery	8.00	2026-07-24	\N
+237	ENGI_014	Exchange	23.00	2026-07-24	\N
+238	ENGI_014	Collect	23.00	2026-07-24	\N
+239	ENGI_014	Delivery	8.00	2026-07-24	\N
+240	ENGI_015	Exchange	13.00	2026-07-24	\N
+241	ENGI_015	Collect	13.00	2026-07-24	\N
+242	ENGI_015	Delivery	8.00	2026-07-24	\N
+243	EPO_001	Exchange	13.00	2026-07-24	\N
+244	EPO_001	Collect	13.00	2026-07-24	\N
+245	EPO_001	Delivery	8.00	2026-07-24	\N
+246	EUR_001	Exchange	13.00	2026-07-24	\N
+247	EUR_001	Collect	13.00	2026-07-24	\N
+248	EUR_001	Delivery	8.00	2026-07-24	\N
+249	EUR_002	Exchange	13.00	2026-07-24	\N
+250	EUR_002	Collect	13.00	2026-07-24	\N
+251	EUR_002	Delivery	8.00	2026-07-24	\N
+252	EVE_001	Exchange	13.00	2026-07-24	\N
+253	EVE_001	Collect	13.00	2026-07-24	\N
+254	EVE_001	Delivery	8.00	2026-07-24	\N
+255	FAX_001	Exchange	13.00	2026-07-24	\N
+256	FAX_001	Collect	13.00	2026-07-24	\N
+257	FAX_001	Delivery	8.00	2026-07-24	\N
+258	GEO_001	Exchange	23.00	2026-07-24	\N
+259	GEO_001	Collect	23.00	2026-07-24	\N
+260	GEO_001	Delivery	8.00	2026-07-24	\N
+261	GSE_001	Exchange	13.00	2026-07-24	\N
+262	GSE_001	Collect	13.00	2026-07-24	\N
+263	GSE_001	Delivery	8.00	2026-07-24	\N
+264	GSE_002	Exchange	23.00	2026-07-24	\N
+265	GSE_002	Collect	23.00	2026-07-24	\N
+266	GSE_002	Delivery	8.00	2026-07-24	\N
+267	GSE_003	Exchange	23.00	2026-07-24	\N
+268	GSE_003	Collect	23.00	2026-07-24	\N
+269	GSE_003	Delivery	8.00	2026-07-24	\N
+270	GSE_004	Exchange	23.00	2026-07-24	\N
+271	GSE_004	Collect	23.00	2026-07-24	\N
+272	GSE_004	Delivery	8.00	2026-07-24	\N
+273	GSE_005	Exchange	23.00	2026-07-24	\N
+274	GSE_005	Collect	23.00	2026-07-24	\N
+275	GSE_005	Delivery	8.00	2026-07-24	\N
+276	GSE_006	Exchange	23.00	2026-07-24	\N
+277	GSE_006	Collect	23.00	2026-07-24	\N
+278	GSE_006	Delivery	8.00	2026-07-24	\N
+279	GSE_007	Exchange	23.00	2026-07-24	\N
+280	GSE_007	Collect	23.00	2026-07-24	\N
+281	GSE_007	Delivery	8.00	2026-07-24	\N
+282	GWC_001	Exchange	13.00	2026-07-24	\N
+283	GWC_001	Collect	13.00	2026-07-24	\N
+284	GWC_001	Delivery	8.00	2026-07-24	\N
+285	GYM_001	Exchange	18.00	2026-07-24	\N
+286	GYM_001	Collect	18.00	2026-07-24	\N
+287	GYM_001	Delivery	8.00	2026-07-24	\N
+288	HPR_001	Exchange	23.00	2026-07-24	\N
+289	HPR_001	Collect	23.00	2026-07-24	\N
+290	HPR_001	Delivery	8.00	2026-07-24	\N
+291	HAI_001	Exchange	13.00	2026-07-24	\N
+292	HAI_001	Collect	13.00	2026-07-24	\N
+293	HAI_001	Delivery	8.00	2026-07-24	\N
+294	HCG_001	Exchange	13.00	2026-07-24	\N
+295	HCG_001	Collect	13.00	2026-07-24	\N
+296	HCG_001	Delivery	8.00	2026-07-24	\N
+297	HCG_002	Exchange	18.00	2026-07-24	\N
+298	HCG_002	Collect	18.00	2026-07-24	\N
+299	HCG_002	Delivery	8.00	2026-07-24	\N
+300	HEP_001	Exchange	23.00	2026-07-24	\N
+301	HEP_001	Collect	23.00	2026-07-24	\N
+302	HEP_001	Delivery	8.00	2026-07-24	\N
+303	HEP_002	Exchange	23.00	2026-07-24	\N
+304	HEP_002	Collect	23.00	2026-07-24	\N
+305	HEP_002	Delivery	8.00	2026-07-24	\N
+306	HEP_003	Exchange	23.00	2026-07-24	\N
+307	HEP_003	Collect	23.00	2026-07-24	\N
+308	HEP_003	Delivery	8.00	2026-07-24	\N
+309	HON_001	Exchange	13.00	2026-07-24	\N
+310	HON_001	Collect	13.00	2026-07-24	\N
+311	HON_001	Delivery	8.00	2026-07-24	\N
+312	HOT_001	Exchange	23.00	2026-07-24	\N
+313	HOT_001	Collect	23.00	2026-07-24	\N
+314	HOT_001	Delivery	8.00	2026-07-24	\N
+315	HUA_001	Exchange	23.00	2026-07-24	\N
+316	HUA_001	Collect	23.00	2026-07-24	\N
+317	HUA_001	Delivery	8.00	2026-07-24	\N
+318	HUN_001	Exchange	23.00	2026-07-24	\N
+319	HUN_001	Collect	23.00	2026-07-24	\N
+320	HUN_001	Delivery	8.00	2026-07-24	\N
+321	HYD_001	Exchange	13.00	2026-07-24	\N
+322	HYD_001	Collect	13.00	2026-07-24	\N
+323	HYD_001	Delivery	8.00	2026-07-24	\N
+324	HYU_001	Exchange	23.00	2026-07-24	\N
+325	HYU_001	Collect	23.00	2026-07-24	\N
+326	HYU_001	Delivery	8.00	2026-07-24	\N
+327	INV_001	Exchange	13.00	2026-07-24	\N
+328	INV_001	Collect	13.00	2026-07-24	\N
+329	INV_001	Delivery	8.00	2026-07-24	\N
+330	IWA_001	Exchange	13.00	2026-07-24	\N
+331	IWA_001	Collect	13.00	2026-07-24	\N
+332	IWA_001	Delivery	8.00	2026-07-24	\N
+333	LAU_001	Exchange	13.00	2026-07-24	\N
+334	LAU_001	Collect	13.00	2026-07-24	\N
+335	LAU_001	Delivery	8.00	2026-07-24	\N
+336	LCH_001	Exchange	13.00	2026-07-24	\N
+337	LCH_001	Collect	13.00	2026-07-24	\N
+338	LCH_001	Delivery	8.00	2026-07-24	\N
+339	LEN_001	Exchange	13.00	2026-07-24	\N
+340	LEN_001	Collect	13.00	2026-07-24	\N
+341	LEN_001	Delivery	8.00	2026-07-24	\N
+342	LEX_001	Exchange	13.00	2026-07-24	\N
+343	LEX_001	Collect	13.00	2026-07-24	\N
+344	LEX_001	Delivery	8.00	2026-07-24	\N
+345	LIR_001	Delivery	8.00	2026-07-24	\N
+346	LIR_001	Sell	13.00	2026-07-24	\N
+347	LIR_002	Delivery	8.00	2026-07-24	\N
+348	LIR_002	Sell	13.00	2026-07-24	\N
+349	LIR_003	Delivery	8.00	2026-07-24	\N
+350	LIR_003	Sell	13.00	2026-07-24	\N
+351	LIM_001	Exchange	13.00	2026-07-24	\N
+352	LIM_001	Collect	13.00	2026-07-24	\N
+353	LIM_001	Delivery	8.00	2026-07-24	\N
+354	MAT_001	Exchange	13.00	2026-07-24	\N
+355	MAT_001	Collect	13.00	2026-07-24	\N
+356	MAT_001	Delivery	8.00	2026-07-24	\N
+357	MEC_001	Exchange	13.00	2026-07-24	\N
+358	MEC_001	Collect	13.00	2026-07-24	\N
+359	MEC_001	Delivery	8.00	2026-07-24	\N
+360	NEA_001	Exchange	13.00	2026-07-24	\N
+361	NEA_001	Collect	13.00	2026-07-24	\N
+362	NEA_001	Delivery	8.00	2026-07-24	\N
+363	PAX_001	Exchange	13.00	2026-07-24	\N
+364	PAX_001	Collect	13.00	2026-07-24	\N
+365	PAX_001	Delivery	8.00	2026-07-24	\N
+366	POH_001	Exchange	13.00	2026-07-24	\N
+367	POH_001	Collect	13.00	2026-07-24	\N
+368	POH_001	Delivery	8.00	2026-07-24	\N
+369	POH_002	Exchange	13.00	2026-07-24	\N
+370	POH_002	Collect	13.00	2026-07-24	\N
+371	POH_002	Delivery	8.00	2026-07-24	\N
+372	POH_003	Exchange	13.00	2026-07-24	\N
+373	POH_003	Collect	13.00	2026-07-24	\N
+374	POH_003	Delivery	8.00	2026-07-24	\N
+375	POH_004	Exchange	13.00	2026-07-24	\N
+376	POH_004	Collect	13.00	2026-07-24	\N
+377	POH_004	Delivery	8.00	2026-07-24	\N
+378	PSA_001	Exchange	13.00	2026-07-24	\N
+379	PSA_001	Collect	13.00	2026-07-24	\N
+380	PSA_001	Delivery	8.00	2026-07-24	\N
+381	QUA_001	Exchange	13.00	2026-07-24	\N
+382	QUA_001	Collect	13.00	2026-07-24	\N
+383	QUA_001	Delivery	8.00	2026-07-24	\N
+384	RAD_001	Exchange	13.00	2026-07-24	\N
+385	RAD_001	Collect	13.00	2026-07-24	\N
+386	RAD_001	Delivery	8.00	2026-07-24	\N
+387	RAD_002	Exchange	13.00	2026-07-24	\N
+388	RAD_002	Collect	13.00	2026-07-24	\N
+389	RAD_002	Delivery	8.00	2026-07-24	\N
+390	RAD_003	Exchange	13.00	2026-07-24	\N
+391	RAD_003	Collect	13.00	2026-07-24	\N
+392	RAD_003	Delivery	8.00	2026-07-24	\N
+393	RAD_004	Exchange	13.00	2026-07-24	\N
+394	RAD_004	Collect	13.00	2026-07-24	\N
+395	RAD_004	Delivery	8.00	2026-07-24	\N
+396	REM_001	Exchange	13.00	2026-07-24	\N
+397	REM_001	Collect	13.00	2026-07-24	\N
+398	REM_001	Delivery	8.00	2026-07-24	\N
+399	RJH_001	Exchange	23.00	2026-07-24	\N
+400	RJH_001	Collect	23.00	2026-07-24	\N
+401	RJH_001	Delivery	8.00	2026-07-24	\N
+402	SAV_001	Exchange	13.00	2026-07-24	\N
+403	SAV_001	Collect	13.00	2026-07-24	\N
+404	SAV_001	Delivery	8.00	2026-07-24	\N
+405	SAV_002	Exchange	13.00	2026-07-24	\N
+406	SAV_002	Collect	13.00	2026-07-24	\N
+407	SAV_002	Delivery	8.00	2026-07-24	\N
+408	SAV_003	Exchange	13.00	2026-07-24	\N
+409	SAV_003	Collect	13.00	2026-07-24	\N
+410	SAV_003	Delivery	8.00	2026-07-24	\N
+411	SAV_004	Exchange	13.00	2026-07-24	\N
+412	SAV_004	Collect	13.00	2026-07-24	\N
+413	SAV_004	Delivery	8.00	2026-07-24	\N
+414	SAVI_001	Exchange	13.00	2026-07-24	\N
+415	SAVI_001	Collect	13.00	2026-07-24	\N
+416	SAVI_001	Delivery	8.00	2026-07-24	\N
+417	SAVI_002	Exchange	13.00	2026-07-24	\N
+418	SAVI_002	Collect	13.00	2026-07-24	\N
+419	SAVI_002	Delivery	8.00	2026-07-24	\N
+420	SAVI_003	Exchange	13.00	2026-07-24	\N
+421	SAVI_003	Collect	13.00	2026-07-24	\N
+422	SAVI_003	Delivery	8.00	2026-07-24	\N
+423	SAVI_004	Exchange	13.00	2026-07-24	\N
+424	SAVI_004	Collect	13.00	2026-07-24	\N
+425	SAVI_004	Delivery	8.00	2026-07-24	\N
+426	SAVI_005	Exchange	13.00	2026-07-24	\N
+427	SAVI_005	Collect	13.00	2026-07-24	\N
+428	SAVI_005	Delivery	8.00	2026-07-24	\N
+429	SEA_001	Exchange	23.00	2026-07-24	\N
+430	SEA_001	Collect	23.00	2026-07-24	\N
+431	SEA_001	Delivery	8.00	2026-07-24	\N
+432	SHI_001	Exchange	13.00	2026-07-24	\N
+433	SHI_001	Collect	13.00	2026-07-24	\N
+434	SHI_001	Delivery	8.00	2026-07-24	\N
+435	SHI_002	Exchange	13.00	2026-07-24	\N
+436	SHI_002	Collect	13.00	2026-07-24	\N
+437	SHI_002	Delivery	8.00	2026-07-24	\N
+438	SIE_001	Exchange	13.00	2026-07-24	\N
+439	SIE_001	Collect	13.00	2026-07-24	\N
+440	SIE_001	Delivery	8.00	2026-07-24	\N
+441	SIN_001	Exchange	13.00	2026-07-24	\N
+442	SIN_001	Collect	13.00	2026-07-24	\N
+443	SIN_001	Delivery	8.00	2026-07-24	\N
+444	SINH_001	Exchange	23.00	2026-07-24	\N
+445	SINH_001	Collect	23.00	2026-07-24	\N
+446	SINH_001	Delivery	8.00	2026-07-24	\N
+447	SIND_001	Exchange	13.00	2026-07-24	\N
+448	SIND_001	Collect	13.00	2026-07-24	\N
+449	SIND_001	Delivery	8.00	2026-07-24	\N
+450	SIND_002	Exchange	18.00	2026-07-24	\N
+451	SIND_002	Collect	18.00	2026-07-24	\N
+452	SIND_002	Delivery	8.00	2026-07-24	\N
+453	SLS_001	Exchange	13.00	2026-07-24	\N
+454	SLS_001	Collect	13.00	2026-07-24	\N
+455	SLS_001	Delivery	8.00	2026-07-24	\N
+456	SLS_002	Exchange	13.00	2026-07-24	\N
+457	SLS_002	Collect	13.00	2026-07-24	\N
+458	SLS_002	Delivery	8.00	2026-07-24	\N
+459	SNI_001	Exchange	23.00	2026-07-24	\N
+460	SNI_001	Collect	23.00	2026-07-24	\N
+461	SNI_001	Delivery	8.00	2026-07-24	\N
+462	SPR_001	Exchange	18.00	2026-07-24	\N
+463	SPR_001	Collect	18.00	2026-07-24	\N
+464	SPR_001	Delivery	8.00	2026-07-24	\N
+465	SPR_002	Exchange	13.00	2026-07-24	\N
+466	SPR_002	Collect	13.00	2026-07-24	\N
+467	SPR_002	Delivery	8.00	2026-07-24	\N
+468	SPR_003	Exchange	23.00	2026-07-24	\N
+469	SPR_003	Collect	23.00	2026-07-24	\N
+470	SPR_003	Delivery	8.00	2026-07-24	\N
+471	STX_001	Exchange	13.00	2026-07-24	\N
+472	STX_001	Collect	13.00	2026-07-24	\N
+473	STX_001	Delivery	8.00	2026-07-24	\N
+474	STX_002	Exchange	19.50	2026-07-24	\N
+475	STX_002	Collect	19.50	2026-07-24	\N
+476	STX_002	Delivery	8.00	2026-07-24	\N
+477	STX_003	Exchange	19.50	2026-07-24	\N
+478	STX_003	Collect	19.50	2026-07-24	\N
+479	STX_003	Delivery	8.00	2026-07-24	\N
+480	STX_004	Exchange	13.00	2026-07-24	\N
+481	STX_004	Collect	13.00	2026-07-24	\N
+482	STX_004	Delivery	8.00	2026-07-24	\N
+483	STA_001	Exchange	23.00	2026-07-24	\N
+484	STA_001	Collect	23.00	2026-07-24	\N
+485	STA_001	Delivery	8.00	2026-07-24	\N
+486	STS_001	Exchange	23.00	2026-07-24	\N
+487	STS_001	Collect	23.00	2026-07-24	\N
+488	STS_001	Delivery	8.00	2026-07-24	\N
+489	STS_002	Exchange	23.00	2026-07-24	\N
+490	STS_002	Collect	23.00	2026-07-24	\N
+491	STS_002	Delivery	8.00	2026-07-24	\N
+492	STS_003	Exchange	18.00	2026-07-24	\N
+493	STS_003	Collect	18.00	2026-07-24	\N
+494	STS_003	Delivery	8.00	2026-07-24	\N
+495	STS_004	Exchange	13.00	2026-07-24	\N
+496	STS_004	Collect	13.00	2026-07-24	\N
+497	STS_004	Delivery	8.00	2026-07-24	\N
+498	STS_005	Exchange	18.00	2026-07-24	\N
+499	STS_005	Collect	18.00	2026-07-24	\N
+500	STS_005	Delivery	8.00	2026-07-24	\N
+501	STS_006	Exchange	18.00	2026-07-24	\N
+502	STS_006	Collect	18.00	2026-07-24	\N
+503	STS_006	Delivery	8.00	2026-07-24	\N
+504	SUM_001	Exchange	13.00	2026-07-24	\N
+505	SUM_001	Collect	13.00	2026-07-24	\N
+506	SUM_001	Delivery	8.00	2026-07-24	\N
+507	SUN_001	Exchange	18.00	2026-07-24	\N
+508	SUN_001	Collect	18.00	2026-07-24	\N
+509	SUN_001	Delivery	8.00	2026-07-24	\N
+510	SUN_002	Exchange	23.00	2026-07-24	\N
+511	SUN_002	Collect	23.00	2026-07-24	\N
+512	SUN_002	Delivery	8.00	2026-07-24	\N
+513	SUN_003	Exchange	23.00	2026-07-24	\N
+514	SUN_003	Collect	23.00	2026-07-24	\N
+515	SUN_003	Delivery	8.00	2026-07-24	\N
+516	SUN_004	Exchange	23.00	2026-07-24	\N
+517	SUN_004	Collect	23.00	2026-07-24	\N
+518	SUN_004	Delivery	8.00	2026-07-24	\N
+519	SUN_005	Exchange	18.00	2026-07-24	\N
+520	SUN_005	Collect	18.00	2026-07-24	\N
+521	SUN_005	Delivery	8.00	2026-07-24	\N
+522	SYS_001	Exchange	18.00	2026-07-24	\N
+523	SYS_001	Collect	18.00	2026-07-24	\N
+524	SYS_001	Delivery	8.00	2026-07-24	\N
+525	SYST_001	Exchange	13.00	2026-07-24	\N
+526	SYST_001	Collect	13.00	2026-07-24	\N
+527	SYST_001	Delivery	8.00	2026-07-24	\N
+528	SYST_002	Exchange	13.00	2026-07-24	\N
+529	SYST_002	Collect	13.00	2026-07-24	\N
+530	SYST_002	Delivery	8.00	2026-07-24	\N
+531	TRE_001	Sell	13.00	2026-07-24	\N
+532	TAI_001	Exchange	23.00	2026-07-24	\N
+533	TAI_001	Collect	23.00	2026-07-24	\N
+534	TAI_001	Delivery	8.00	2026-07-24	\N
+535	TECH_001	Exchange	23.00	2026-07-24	\N
+536	TECH_001	Collect	23.00	2026-07-24	\N
+537	TECH_001	Delivery	8.00	2026-07-24	\N
+538	TEC_001	Exchange	23.00	2026-07-24	\N
+539	TEC_001	Collect	23.00	2026-07-24	\N
+540	TEC_001	Delivery	8.00	2026-07-24	\N
+541	TECK_001	Exchange	13.00	2026-07-24	\N
+542	TECK_001	Collect	13.00	2026-07-24	\N
+543	TECK_001	Delivery	8.00	2026-07-24	\N
+544	TOH_001	Exchange	23.00	2026-07-24	\N
+545	TOH_001	Collect	23.00	2026-07-24	\N
+546	TOH_001	Delivery	8.00	2026-07-24	\N
+547	TON_001	Exchange	13.00	2026-07-24	\N
+548	TON_001	Collect	13.00	2026-07-24	\N
+549	TON_001	Delivery	8.00	2026-07-24	\N
+550	TONG_001	Exchange	13.00	2026-07-24	\N
+551	TONG_001	Collect	13.00	2026-07-24	\N
+552	TONG_001	Delivery	8.00	2026-07-24	\N
+553	TONG_002	Exchange	23.00	2026-07-24	\N
+554	TONG_002	Collect	23.00	2026-07-24	\N
+555	TONG_002	Delivery	8.00	2026-07-24	\N
+556	TONG_003	Exchange	18.00	2026-07-24	\N
+557	TONG_003	Collect	18.00	2026-07-24	\N
+558	TONG_003	Delivery	8.00	2026-07-24	\N
+559	TONG_004	Exchange	13.00	2026-07-24	\N
+560	TONG_004	Collect	13.00	2026-07-24	\N
+561	TONG_004	Delivery	8.00	2026-07-24	\N
+562	TONG_005	Exchange	23.00	2026-07-24	\N
+563	TONG_005	Collect	23.00	2026-07-24	\N
+564	TONG_005	Delivery	8.00	2026-07-24	\N
+565	TONG_006	Exchange	13.00	2026-07-24	\N
+566	TONG_006	Collect	13.00	2026-07-24	\N
+567	TONG_006	Delivery	8.00	2026-07-24	\N
+568	TONG_007	Exchange	18.00	2026-07-24	\N
+569	TONG_007	Collect	18.00	2026-07-24	\N
+570	TONG_007	Delivery	8.00	2026-07-24	\N
+571	TONG_008	Exchange	18.00	2026-07-24	\N
+572	TONG_008	Collect	18.00	2026-07-24	\N
+573	TONG_008	Delivery	8.00	2026-07-24	\N
+574	TONG_009	Exchange	18.00	2026-07-24	\N
+575	TONG_009	Collect	18.00	2026-07-24	\N
+576	TONG_009	Delivery	8.00	2026-07-24	\N
+577	TOP_001	Exchange	23.00	2026-07-24	\N
+578	TOP_001	Collect	23.00	2026-07-24	\N
+579	TOP_001	Delivery	8.00	2026-07-24	\N
+580	TST_001	Exchange	13.00	2026-07-24	\N
+581	TST_001	Collect	13.00	2026-07-24	\N
+582	TST_001	Delivery	8.00	2026-07-24	\N
+583	TRA_001	Exchange	18.00	2026-07-24	\N
+584	TRA_001	Collect	18.00	2026-07-24	\N
+585	TRA_001	Delivery	8.00	2026-07-24	\N
+586	URB_001	Exchange	23.00	2026-07-24	\N
+587	URB_001	Collect	23.00	2026-07-24	\N
+588	URB_001	Delivery	8.00	2026-07-24	\N
+589	WAH_001	Exchange	23.00	2026-07-24	\N
+590	WAH_001	Collect	23.00	2026-07-24	\N
+591	WAH_001	Delivery	8.00	2026-07-24	\N
+592	WAH_002	Exchange	23.00	2026-07-24	\N
+593	WAH_002	Collect	23.00	2026-07-24	\N
+594	WAH_002	Delivery	8.00	2026-07-24	\N
+595	WAH_003	Exchange	18.00	2026-07-24	\N
+596	WAH_003	Collect	18.00	2026-07-24	\N
+597	WAH_003	Delivery	8.00	2026-07-24	\N
+598	WAH_004	Exchange	23.00	2026-07-24	\N
+599	WAH_004	Collect	23.00	2026-07-24	\N
+600	WAH_004	Delivery	8.00	2026-07-24	\N
+601	WAH_005	Exchange	18.00	2026-07-24	\N
+602	WAH_005	Collect	18.00	2026-07-24	\N
+603	WAH_005	Delivery	8.00	2026-07-24	\N
+604	WAH_006	Exchange	23.00	2026-07-24	\N
+605	WAH_006	Collect	23.00	2026-07-24	\N
+606	WAH_006	Delivery	8.00	2026-07-24	\N
+607	WAH_007	Exchange	23.00	2026-07-24	\N
+608	WAH_007	Collect	23.00	2026-07-24	\N
+609	WAH_007	Delivery	8.00	2026-07-24	\N
+610	WEB_001	Exchange	23.00	2026-07-24	\N
+611	WEB_001	Collect	23.00	2026-07-24	\N
+612	WEB_001	Delivery	8.00	2026-07-24	\N
+613	WIK_001	Exchange	13.00	2026-07-24	\N
+614	WIK_001	Collect	13.00	2026-07-24	\N
+615	WIK_001	Delivery	8.00	2026-07-24	\N
+616	WIL_001	Exchange	13.00	2026-07-24	\N
+617	WIL_001	Collect	13.00	2026-07-24	\N
+618	WIL_001	Delivery	8.00	2026-07-24	\N
+619	WOR_001	Exchange	23.00	2026-07-24	\N
+620	WOR_001	Collect	23.00	2026-07-24	\N
+621	WOR_001	Delivery	8.00	2026-07-24	\N
+622	WRA_001	Exchange	23.00	2026-07-24	\N
+623	WRA_001	Collect	23.00	2026-07-24	\N
+624	WRA_001	Delivery	8.00	2026-07-24	\N
+625	WRA_002	Exchange	13.00	2026-07-24	\N
+626	WRA_002	Collect	13.00	2026-07-24	\N
+627	WRA_002	Delivery	8.00	2026-07-24	\N
+628	ENGI_016	Exchange	23.00	2026-07-24	\N
+629	ENGI_016	Collect	23.00	2026-07-24	\N
+630	ENGI_016	Delivery	8.00	2026-07-24	\N
+631	ENGI_017	Exchange	23.00	2026-07-24	\N
+632	ENGI_017	Collect	23.00	2026-07-24	\N
+633	ENGI_017	Delivery	8.00	2026-07-24	\N
+634	ENGI_018	Exchange	23.00	2026-07-24	\N
+635	ENGI_018	Collect	23.00	2026-07-24	\N
+636	ENGI_018	Delivery	8.00	2026-07-24	\N
+637	GLO_001	Exchange	13.00	2026-07-24	\N
+638	GLO_001	Collect	13.00	2026-07-24	\N
+639	GLO_001	Delivery	8.00	2026-07-24	\N
+640	LIR_004	Dump	18.00	2026-07-24	\N
+641	LIR_005	Dump	13.00	2026-07-24	\N
+\.
+
+
+--
+-- Data for Name: ref_lists; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.ref_lists (kind, value) FROM stdin;
+waste	General Waste
+waste	Wood Waste
+waste	Metal Waste
+waste	Plastic Waste
+waste	Hardcore Waste
+waste	Food Waste
+waste	Vessel Waste
+dump	Lirich Resources Pte Ltd
+dump	NEA
+dump	WDL
+dump	Bee Joo
+dump	Kim Hock
+dump	Wah & Hua
+dump	TRS Environment
 \.
 
 
@@ -4238,6 +5244,222 @@ COPY public.rate_card (id, site_id, job_type, price, valid_from, created_by) FRO
 --
 
 COPY public.sites (site_id, client_id, site_name, address, active, created_at) FROM stdin;
+EXP_001	EXP	123 Express	60 Kaki Bukit Place, #06-14 Eunos Techpark	t	2026-07-24 15:15:51.944859+00
+ABS_001	ABS	Absolut Properties Pte Ltd	163 Marine Parade Road, Marine Meadows Condo	t	2026-07-24 15:15:51.944859+00
+ABS_002	ABS	Absolut Properties Pte Ltd	173 Jalan Loyang Besar, Ocean Front Suites Condo	t	2026-07-24 15:15:51.944859+00
+ACR_001	ACR	Acreation Group Pte Ltd	19 Jalan Mesin	t	2026-07-24 15:15:51.944859+00
+ACR_002	ACR	Acreation Group Pte Ltd	9 Raffles Boulevard	t	2026-07-24 15:15:51.944859+00
+ACR_003	ACR	Acreation Group Pte Ltd	Engku Aman Road	t	2026-07-24 15:15:51.944859+00
+ACR_004	ACR	Acreation Group Pte Ltd	Orchard Gateway, 277 Orchard Road	t	2026-07-24 15:15:51.944859+00
+ADV_001	ADV	Advanced Substrate Technologies Pte Ltd	47A Jalan Buroh	t	2026-07-24 15:15:51.944859+00
+AJK_001	AJK	AJK	24 Tuas Ave 8	t	2026-07-24 15:15:51.944859+00
+ALL_001	ALL	Allalloy Dynaweld Pte Ltd	10 Tuas Link 1	t	2026-07-24 15:15:51.944859+00
+ALLI_001	ALLI	Allied Container Services Pte Ltd	10 Tuas Ave 6	t	2026-07-24 15:15:51.944859+00
+ALLI_002	ALLI	Allied Container Services Pte Ltd	15 Pioneer Crescent	t	2026-07-24 15:15:51.944859+00
+ALLI_003	ALLI	Allied Container Services Pte Ltd	25 Penjuru Lane Yard 3	t	2026-07-24 15:15:51.944859+00
+APE_001	APE	Apex Sealing Technologies Pte Ltd	19 Tuas South Street 5	t	2026-07-24 15:15:51.944859+00
+APE_002	APE	Apex Sealing Technologies Pte Ltd	Tuas Basin Lane	t	2026-07-24 15:15:51.944859+00
+ARC_001	ARC	Archibiz	Blk A 30 Kranji Loop, #06-05 Timmac @ Kranji	t	2026-07-24 15:15:51.944859+00
+ART_001	ART	Artdecor Design Studio Pte Ltd	2 Defu South Street 1, #05-03, JTC Industrial City	t	2026-07-24 15:15:51.944859+00
+ASL_001	ASL	ASL Proworld Solution Pte Ltd	8 Pandan Crescent	t	2026-07-24 15:15:51.944859+00
+AST_001	AST	Astore Pte Ltd	43 Keppel Road	t	2026-07-24 15:15:51.944859+00
+AVE_001	AVE	Aver Asia (S) Pte Ltd	14 Benoi Place	t	2026-07-24 15:15:51.944859+00
+BCW_001	BCW	B&C Waste	16 Gul Crescent	t	2026-07-24 15:15:51.944859+00
+BCW_002	BCW	B&C Waste	513 Kampong Bahru Road Keppel Distripark	t	2026-07-24 15:15:51.944859+00
+BCW_003	BCW	B&C Waste	Upper Changi Road, Summer Garden Condo	t	2026-07-24 15:15:51.944859+00
+BCW_004	BCW	B&C Waste	2 Mandai Link	t	2026-07-24 15:15:51.944859+00
+BCW_005	BCW	B&C Waste	Peck Seah Street	t	2026-07-24 15:15:51.944859+00
+BCW_006	BCW	B&C Waste	7 Changi South Street 2	t	2026-07-24 15:15:51.944859+00
+BCW_007	BCW	B&C Waste	26 Loyang Drive	t	2026-07-24 15:15:51.944859+00
+BAB_001	BAB	Babu	80 Mandai Lake Road	t	2026-07-24 15:15:51.944859+00
+BAB_002	BAB	Babu	Blk 5 Haig Road #07-463	t	2026-07-24 15:15:51.944859+00
+BAB_003	BAB	Babu	900 Bedok North Road	t	2026-07-24 15:15:51.944859+00
+BAB_004	BAB	Babu	2 Stadium Walk	t	2026-07-24 15:15:51.944859+00
+BEE_001	BEE	Beejoo	5 Sungei Kadut Street 6	t	2026-07-24 15:15:51.944859+00
+BND_001	BND	BNDC (Fairprice)	1 Buroh Lane L4	t	2026-07-24 15:15:51.944859+00
+BND_002	BND	BNDC (Fairprice)	28 Tuas Ave 13	t	2026-07-24 15:15:51.944859+00
+BND_003	BND	BNDC (Fairprice)	5 Joo Koon Circle	t	2026-07-24 15:15:51.944859+00
+BND_004	BND	BNDC (Fairprice)	7 Sunview Road	t	2026-07-24 15:15:51.944859+00
+CPH_001	CPH	C & P Holdings Pte Ltd	46 Penjuru Lane	t	2026-07-24 15:15:51.944859+00
+CAL_001	CAL	Calvary Carpentry Pte Ltd	54 Senoko Road	t	2026-07-24 15:15:51.944859+00
+CAR_001	CAR	Cargo International	20 Gul Way, #05-04	t	2026-07-24 15:15:51.944859+00
+CAT_001	CAT	Caterpillar	14 Tractor Road	t	2026-07-24 15:15:51.944859+00
+CAT_002	CAT	Caterpillar	7 Tractor Road	t	2026-07-24 15:15:51.944859+00
+CBM_001	CBM	CBM Pte Ltd	501 Old Choa Chu Kang Road, Home Team Academy	t	2026-07-24 15:15:51.944859+00
+CHA_001	CHA	Chateraise	8 Jalan Besut L3	t	2026-07-24 15:15:51.944859+00
+CHI_001	CHI	Chiong Construction	10 Serangoon Ave 4	t	2026-07-24 15:15:51.944859+00
+CHI_002	CHI	Chiong Construction	13 Serangoon Ave 3	t	2026-07-24 15:15:51.944859+00
+CHI_003	CHI	Chiong Construction	60 Blk A Jurong West Street 42	t	2026-07-24 15:15:51.944859+00
+CHU_001	CHU	Chuan Seng Leong	21 Benoi Sector #03-03	t	2026-07-24 15:15:51.944859+00
+CLE_001	CLE	Cleanis-Tee	8 Jalan Papan	t	2026-07-24 15:15:51.944859+00
+CNC_001	CNC	CNCCS Engineering and Construction Pte Ltd	15 Tembusu Crescent, #08-01, COGENT.	t	2026-07-24 15:15:51.944859+00
+CRE_001	CRE	CrestSA Marine & Offshore Pte Ltd	15 Pandan Road	t	2026-07-24 15:15:51.944859+00
+DSV_001	DSV	DSV	24 Penjuru Road, #09-05/06 (Loading Bay 2)	t	2026-07-24 15:15:51.944859+00
+DYN_001	DYN	Dyna Cool	2 Bukit Batok Street 24, #03-19 Skytech	t	2026-07-24 15:15:51.944859+00
+ENG_001	ENG	Eng Lee Logistics Pte Ltd	9 Gul Circle	t	2026-07-24 15:15:51.944859+00
+ENGL_001	ENGL	Eng Leng Contractors Pte Ltd	1 CleanTech Loop	t	2026-07-24 15:15:51.944859+00
+ENGL_002	ENGL	Eng Leng Contractors Pte Ltd	1 Gul Circle, JTC Logistics Hub	t	2026-07-24 15:15:51.944859+00
+ENGL_003	ENGL	Eng Leng Contractors Pte Ltd	16 Tuas Ave 1, JTC Space @ Tuas	t	2026-07-24 15:15:51.944859+00
+ENGL_004	ENGL	Eng Leng Contractors Pte Ltd	2 Tukang Innovation Grove	t	2026-07-24 15:15:51.944859+00
+ENGL_005	ENGL	Eng Leng Contractors Pte Ltd	28A Penjuru Close Bin Centre	t	2026-07-24 15:15:51.944859+00
+ENGL_006	ENGL	Eng Leng Contractors Pte Ltd	8 Buroh Street	t	2026-07-24 15:15:51.944859+00
+ENGL_007	ENGL	Eng Leng Contractors Pte Ltd	8 Jurong Town Hall Rd, JTC Summit Building	t	2026-07-24 15:15:51.944859+00
+ENGL_008	ENGL	Eng Leng Contractors Pte Ltd	Jalan Papan LP 15	t	2026-07-24 15:15:51.944859+00
+ENGL_009	ENGL	Eng Leng Contractors Pte Ltd	Pandan Loop, Blk K, (Phase 1), Bin Centre	t	2026-07-24 15:15:51.944859+00
+ENGL_010	ENGL	Eng Leng Contractors Pte Ltd	Pandan Loop, Blk X, (Phase 3), Bin Centre	t	2026-07-24 15:15:51.944859+00
+ENGL_011	ENGL	Eng Leng Contractors Pte Ltd	15 Jalan Terusan	t	2026-07-24 15:15:51.944859+00
+ENGI_001	ENGI	Engie Services Singapore Pte Ltd	1 Canning Rise Singapore 179868	t	2026-07-24 15:15:51.944859+00
+ENGI_002	ENGI	Engie Services Singapore Pte Ltd	1 Empress Place	t	2026-07-24 15:15:51.944859+00
+ENGI_003	ENGI	Engie Services Singapore Pte Ltd	1 Jurong East st 21, Ng Teng Fong Hospital	t	2026-07-24 15:15:51.944859+00
+ENGI_004	ENGI	Engie Services Singapore Pte Ltd	100 Victoria Street, Basement 2, Loading Bay	t	2026-07-24 15:15:51.944859+00
+ENGI_005	ENGI	Engie Services Singapore Pte Ltd	17 Woodlands Drive 17, Woodlands Health Campus	t	2026-07-24 15:15:51.944859+00
+ENGI_006	ENGI	Engie Services Singapore Pte Ltd	2 Simei Street 3, Changi General Hospital	t	2026-07-24 15:15:51.944859+00
+ENGI_007	ENGI	Engie Services Singapore Pte Ltd	20 Airport Boulevard Changi Airport	t	2026-07-24 15:15:51.944859+00
+ENGI_008	ENGI	Engie Services Singapore Pte Ltd	28 Irrawaddy Road, New Phoenix Park. (Ministry of Home Affairs)	t	2026-07-24 15:15:51.944859+00
+ENGI_009	ENGI	Engie Services Singapore Pte Ltd	32 Jurong Port Road, Heritage Center	t	2026-07-24 15:15:51.944859+00
+ENGI_010	ENGI	Engie Services Singapore Pte Ltd	4A Tuas Bay Street	t	2026-07-24 15:15:51.944859+00
+ENGI_011	ENGI	Engie Services Singapore Pte Ltd	65 Airport Boulevard, #B2-63, Changi Airport T3	t	2026-07-24 15:15:51.944859+00
+ENGI_012	ENGI	Engie Services Singapore Pte Ltd	9 Kallang Place	t	2026-07-24 15:15:51.944859+00
+ENGI_013	ENGI	Engie Services Singapore Pte Ltd	93 Stamford Road, National Museum of Singapore	t	2026-07-24 15:15:51.944859+00
+ENGI_014	ENGI	Engie Services Singapore Pte Ltd	Changi Airport T2 Basement	t	2026-07-24 15:15:51.944859+00
+ENGI_015	ENGI	Engie Services Singapore Pte Ltd	2 Tuas Bay Street	t	2026-07-24 15:15:51.944859+00
+STX_004	STX	ST	61a Tuas Nexus Drive	t	2026-07-24 15:15:51.944859+00
+EPO_001	EPO	Epont Building Services Pte Ltd	1 Tuas View Place, Westlink One, #02-01	t	2026-07-24 15:15:51.944859+00
+EUR_001	EUR	Euro Pac Logistics Pte Ltd	42 Tanjong Penjuru Road	t	2026-07-24 15:15:51.944859+00
+EUR_002	EUR	Euro Pac Logistics Pte Ltd	52 Tanjong Penjuru #04-92	t	2026-07-24 15:15:51.944859+00
+EVE_001	EVE	EverTeam Pte Ltd	60 Benoi Road	t	2026-07-24 15:15:51.944859+00
+FAX_001	FAX	Faxolif Industries Pte Ltd	75 Tech Park Crescent	t	2026-07-24 15:15:51.944859+00
+GEO_001	GEO	Geoinnovations Pte Ltd	5 Kwong Ming Road	t	2026-07-24 15:15:51.944859+00
+GSE_001	GSE	GS Engineering and Construction Corporation	Nicoll Highway LP 120F	t	2026-07-24 15:15:51.944859+00
+GSE_002	GSE	GS Engineering and Construction Corporation	Nicoll Highway LP 131F	t	2026-07-24 15:15:51.944859+00
+GSE_003	GSE	GS Engineering and Construction Corporation	Nicoll Highway, LP 132F	t	2026-07-24 15:15:51.944859+00
+GSE_004	GSE	GS Engineering and Construction Corporation	Ophir Road LP 14/1F	t	2026-07-24 15:15:51.944859+00
+GSE_005	GSE	GS Engineering and Construction Corporation	Ophir Road, LP 30F	t	2026-07-24 15:15:51.944859+00
+GSE_006	GSE	GS Engineering and Construction Corporation	Republic Boulevard LP 4F	t	2026-07-24 15:15:51.944859+00
+GSE_007	GSE	GS Engineering and Construction Corporation	Victoria Street, LP 64F	t	2026-07-24 15:15:51.944859+00
+GWC_001	GWC	GWC	449 Clementi Ave 3, #01-259	t	2026-07-24 15:15:51.944859+00
+GYM_001	GYM	Gymsportz	7, Block B Mandai Link, #05-27 Mandai Connection	t	2026-07-24 15:15:51.944859+00
+HPR_001	HPR	H1 Projects Pte Ltd	107 Jalan Pari Burong	t	2026-07-24 15:15:51.944859+00
+HAI_001	HAI	Haid Biotechnology Industry (Singapore) Pte Ltd	46 Gul Drive	t	2026-07-24 15:15:51.944859+00
+HCG_001	HCG	HCG	8 Tuas View Circuit	t	2026-07-24 15:15:51.944859+00
+HCG_002	HCG	HCG	79 Anson Road	t	2026-07-24 15:15:51.944859+00
+HEP_001	HEP	He Ping Development Pte Ltd	32 Tras Street	t	2026-07-24 15:15:51.944859+00
+HEP_002	HEP	He Ping Development Pte Ltd	38 Beach Road, South Beach Tower	t	2026-07-24 15:15:51.944859+00
+HEP_003	HEP	He Ping Development Pte Ltd	51 Tanjong Pagar Road	t	2026-07-24 15:15:51.944859+00
+HON_001	HON	Hong Hang Hardware	35 Pioneer Road	t	2026-07-24 15:15:51.944859+00
+HOT_001	HOT	Hotel Royal Singapore	36 Newton Road	t	2026-07-24 15:15:51.944859+00
+HUA_001	HUA	Huationg Contractor	Tanah Merah Coast Road LP 509	t	2026-07-24 15:15:51.944859+00
+HUN_001	HUN	Huntsman (S) Pte Ltd	10 Seraya Ave	t	2026-07-24 15:15:51.944859+00
+HYD_001	HYD	Hydroproof	The Aries, 51 Science Park	t	2026-07-24 15:15:51.944859+00
+HYU_001	HYU	Hyundai Engineering & Construction Co., Ltd	100 Beach Road	t	2026-07-24 15:15:51.944859+00
+INV_001	INV	INVX Asia Pacific Pte Ltd	80 Tuas West Drive	t	2026-07-24 15:15:51.944859+00
+IWA_001	IWA	Iwatech	2 Kian Teck Drive	t	2026-07-24 15:15:51.944859+00
+LAU_001	LAU	Lau Choy Seng Pte Ltd	30 Tuas West Avenue	t	2026-07-24 15:15:51.944859+00
+LCH_001	LCH	LCH Logistics Pte Ltd	3 Pioneer Sector 3	t	2026-07-24 15:15:51.944859+00
+LEN_001	LEN	Leng Aik Engineering	17 Soon Lee Road	t	2026-07-24 15:15:51.944859+00
+LEX_001	LEX	LexBuild International Pte Ltd	11 Tuas Bay Close, #04-01/02	t	2026-07-24 15:15:51.944859+00
+LIR_001	LIR	Lirich	Carton	t	2026-07-24 15:15:51.944859+00
+LIR_002	LIR	Lirich	Metal	t	2026-07-24 15:15:51.944859+00
+LIR_003	LIR	Lirich	Plastics	t	2026-07-24 15:15:51.944859+00
+LIM_001	LIM	Lim Siang Huat Pte Ltd	6 Fishery Port Road L3	t	2026-07-24 15:15:51.944859+00
+MAT_001	MAT	Matrix Cooling (Singapore) Pte Ltd	10 Buroh Street, #07-01, Westconnect Building	t	2026-07-24 15:15:51.944859+00
+MEC_001	MEC	Mecom GreenBuild (Singapore) Pte Ltd	23 Jurong Port Road	t	2026-07-24 15:15:51.944859+00
+NEA_001	NEA	NEA	NEA Tuas	t	2026-07-24 15:15:51.944859+00
+PAX_001	PAX	PaxOcean Singapore Pte Ltd	5 Jalan Samulun	t	2026-07-24 15:15:51.944859+00
+POH_001	POH	Poh Tiong Choon Logistics Ltd	21 Ayer Merbau, Jurong Island	t	2026-07-24 15:15:51.944859+00
+POH_002	POH	Poh Tiong Choon Logistics Ltd	48 Pandan Road L1	t	2026-07-24 15:15:51.944859+00
+POH_003	POH	Poh Tiong Choon Logistics Ltd	48 Pandan Road L3	t	2026-07-24 15:15:51.944859+00
+POH_004	POH	Poh Tiong Choon Logistics Ltd	48 Pandan Road L6	t	2026-07-24 15:15:51.944859+00
+PSA_001	PSA	PSA Port Ecosystem (Sea) Pte Ltd	24 Penjuru Road. #05-06	t	2026-07-24 15:15:51.944859+00
+QUA_001	QUA	Qualicoat Pte Ltd	5 Gul Drive	t	2026-07-24 15:15:51.944859+00
+RAD_001	RAD	Radha Exports Pte Ltd	118 Pioneer Road L1	t	2026-07-24 15:15:51.944859+00
+RAD_002	RAD	Radha Exports Pte Ltd	118 Pioneer Road L4	t	2026-07-24 15:15:51.944859+00
+RAD_003	RAD	Radha Exports Pte Ltd	118 Pioneer Road L7	t	2026-07-24 15:15:51.944859+00
+RAD_004	RAD	Radha Exports Pte Ltd	6 Fishery Port, L5M	t	2026-07-24 15:15:51.944859+00
+REM_001	REM	REMEX Minerals Singapore Pte Ltd	98 Tuas South Ave 3 (Inside NEA building)	t	2026-07-24 15:15:51.944859+00
+RJH_001	RJH	RJ Hydralics	83 Tagore Lane	t	2026-07-24 15:15:51.944859+00
+SAV_001	SAV	Savills Property Management Pte Ltd (Blue Hub)	10 Sunview Road L109	t	2026-07-24 15:15:51.944859+00
+SAV_002	SAV	Savills Property Management Pte Ltd (Blue Hub)	10 Sunview Road L309	t	2026-07-24 15:15:51.944859+00
+SAV_003	SAV	Savills Property Management Pte Ltd (Blue Hub)	10 Sunview Road L407	t	2026-07-24 15:15:51.944859+00
+SAV_004	SAV	Savills Property Management Pte Ltd (Blue Hub)	10 Sunview Road L609	t	2026-07-24 15:15:51.944859+00
+SAVI_001	SAVI	Savills Property Management Pte Ltd (Green Hub)	11 Pioneer Turn L2	t	2026-07-24 15:15:51.944859+00
+SAVI_002	SAVI	Savills Property Management Pte Ltd (Green Hub)	11 Pioneer Turn L401	t	2026-07-24 15:15:51.944859+00
+SAVI_003	SAVI	Savills Property Management Pte Ltd (Green Hub)	11 Pioneer Turn L407	t	2026-07-24 15:15:51.944859+00
+SAVI_004	SAVI	Savills Property Management Pte Ltd (Green Hub)	11 Pioneer Turn L601	t	2026-07-24 15:15:51.944859+00
+SAVI_005	SAVI	Savills Property Management Pte Ltd (Green Hub)	11 Pioneer Turn L8	t	2026-07-24 15:15:51.944859+00
+SEA_001	SEA	Seatrium Pte Ltd	60 Admiralty Road West	t	2026-07-24 15:15:51.944859+00
+SHI_001	SHI	Shin Ya O Ya Pte Ltd	6 Chin Bee Ave L5	t	2026-07-24 15:15:51.944859+00
+SHI_002	SHI	Shin Ya O Ya Pte Ltd	6 Chin Bee Ave L9	t	2026-07-24 15:15:51.944859+00
+SIE_001	SIE	Siew Kong Glass Makers Pte Ltd	43 Joo Koon Circle	t	2026-07-24 15:15:51.944859+00
+SIN_001	SIN	Sin Hong Hardware Pte Ltd	3 Kian Teck Crescent	t	2026-07-24 15:15:51.944859+00
+SINH_001	SINH	Sin Hong Poh Metal Trading	59 Tampines Industrial Ave	t	2026-07-24 15:15:51.944859+00
+SIND_001	SIND	Sindac Cleaning Services Pte Ltd	1H Pine Grove, Pine Grove Condo	t	2026-07-24 15:15:51.944859+00
+SIND_002	SIND	Sindac Cleaning Services Pte Ltd	20 Woodlands Crescent, Northoaks Condo	t	2026-07-24 15:15:51.944859+00
+SLS_001	SLS	SLS	No. 9 Tuas South Avenue 19, #01-99	t	2026-07-24 15:15:51.944859+00
+SLS_002	SLS	SLS	VSMC site office Gate 3	t	2026-07-24 15:15:51.944859+00
+SNI_001	SNI	Snip Avenue Holdings	9 Changi South Street 3, loading bay	t	2026-07-24 15:15:51.944859+00
+SPR_001	SPR	Springlife Maintenance Service Pte Ltd	21 Ang Mo Kio Ave 9, Nuovo Condo	t	2026-07-24 15:15:51.944859+00
+SPR_002	SPR	Springlife Maintenance Service Pte Ltd	464 Corporation Road, Parc Vista Condo	t	2026-07-24 15:15:51.944859+00
+SPR_003	SPR	Springlife Maintenance Service Pte Ltd	88 Flora Road, Edelweiss Park Condo	t	2026-07-24 15:15:51.944859+00
+STX_001	STX	ST	6 Tuas South Street 15	t	2026-07-24 15:15:51.944859+00
+STX_002	STX	ST	Benoi	t	2026-07-24 15:15:51.944859+00
+STX_003	STX	ST	Gul	t	2026-07-24 15:15:51.944859+00
+STA_001	STA	Stamford Tyres	19 Lok Yang Way	t	2026-07-24 15:15:51.944859+00
+STS_001	STS	STSM	15 Pasir Ris Street 21	t	2026-07-24 15:15:51.944859+00
+STS_002	STS	STSM	47 Hougang Avenue 1	t	2026-07-24 15:15:51.944859+00
+STS_003	STS	STSM	Blk 15 Toa Payoh Lorong 7	t	2026-07-24 15:15:51.944859+00
+STS_004	STS	STSM	Blk 61 Jurong West Street 65, Jurong West Secondary School (JWSS)	t	2026-07-24 15:15:51.944859+00
+STS_005	STS	STSM	Blk 64 Lorong 5 Toa Payoh - Lot no. 24	t	2026-07-24 15:15:51.944859+00
+STS_006	STS	STSM	Blk 698 West Coast Road, Commonwealth Secondary School (CWSS)	t	2026-07-24 15:15:51.944859+00
+SUM_001	SUM	Sumber Indah Pte Ltd	1 Tuas View Close	t	2026-07-24 15:15:51.944859+00
+SUN_001	SUN	Sun City Maintenance Pte Ltd	300 Mandai Road, Mandai Crematorium and Columbarium	t	2026-07-24 15:15:51.944859+00
+SUN_002	SUN	Sun City Maintenance Pte Ltd	55 Changi South Ave 1	t	2026-07-24 15:15:51.944859+00
+SUN_003	SUN	Sun City Maintenance Pte Ltd	SUTD Building 2, 8 Somapah Road, loading bay	t	2026-07-24 15:15:51.944859+00
+SUN_004	SUN	Sun City Maintenance Pte Ltd	SUTD Building 3, 8 somapah Road , with access via the Changi Street carpark entrance	t	2026-07-24 15:15:51.944859+00
+SUN_005	SUN	Sun City Maintenance Pte Ltd	Yishun Columbarium, 569 Yishun Ring Road	t	2026-07-24 15:15:51.944859+00
+SYS_001	SYS	Sys-Mac Automation Engineering Pte Ltd	2 Woodlands Sector 1, #05-18	t	2026-07-24 15:15:51.944859+00
+SYST_001	SYST	System Foundation Pte Ltd	21A Tuas South Place	t	2026-07-24 15:15:51.944859+00
+SYST_002	SYST	System Foundation Pte Ltd	45 Tuas View Place	t	2026-07-24 15:15:51.944859+00
+TRE_001	TRE	T3 Reources Pte Ltd	16 Gul Street 3	t	2026-07-24 15:15:51.944859+00
+TAI_001	TAI	Tai Lee Tong	No 11, Lorong 21A Geylang	t	2026-07-24 15:15:51.944859+00
+TECH_001	TECH	Technigroup Far East Pte Ltd	Outram Road	t	2026-07-24 15:15:51.944859+00
+TEC_001	TEC	Technicair Singapore Services Pte Ltd	16 Jalan Tan Tock Seng	t	2026-07-24 15:15:51.944859+00
+TECK_001	TECK	Teck Sang Pte Ltd	30A Quality Road	t	2026-07-24 15:15:51.944859+00
+TOH_001	TOH	Toh Ban Seng	Seletar Westlink LP 103	t	2026-07-24 15:15:51.944859+00
+TON_001	TON	Tong Carriage (S) Pte Ltd	30 Toh Guan Road	t	2026-07-24 15:15:51.944859+00
+TONG_001	TONG	Tong Hock Pte Ltd	10 Pandan Crescent	t	2026-07-24 15:15:51.944859+00
+TONG_002	TONG	Tong Hock Pte Ltd	1206A East Coast Park	t	2026-07-24 15:15:51.944859+00
+TONG_003	TONG	Tong Hock Pte Ltd	14 Tractor Road	t	2026-07-24 15:15:51.944859+00
+TONG_004	TONG	Tong Hock Pte Ltd	19 Tuas Street	t	2026-07-24 15:15:51.944859+00
+TONG_005	TONG	Tong Hock Pte Ltd	2 Peach Garden, Peach Garden condo	t	2026-07-24 15:15:51.944859+00
+TONG_006	TONG	Tong Hock Pte Ltd	2 Pioneer Sector 1	t	2026-07-24 15:15:51.944859+00
+TONG_007	TONG	Tong Hock Pte Ltd	58 Woodlands Drive 16, La Casa Condo	t	2026-07-24 15:15:51.944859+00
+TONG_008	TONG	Tong Hock Pte Ltd	7 Tractor Road	t	2026-07-24 15:15:51.944859+00
+TONG_009	TONG	Tong Hock Pte Ltd	1 Woodlands Terrace	t	2026-07-24 15:15:51.944859+00
+TOP_001	TOP	Top Star Builder Pte Ltd	50 Playfair road	t	2026-07-24 15:15:51.944859+00
+TST_001	TST	TSTL	19 Tuas Street	t	2026-07-24 15:15:51.944859+00
+TRA_001	TRA	Tracebuild	1 Woodlands Street 31, Fu Chun Community Club	t	2026-07-24 15:15:51.944859+00
+URB_001	URB	Urban Group Pte Ltd	200 Netheravon Road	t	2026-07-24 15:15:51.944859+00
+WAH_001	WAH	Wah & Hua Pte Ltd	17 Kallang Junction, #01-01, Singapore 339274	t	2026-07-24 15:15:51.944859+00
+WAH_002	WAH	Wah & Hua Pte Ltd	19 Loyang Way	t	2026-07-24 15:15:51.944859+00
+WAH_003	WAH	Wah & Hua Pte Ltd	22 Woodlands Link	t	2026-07-24 15:15:51.944859+00
+WAH_004	WAH	Wah & Hua Pte Ltd	221 Kallang Bahru Lion Building	t	2026-07-24 15:15:51.944859+00
+WAH_005	WAH	Wah & Hua Pte Ltd	30 Kerong Lane	t	2026-07-24 15:15:51.944859+00
+WAH_006	WAH	Wah & Hua Pte Ltd	76 Sungei Tengah Road	t	2026-07-24 15:15:51.944859+00
+WAH_007	WAH	Wah & Hua Pte Ltd	980 Upper Changi Road North Singapore 507708(Prison HQ)	t	2026-07-24 15:15:51.944859+00
+WEB_001	WEB	WeBuild	120 Hillview Ave	t	2026-07-24 15:15:51.944859+00
+WIK_001	WIK	WIKA Instrumentation Pte Ltd	13 Kian Teck Crescent	t	2026-07-24 15:15:51.944859+00
+WIL_001	WIL	Wilkie Development Pte Ltd	12 New Industrial Road	t	2026-07-24 15:15:51.944859+00
+WOR_001	WOR	World of Wood Pte Ltd	35 Tannery Road, #01-07, Ruby Industrial Complex	t	2026-07-24 15:15:51.944859+00
+WRA_001	WRA	W''Ray Construction Pte Ltd	22 Scotts Road, Goodwood Park Hotel	t	2026-07-24 15:15:51.944859+00
+WRA_002	WRA	W''Ray Construction Pte Ltd	25 Tuas Ave 4	t	2026-07-24 15:15:51.944859+00
+ENGI_016	ENGI	Engie Services Singapore Pte Ltd	1 Cove Grove	t	2026-07-24 15:15:51.944859+00
+ENGI_017	ENGI	Engie Services Singapore Pte Ltd	1 Media Link	t	2026-07-24 15:15:51.944859+00
+ENGI_018	ENGI	Engie Services Singapore Pte Ltd	30 Changi North Cresent	t	2026-07-24 15:15:51.944859+00
+GLO_001	GLO	Glory SIP Pte Ltd	50 Tuas Avenue 11, 02-05	t	2026-07-24 15:15:51.944859+00
+LIR_004	LIR	Lirich	Beejoo	t	2026-07-24 15:15:51.944859+00
+LIR_005	LIR	Lirich	NEA Tuas	t	2026-07-24 15:15:51.944859+00
+PIL_001	PIL	Pacific International Lines	PSA berths - vessel operations	t	2026-07-24 15:15:51.944859+00
 \.
 
 
@@ -4246,6 +5468,13 @@ COPY public.sites (site_id, client_id, site_name, address, active, created_at) F
 --
 
 COPY public.vehicles (vehicle_id, vtype, active) FROM stdin;
+XE5457Y	\N	t
+XE6221D	\N	t
+XE4491D	\N	t
+XE8496	\N	t
+XE6204D	\N	t
+XE7116D	\N	t
+XE7126P	\N	t
 \.
 
 
@@ -4351,6 +5580,7 @@ COPY realtime.subscription (id, subscription_id, entity, filters, claims, create
 --
 
 COPY storage.buckets (id, name, owner, created_at, updated_at, public, avif_autodetection, file_size_limit, allowed_mime_types, owner_id, type) FROM stdin;
+do-photos	do-photos	\N	2026-07-24 16:50:07.610059+00	2026-07-24 16:50:07.610059+00	t	f	\N	\N	\N	STANDARD
 \.
 
 
@@ -4444,6 +5674,10 @@ COPY storage.migrations (id, name, hash, executed_at) FROM stdin;
 --
 
 COPY storage.objects (id, bucket_id, name, owner, created_at, updated_at, last_accessed_at, metadata, version, owner_id, user_metadata) FROM stdin;
+a2e812d0-30b6-4735-adfa-eb4f616b487e	do-photos	mrzbayza-BININ-43-1.jpg	\N	2026-07-24 19:07:17.293815+00	2026-07-24 19:07:17.293815+00	2026-07-24 19:07:17.293815+00	{"eTag": "\\"e6de1330bcd5d161d095a6545f8fb7e0\\"", "size": 126487, "mimetype": "image/jpeg", "cacheControl": "max-age=3600", "lastModified": "2026-07-24T19:07:18.000Z", "contentLength": 126487, "httpStatusCode": 200}	5b28730c-69db-413e-a84e-ca4d05aa20f7	\N	{}
+344f6e6e-4b8e-4028-a546-2ce9315490ee	do-photos	mrzbaz6l-BINOUT-43-1.jpg	\N	2026-07-24 19:07:17.439235+00	2026-07-24 19:07:17.439235+00	2026-07-24 19:07:17.439235+00	{"eTag": "\\"e6de1330bcd5d161d095a6545f8fb7e0\\"", "size": 126487, "mimetype": "image/jpeg", "cacheControl": "max-age=3600", "lastModified": "2026-07-24T19:07:18.000Z", "contentLength": 126487, "httpStatusCode": 200}	2b3ae022-6d76-4be9-a2e8-55dcabf5da4d	\N	{}
+94cd0f1c-8f1b-4492-8caa-508e1f1627bb	do-photos	mrzbazaa-DO-43-1.jpg	\N	2026-07-24 19:07:17.568546+00	2026-07-24 19:07:17.568546+00	2026-07-24 19:07:17.568546+00	{"eTag": "\\"e6de1330bcd5d161d095a6545f8fb7e0\\"", "size": 126487, "mimetype": "image/jpeg", "cacheControl": "max-age=3600", "lastModified": "2026-07-24T19:07:18.000Z", "contentLength": 126487, "httpStatusCode": 200}	ca6af05e-d355-4002-9ed4-5c6580d813f7	\N	{}
+6da9ddc2-fb74-49ef-8808-d8db60c5f29c	do-photos	mrzcgqcw-DO-44-1.jpg	\N	2026-07-24 19:39:45.618481+00	2026-07-24 19:39:45.618481+00	2026-07-24 19:39:45.618481+00	{"eTag": "\\"e6de1330bcd5d161d095a6545f8fb7e0\\"", "size": 126487, "mimetype": "image/jpeg", "cacheControl": "max-age=3600", "lastModified": "2026-07-24T19:39:46.000Z", "contentLength": 126487, "httpStatusCode": 200}	12b38056-ecb5-4f45-9217-d36b46466160	\N	{}
 \.
 
 
@@ -4490,14 +5724,14 @@ SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 1, false);
 -- Name: adjustments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.adjustments_id_seq', 1, false);
+SELECT pg_catalog.setval('public.adjustments_id_seq', 10, true);
 
 
 --
 -- Name: factors_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.factors_id_seq', 1, false);
+SELECT pg_catalog.setval('public.factors_id_seq', 7, true);
 
 
 --
@@ -4539,7 +5773,7 @@ SELECT pg_catalog.setval('public.portal_accounts_id_seq', 1, false);
 -- Name: rate_card_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.rate_card_id_seq', 1, false);
+SELECT pg_catalog.setval('public.rate_card_id_seq', 641, true);
 
 
 --
@@ -4822,6 +6056,14 @@ ALTER TABLE ONLY public.adjustments
 
 
 --
+-- Name: app_state app_state_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.app_state
+    ADD CONSTRAINT app_state_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: approved_domains approved_domains_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4955,6 +6197,14 @@ ALTER TABLE ONLY public.rate_card
 
 ALTER TABLE ONLY public.rate_card
     ADD CONSTRAINT rate_card_site_id_job_type_valid_from_key UNIQUE (site_id, job_type, valid_from);
+
+
+--
+-- Name: ref_lists ref_lists_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.ref_lists
+    ADD CONSTRAINT ref_lists_pkey PRIMARY KEY (kind, value);
 
 
 --
@@ -6076,6 +7326,12 @@ ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.adjustments ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: app_state; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.app_state ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: approved_domains; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -6158,6 +7414,12 @@ ALTER TABLE public.portal_accounts ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.rate_card ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ref_lists; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.ref_lists ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: sites; Type: ROW SECURITY; Schema: public; Owner: -
@@ -6288,5 +7550,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0eCFhFexV9Z8ieam9miIwPKUzNwCCRstdZ66CaffhMSK7aExjePK76xlVK3QVQv
+\unrestrict Hf1bXP79njgH7Yx1frOa8HcRwVVHPg5Rgde3TkUzUPikv6tyH6HZ9l7iiF8xZLt
 
