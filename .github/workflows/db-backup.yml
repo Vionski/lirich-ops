@@ -2,9 +2,11 @@
 # Setup: repo Settings > Secrets and variables > Actions > New repository secret
 # SUPABASE_DB_URL = Supabase connection string (Project Settings > Database, pooler URI port 6543, with password filled in).
 name: db-backup
+permissions:
+  contents: write        # allow the workflow to push the backup commit
 on:
   schedule:
-    - cron: "30 18 * * *"   # 18:30 UTC = 02:30 SGT nightly
+    - cron: "30 18 * * *"→ Runs at 18:30   # 18:30 UTC = 02:30 SGT nightly
   workflow_dispatch: {}      # manual run button
 jobs:
   backup:
@@ -34,10 +36,3 @@ jobs:
           for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts; do
             psql "$DB" -c "\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
           done
-      - name: Commit snapshot
-        run: |
-          git config user.name  "lirich-backup-bot"
-          git config user.email "backup@lirichresources.sg"
-          git add backups
-          git commit -m "db backup $(date -u +%F)" || echo "no changes"
-          git push
