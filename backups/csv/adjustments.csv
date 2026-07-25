@@ -1,3 +1,2 @@
 id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 1,23636,do_date,,2026-06-09,Re-OCR of scan p3: date clearly reads 09/06/26 (was blank in backfill),claude re-ocr 24Jul2026,2026-07-24 15:45:07.605862+00
-2,23947,do_date,2026-06-30,2026-06-20,"Re-OCR of scan p15: date reads 20/06/26, original backfill had 30/06/26 - verify against invoice",claude re-ocr 24Jul2026,2026-07-24 15:45:07.605862+00
