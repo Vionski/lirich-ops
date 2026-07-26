@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v41';
+const APP_VERSION = 'v42';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -736,6 +736,9 @@ function vDash(){
   BIN_STATUS.forEach(s=>counts[s.id] = S.bins.filter(b=>b.status===s.id).length);
   const colors = {unknown:'#9aa0a6', yard:'var(--brand)', client:'var(--amber)'};
 
+  /* jobs a driver added themselves that the office hasn't confirmed yet */
+  const toConfirm = realOnly(S.jobs.filter(j=>j._bydriver && !j._confirmed && j.status!=='void'));
+
   $('#main').innerHTML = `
     <div class="kpis">
       <div class="kpi amber"><div class="num">${openJobs.length}</div><div class="lbl">OPEN JOBS TODAY</div></div>
@@ -743,6 +746,11 @@ function vDash(){
       <div class="kpi green"><div class="num">${money(payToday)}</div><div class="lbl">DRIVER PAY TODAY</div></div>
       <div class="kpi red"><div class="num">${binsOut}</div><div class="lbl">BINS AT CLIENTS</div></div>
     </div>
+
+    ${toConfirm.length ? `<div class="card" style="background:#fdf3dd; box-shadow:none; padding:12px 14px; margin-bottom:12px; cursor:pointer" onclick="jobFilter='bydriver'; setTab('jobs')">
+      <div style="font-weight:800; color:var(--amber)">⚠️ ${toConfirm.length} driver-added job${toConfirm.length===1?'':'s'} to confirm</div>
+      <div class="muted" style="margin-top:3px">A driver set ${toConfirm.length===1?'a job':'these jobs'} and the price — tap to review and confirm.</div>
+    </div>` : ''}
 
     <div style="margin-bottom:12px"><button class="btn" onclick="openJobForm()">➕ Assign a new job</button></div>
 
@@ -787,7 +795,7 @@ function jobRow(j){
   const c = client(j.clientId), d = driver(j.driverId), ty = ttype(j.task);
   return `<div class="item tap" onclick="openJobDetail(${j.id})">
     <div class="grow">
-      <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>${j._test?' <span class="chip st-void">TEST</span>':''}${j._bydriver?' <span class="chip st-in_progress">BY DRIVER</span>':''}</div>
+      <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>${j._test?' <span class="chip st-void">TEST</span>':''}${j._bydriver?(j._confirmed?' <span class="chip st-done">BY DRIVER ✓</span>':' <span class="chip st-assigned">BY DRIVER — CONFIRM</span>'):''}</div>
       <div class="sub">${esc(c?cSite(c,j.siteIdx).addr:'')}</div>
       <div class="sub">${esc(ty?ty.label:j.task)} · ${esc(j.binSize)} ${esc(j.waste)} · ${d?esc(d.name):'—'}</div>
     </div>
@@ -795,11 +803,17 @@ function jobRow(j){
   </div>`;
 }
 function vJobs(){
+  const byDriverCount = S.jobs.filter(j=>j._bydriver).length;
   const F = [['all','All'],['assigned','Assigned'],['in_progress','In progress'],['done','Done'],['void','Void']];
-  const list = S.jobs.filter(j=>jobFilter==='all'||j.status===jobFilter).slice().reverse();
+  if(byDriverCount) F.push(['bydriver','By driver']); /* only show the tab once a driver has added one */
+  const list = S.jobs.filter(j=> jobFilter==='all' ? true
+      : jobFilter==='bydriver' ? !!j._bydriver
+      : j.status===jobFilter).slice().reverse();
   $('#main').innerHTML = `
     <div class="ftabs">${F.map(([id,l])=>{
-      const n = id==='all' ? S.jobs.length : S.jobs.filter(j=>j.status===id).length;
+      const n = id==='all' ? S.jobs.length
+        : id==='bydriver' ? byDriverCount
+        : S.jobs.filter(j=>j.status===id).length;
       return `<button class="${jobFilter===id?'on':''}" onclick="jobFilter='${id}'; render()">${l} (${n})</button>`;
     }).join('')}</div>
     <div style="margin-bottom:10px"><button class="btn" onclick="openJobForm()">➕ Assign a new job</button></div>
@@ -926,6 +940,14 @@ function openJobDetail(id){
     ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-bottom:8px">💬 WhatsApp ${esc(person.name||c.name)}</button></a>`:''}
     ${mine && j.status==='assigned' ? `<button class="btn" onclick="acceptJob(${j.id})">▶️ Accept job</button>` : ''}
     ${mine && j.status==='in_progress' ? `<button class="btn" onclick="closeSheet(); openTripForm({jobId:${j.id}})">📋 Log trip / DO for this job</button>` : ''}
+    ${S.role.kind==='operator' && j._bydriver ? (j._confirmed
+      ? `<div class="card" style="box-shadow:none; background:var(--brand-soft); color:var(--brand); margin:8px 0; padding:10px 12px; font-weight:700; font-size:13px">✅ Added by ${esc(j._driver||'driver')} · confirmed by office${j._confirmedAt?' · '+fmtDate(j._confirmedAt.slice(0,10)):''}</div>`
+      : `<div class="card" style="box-shadow:none; background:#fdf3dd; margin:8px 0; padding:11px 12px">
+          <div style="font-weight:800; color:var(--amber); font-size:13px">⚠️ Added by ${esc(j._driver||'driver')} — needs confirming</div>
+          <div class="muted" style="margin-top:5px">Driver set this job themselves. Check the client, job type and price below, then confirm.</div>
+          <div style="margin-top:6px; font-weight:700">🛠️ ${esc(jobTypeLabel(j))} · 💵 <b>${money(jobPay(j))}</b></div>
+          <div style="margin-top:9px"><button class="btn" onclick="confirmDriverJob(${j.id})">✅ Confirm this job</button></div>
+        </div>`) : ''}
     ${S.role.kind==='operator' && j.status!=='void' ? `
       <label class="f">REASSIGN DRIVER</label>
       <div class="row">
@@ -962,6 +984,13 @@ async function voidJob(id){
   closeSheet();
   await api('voidJob', {id});
   render(); toast('Job voided');
+}
+/* operator confirms a job a driver added themselves — records who/when in the shared state
+   (persists in the Supabase app_state blob, syncs to every device). Frontend-only, no schema change. */
+async function confirmDriverJob(id){
+  closeSheet();
+  await api('updateJob', {id, patch:{_confirmed:true, _confirmedAt:new Date().toISOString()}});
+  render(); toast('Driver job confirmed ✅');
 }
 
 function openJobForm(presetClientId){
@@ -1099,7 +1128,7 @@ function vJobCard(){
             <td>${esc(t.timeStart||'—')}<br>${esc(t.timeEnd||'')}</td>
             <td style="text-align:right"><b>${money(tripPay(t))}</b></td>
           </tr>`;
-        }).join('') || '<tr><td colspan="4"><div class="empty">No trips logged today. Tap “＋ Log a trip / DO”.</div></td></tr>'}
+        }).join('') || '<tr><td colspan="4"><div class="empty">No trips logged today. Open a job from My Jobs to start.</div></td></tr>'}
         </tbody>
         ${trips.length?`<tfoot><tr><td colspan="3">Total trip charge</td><td style="text-align:right; color:var(--brand)">${money(payOf(trips))}</td></tr></tfoot>`:''}
       </table>
