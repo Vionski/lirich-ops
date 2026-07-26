@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v39';
+const APP_VERSION = 'v41';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -718,6 +718,7 @@ function renderFab(){
   const t = curTab();
   if(S.role.kind==='operator' && (t==='jobs' || t==='dash')){ fab.style.display='block'; fab.textContent='＋ Assign job'; fab.onclick=()=>openJobForm(); }
   else if(S.role.kind==='operator' && t==='crm'){ fab.style.display='block'; fab.textContent='＋ Add'; fab.onclick=()=>openClientForm(); }
+  else if(S.role.kind==='driver' && t==='myjobs'){ fab.style.display='block'; fab.textContent='＋ Add job'; fab.onclick=()=>openJobForm(); }
   else fab.style.display='none';
 }
 
@@ -786,7 +787,7 @@ function jobRow(j){
   const c = client(j.clientId), d = driver(j.driverId), ty = ttype(j.task);
   return `<div class="item tap" onclick="openJobDetail(${j.id})">
     <div class="grow">
-      <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>${j._test?' <span class="chip st-void">TEST</span>':''}</div>
+      <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>${j._test?' <span class="chip st-void">TEST</span>':''}${j._bydriver?' <span class="chip st-in_progress">BY DRIVER</span>':''}</div>
       <div class="sub">${esc(c?cSite(c,j.siteIdx).addr:'')}</div>
       <div class="sub">${esc(ty?ty.label:j.task)} · ${esc(j.binSize)} ${esc(j.waste)} · ${d?esc(d.name):'—'}</div>
     </div>
@@ -964,9 +965,15 @@ async function voidJob(id){
 }
 
 function openJobForm(presetClientId){
-  openSheet(sheetTitle('Assign a job') + `
-    <p class="muted">This replaces the WhatsApp message to the driver. Client, yard and contact pull from the CRM database.</p>
-    <label class="f">JOB DATE <span style="font-weight:600">(defaults to today — pick ahead to schedule in advance)</span></label>
+  /* the same form serves both roles. A DRIVER adding their own job doesn't pick a driver
+     (it's them) and doesn't set surcharges (those are office fees) — everything else is
+     identical, and the job they create flows through the exact same accept→e-DO→weigh path. */
+  const isDriver = S.role.kind==='driver';
+  openSheet(sheetTitle(isDriver ? 'Add a job' : 'Assign a job') + `
+    <p class="muted">${isDriver
+      ? 'Add a job you\'re doing that wasn\'t assigned to you. It goes to your list and the office sees it too.'
+      : 'This replaces the WhatsApp message to the driver. Client, yard and contact pull from the CRM database.'}</p>
+    <label class="f">JOB DATE <span style="font-weight:600">(defaults to today${isDriver?'':' — pick ahead to schedule in advance'})</span></label>
     <input type="date" id="jf-date" value="${TODAY}">
     <label class="f">CLIENT</label>
     <select id="jf-client" onchange="jfClientChanged()">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClientId?'selected':''}>${esc(c.name)}${c.salesRep?' · '+c.salesRep:''}</option>`).join('')}</select>
@@ -974,10 +981,10 @@ function openJobForm(presetClientId){
     <select id="jf-site" onchange="jfSiteChanged()"></select>
     <label class="f">CONTACT PERSON</label>
     <select id="jf-contact"></select>
-    <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(the driver sees this price — set per site)</span></label>
+    <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(${isDriver?'your pay for this job':'the driver sees this price'} — set per site)</span></label>
     <select id="jf-jobtype">${jobTypeOptions(presetClientId||S.clients[0].id, 0)}</select>
-    <label class="f">DRIVER · VEHICLE</label>
-    <select id="jf-driver">${driverSelectOptions()}</select>
+    ${isDriver ? '' : `<label class="f">DRIVER · VEHICLE</label>
+    <select id="jf-driver">${driverSelectOptions()}</select>`}
     <div class="grid2">
       <div><label class="f">BIN TYPE</label>
         <select id="jf-size">${binOptions().map(s=>`<option>${esc(s)}</option>`).join('')}</select></div>
@@ -988,14 +995,14 @@ function openJobForm(presetClientId){
     <select id="jf-dump" onchange="autoDistance()"><option value="">— select —</option>${selOpts(dumpOptions())}</select>
     <label class="f">DISTANCE — YARD ➜ DUMPING (KM) <span style="font-weight:600">(auto-estimated, adjust if needed)</span></label>
     <input type="number" id="jf-dist" step="0.1" min="0" placeholder="auto">
-    <label class="f">SURCHARGES / EXTRA FEES (TICK IF ANY) <span style="font-weight:600">(added to driver pay; editable after the job is done)</span></label>
+    ${isDriver ? '' : `<label class="f">SURCHARGES / EXTRA FEES (TICK IF ANY) <span style="font-weight:600">(added to driver pay; editable after the job is done)</span></label>
     <div id="jf-sur">${SURCHARGES.map(s=>`
       <label class="checkline"><input type="checkbox" value="${s.id}"> ${esc(s.label)}
-        <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>
+        <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>`}
     <div class="muted" id="jf-sync" style="margin-top:4px">Options come from the "Customer DB" tab of the Google Sheet.</div>
-    <label class="f">INSTRUCTIONS FOR DRIVER</label>
+    <label class="f">${isDriver?'NOTES':'INSTRUCTIONS FOR DRIVER'}</label>
     <textarea id="jf-notes" rows="2" placeholder="Gate code, contact on site, timing…"></textarea>
-    <div style="margin-top:16px"><button class="btn" onclick="saveJob()">Assign job</button></div>`);
+    <div style="margin-top:16px"><button class="btn" onclick="saveJob()">${isDriver?'Add job':'Assign job'}</button></div>`);
   jfClientChanged();
   refreshJobFormOptions();
 }
@@ -1041,7 +1048,9 @@ function jfSiteChanged(){
   if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0);
 }
 async function saveJob(){
-  const driverId = Number($('#jf-driver').value);
+  const isDriver = S.role.kind==='driver';
+  /* a driver adding a job assigns it to themselves; the operator picks the driver */
+  const driverId = isDriver ? S.role.driverId : Number($('#jf-driver').value);
   const c = client($('#jf-client').value);
   const jtSel = $('#jf-jobtype').selectedOptions[0];
   const jobType = $('#jf-jobtype').value;
@@ -1050,7 +1059,7 @@ async function saveJob(){
     clientId: $('#jf-client').value,
     siteIdx: Number($('#jf-site').value)||0, contactIdx: Number($('#jf-contact').value)||0,
     jobType, price,
-    surcharges: $$('#jf-sur input:checked').map(i=>i.value),
+    surcharges: $$('#jf-sur input:checked').map(i=>i.value), /* driver form has none → [] */
     binSize: $('#jf-size').value, waste: $('#jf-waste').value || 'General',
     dumpTo: $('#jf-dump').value,
     distance: Number($('#jf-dist').value) || 0,
@@ -1058,6 +1067,7 @@ async function saveJob(){
     driverId,
     status:'assigned', date: $('#jf-date').value || TODAY, createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
   };
+  if(isDriver) j._bydriver = true; /* so the office can see this one was added by the driver, not assigned */
   /* denormalised display fields for the Google Sheet "Jobs" tab */
   j._client = c ? c.name : ''; j._addr = cSite(c, j.siteIdx).addr;
   j._contact = (cContact(c, j.contactIdx)||{}).name || '';
@@ -1066,7 +1076,7 @@ async function saveJob(){
   closeSheet(); toast('Saving job to database…');
   await api('addJob', {job:j});
   render();
-  toast(`Job assigned to ${driver(driverId).name} ✅ — it's on their phone now`);
+  toast(isDriver ? 'Job added to your list ✅ — the office can see it too' : `Job assigned to ${driver(driverId).name} ✅ — it's on their phone now`);
 }
 
 /* ============================================================
