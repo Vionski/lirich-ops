@@ -640,3 +640,7 @@ id,site_id,job_type,price,valid_from,created_by
 639,GLO_001,Delivery,8.00,2026-07-24,
 640,LIR_004,Dump,18.00,2026-07-24,
 641,LIR_005,Dump,13.00,2026-07-24,
+642,SLS_003,Collect,13.00,2026-07-27,
+643,SLS_003,Delivery,8.00,2026-07-27,
+644,SLS_003,Exchange,13.00,2026-07-27,
+645,LIR_006,Sell,13.00,2026-07-27,
