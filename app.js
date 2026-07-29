@@ -520,6 +520,35 @@ $('#overlay') && document.addEventListener('click', e=>{
   if(e.target === $('#overlay')) closeSheet();
 });
 function sheetTitle(t){ return `<h3>${t}<button class="x" onclick="closeSheet()">✕</button></h3>`; }
+/* ---- branded in-app dialogs. Native confirm()/prompt()/alert() are stamped by the browser
+   with the site's origin ("vionski.github.io says") which CANNOT be relabelled from JS — the
+   only way to show "Lirich" instead is a custom dialog we draw ourselves. Async: use await. ---- */
+function lrAsk(opts){
+  return new Promise(function(resolve){
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(18,26,45,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:22px';
+    var card=document.createElement('div');
+    card.style.cssText='background:#fff;border-radius:16px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden';
+    card.innerHTML=
+      '<div style="background:#1B2A4A;color:#fff;padding:13px 18px;font-weight:800;font-size:15px">Lirich</div>'+
+      '<div style="padding:16px 18px"><div style="font-size:14px;line-height:1.5;color:#1b2540">'+esc(opts.message||'')+'</div>'+
+      (opts.input?'<input id="lrask-in" type="text" value="'+esc(opts.defaultValue||'')+'" style="width:100%;margin-top:12px;padding:10px 12px;border:1px solid #d7dce5;border-radius:10px;font:inherit;box-sizing:border-box">':'')+
+      '</div><div style="display:flex;gap:10px;padding:0 18px 16px">'+
+      (opts.info?'':'<button id="lrask-cancel" style="flex:1;padding:11px;border:1px solid #d7dce5;background:#fff;border-radius:10px;font:inherit;font-weight:700;color:#1b2540">'+esc(opts.cancelText||'Cancel')+'</button>')+
+      '<button id="lrask-ok" style="flex:1;padding:11px;border:0;background:'+(opts.danger?'#c0392b':'#E07C2E')+';color:#fff;border-radius:10px;font:inherit;font-weight:700">'+esc(opts.okText||'OK')+'</button>'+
+      '</div>';
+    ov.appendChild(card); document.body.appendChild(ov);
+    var inp=opts.input?card.querySelector('#lrask-in'):null;
+    if(inp) setTimeout(function(){try{inp.focus();inp.select();}catch(e){}},50);
+    function done(v){ try{ov.remove();}catch(e){} resolve(v); }
+    card.querySelector('#lrask-ok').onclick=function(){ done(opts.input?(inp?inp.value:''):true); };
+    var cb=card.querySelector('#lrask-cancel'); if(cb) cb.onclick=function(){ done(opts.input?null:false); };
+    ov.addEventListener('click',function(e){ if(e.target===ov) done(opts.input?null:(opts.info?true:false)); });
+  });
+}
+function lrInfo(message){ return lrAsk({message:message, info:true, okText:'OK'}); }
+function lrConfirm(message,o){ o=o||{}; return lrAsk({message:message, okText:o.okText||'Yes', cancelText:o.cancelText||'No', danger:o.danger}); }
+function lrPrompt(message,defaultValue,o){ o=o||{}; return lrAsk({message:message, input:true, defaultValue:defaultValue, okText:o.okText||'Save', cancelText:o.cancelText||'Cancel'}); }
 function segPick(el, wrap){
   $$(wrap+' > button').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
@@ -623,8 +652,9 @@ function renderLogin(){
       : `<div class="card muted" style="text-align:center">Drivers: just tap your name — no PIN.<br>Office/Operator PIN <b>1234</b></div>`}`;
   if(u && needsPin){ const el = $('#login-pin'); if(el) el.focus(); }
 }
-function unlockDevice(){
-  const pin = prompt('Operator PIN to unlock this device:');
+async function unlockDevice(){
+  const pin = await lrPrompt('Operator PIN to unlock this device:', '', {okText:'Unlock'});
+  if(pin===null) return;
   if(pin !== USERS[0].pin){ toast('❌ Wrong operator PIN'); return; }
   delete S.settings.lockUser;
   loginSel = null;
@@ -653,7 +683,7 @@ async function resetDemo(){
   /* eslint-disable no-unreachable */
   const u = curUser();
   if(!u || u.role!=='operator'){ toast('⚠️ Only the operator can reset the database'); return; }
-  if(!confirm('Reset ALL data in the central database back to the seed? Every device will see this.')) return;
+  if(!await lrConfirm('Reset ALL data in the central database back to the seed? Every device will see this.', {okText:'Reset', cancelText:'Keep', danger:true})) return;
   const keepUrl = S.settings.sheetUrl;
   S = seed(); S.settings.sheetUrl = keepUrl; persist();
   PhotoDB.clear().catch(()=>{});
@@ -1011,13 +1041,14 @@ async function reassignJob(id){
 }
 async function voidJob(id){
   const invoiced = S.trips.some(t=>t.jobId===id && t.invoiced);
-  if(invoiced){ alert('This job has an invoiced trip and cannot be voided.'); return; }
+  if(invoiced){ await lrInfo('This job has an invoiced trip and cannot be cancelled.'); return; }
   const isDriver = S.role.kind==='driver';
   const msg = isDriver
     ? 'Cancel this job? Use this if the client cancelled. It drops off your list tomorrow and the office keeps a record — you do not need to do anything else.'
     : 'Void this job? It stays on record in the Trips sheet (marked VOID) for dispute purposes, but disappears from active lists.';
-  if(!confirm(msg)) return;
-  const reason = (prompt(isDriver ? 'Reason (optional) — e.g. client cancelled:' : 'Reason for voiding (optional):', isDriver ? 'Client cancelled' : '')||'').trim();
+  const ok = await lrConfirm(msg, {okText: isDriver ? 'Cancel job' : 'Void job', cancelText: 'Keep job', danger:true});
+  if(!ok) return;
+  const reason = ((await lrPrompt(isDriver ? 'Reason (optional) — e.g. client cancelled:' : 'Reason for voiding (optional):', isDriver ? 'Client cancelled' : ''))||'').trim();
   closeSheet();
   const by = isDriver ? ((driver(S.role.driverId)||{}).name || 'driver') : 'office';
   await api('voidJob', {id, voidedOn:TODAY, reason, by});
