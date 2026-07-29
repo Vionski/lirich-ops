@@ -66,7 +66,7 @@ async function customerDB() {
   const out: any = { clients: [], drivers: [], wasteTypes: [], dumpLocations: [], binTypes: [], bins: [] };
   const [{ data: sites }, { data: customers }, { data: rates }, { data: bins }, { data: drivers }, { data: lists }] =
     await Promise.all([
-      supa.from("sites").select("site_id,client_id,address,active").eq("active", true),
+      supa.from("sites").select("site_id,client_id,address,contact_name,contact_phone,active").eq("active", true),
       supa.from("customers").select("client_id,name,active").eq("active", true),
       supa.from("rate_card").select("site_id,job_type,price"),
       supa.from("bins").select("bin_id,bin_type,active").eq("active", true),
@@ -83,8 +83,8 @@ async function customerDB() {
     out.clients.push({
       name: cname[s.client_id] || s.client_id,
       addr: s.address || "",
-      contact: "",
-      phone: "",
+      contact: s.contact_name || "",
+      phone: s.contact_phone || "",
       prices: priceBySite[s.site_id] || {},
     });
   });
@@ -238,6 +238,10 @@ async function apply(st: any, q: any) {
         if ((st.trips || []).some((x: any) => x.jobId === q.id && x.invoiced))
           throw "This job has an invoiced trip and cannot be voided.";
         vj.status = "void";
+        // voidedOn drives the driver app's "off your list tomorrow" rule; reason/by kept for the CRM record
+        vj.voidedOn = q.voidedOn || new Date().toISOString().slice(0, 10);
+        if (q.reason) vj._voidReason = q.reason;
+        if (q.by) vj._voidedBy = q.by;
         await mirrorJob(vj);
       }
       break;

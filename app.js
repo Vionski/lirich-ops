@@ -820,11 +820,22 @@ function vJobs(){
     <div class="card">${list.map(jobRow).join('') || '<div class="empty">No jobs in this filter.</div>'}</div>`;
 }
 /* big, one-tap driver card — action button lives right on the card */
+/* a finished job is only "truly done" when nothing is still pending. Right now the one pending
+   item is the weighbridge weight: a weighable job (not Sell/Dump/vessel) that is done but has no
+   gross weight yet is NOT finished — it stays in the top list with an Add-weight button. */
+function weightPending(j){
+  if(j.status!=='done') return false;
+  const t = S.trips.find(x=>x.jobId===j.id);
+  if(!t || (t.weight && t.weight.gross)) return false;
+  if(t.jobType==='Sell' || t.jobType==='Dump' || t.doType==='vessel') return false;
+  return true;
+}
 function driverJobCard(j){
   const c = client(j.clientId);
   const site = cSite(c, j.siteIdx);
   const person = cContact(c, j.contactIdx);
   const started = j.status==='in_progress';
+  const wp = weightPending(j);        /* finished but weighbridge weight still missing */
   const trip = S.trips.find(t=>t.jobId===j.id);
   const hasWeight = trip && trip.weight && trip.weight.gross;
   /* weighing (phase 2) only unlocks once every required BIN photo for this job type is
@@ -833,36 +844,57 @@ function driverJobCard(j){
      the DO/paperwork can follow separately and shouldn't block the weighbridge step. */
   const requiredKinds = jobFlow(j).photos.filter(p=>p.req && p.k!=='do').map(p=>p.k);
   const hasAllRequired = trip && requiredKinds.every(k => (trip.photos||[]).some(p=>p.kind===k));
+  const badge = wp ? {cls:'run', txt:'⚖️ WEIGH PENDING'} : started ? {cls:'run', txt:'IN PROGRESS'} : {cls:'go', txt:'NEW'};
   return `<div class="djob">
-    <div class="djob-h">${esc(c?c.name:'?')}
-      <span class="djob-badge ${started?'run':'go'}">${started?'IN PROGRESS':'NEW'}</span></div>
+    <div class="djob-h" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+      <span>${esc(c?c.name:'?')}</span>
+      <span class="djob-badge ${badge.cls}">${badge.txt}</span>
+      <span style="margin-left:auto; font-size:11px; font-weight:700; color:var(--muted)">📅 ${fmtDate(j.date)}</span></div>
     <div class="djob-sub">📍 ${esc(site.addr||site.label)}</div>
     <div class="djob-sub"><b>🛠️ ${esc(jobTypeLabel(j))}${j.price?` · 💵 ${money(jobPay(j))}`:''}</b></div>
     <div class="djob-sub muted">🗑️ ${esc(j.binSize)} · ${esc(j.waste)}</div>
     ${j.dumpTo?`<div class="djob-sub muted">♻️ Dispose to: <b>${esc(j.dumpTo)}</b></div>`:''}
     ${j.instructions?`<div class="djob-sub muted">📝 ${esc(j.instructions)}</div>`:''}
     ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-top:10px">💬 Call ${esc(person.name||'customer')}</button></a>`:''}
-    ${started
-      ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
-      : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
-    ${trip && !hasWeight && hasAllRequired ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
+    ${wp
+      ? `<button class="btn djob-act" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>`
+      : started
+        ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
+        : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
+    ${!wp && trip && !hasWeight && hasAllRequired ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
+    ${j.status!=='done' ? `<button class="btn ghost slim" style="margin-top:8px; color:var(--red); border-color:var(--red)" onclick="voidJob(${j.id})">🚫 Cancel job</button>` : ''}
   </div>`;
 }
 function vMyJobs(){
-  /* a job scheduled for a future date stays out of the driver's list until that date arrives */
-  const mine = driverJobs(S.role.driverId).filter(j=>j.status!=='void' && j.date<=TODAY).slice().reverse();
-  const open = mine.filter(j=>j.status!=='done');
-  const done = mine.filter(j=>j.status==='done');
+  /* TOP list = active work: jobs not yet done, PLUS finished jobs whose weighbridge weight is
+     still pending (not truly finished → stay up top with an Add-weight button).
+     BOTTOM "Done today" = jobs actually finished TODAY with nothing pending. Truly-finished jobs
+     from earlier days drop off My Jobs entirely (they live in the Job Card).
+     VOIDED jobs show only on the day they were voided, then drop off the next day. Future-dated
+     jobs stay hidden until their date arrives. */
+  const mine = driverJobs(S.role.driverId).filter(j=>j.date<=TODAY);
+  const isOpen = j => j.status!=='done' && j.status!=='void';
+  /* TODAY's work + anything needing a weigh (newest first) */
+  const todayActive = mine.filter(j=> (isOpen(j) && j.date===TODAY) || weightPending(j)).slice().reverse();
+  /* LATE = still-open jobs carried over from earlier days, oldest → newest */
+  const late      = mine.filter(j=> isOpen(j) && j.date<TODAY).sort((a,b)=> a.date<b.date?-1:(a.date>b.date?1:0));
+  const doneToday = mine.filter(j=> j.status==='done' && !weightPending(j) && j.date===TODAY).slice().reverse();
+  const voided    = mine.filter(j=> j.status==='void' && j.voidedOn===TODAY).slice().reverse();
   $('#main').innerHTML = `
     <h2 style="margin:8px 2px 12px; font-size:17px">🗂️ My jobs — ${fmtDate(TODAY)}</h2>
-    ${open.map(driverJobCard).join('') || '<div class="card empty">No jobs right now. 👍</div>'}
-    ${done.length?`<div class="card"><h2>✅ Done today (${done.length})</h2>${done.map(j=>{
+    ${todayActive.map(driverJobCard).join('') || (late.length?'':'<div class="card empty">No jobs right now. 👍</div>')}
+    ${late.length?`<h2 style="margin:18px 2px 8px; font-size:15px; color:var(--red)">⏰ Late jobs (${late.length}) — from earlier days</h2>${late.map(driverJobCard).join('')}`:''}
+    ${doneToday.length?`<div class="card"><h2>✅ Done today (${doneToday.length})</h2>${doneToday.map(j=>{
       const c=client(j.clientId);
-      const t = S.trips.find(x=>x.jobId===j.id);
-      const hasWeight = t && t.weight && t.weight.gross;
+      const t=S.trips.find(x=>x.jobId===j.id);
+      const w = t && t.weight && t.weight.gross;
       return `<div class="item"><div class="grow"><div class="title">${esc(c?c.name:'?')}</div>
-        <div class="sub">${hasWeight ? '✅ finished · ⚖️ '+t.weight.net+' kg' : '✅ finished'}</div></div>
-        ${t && !hasWeight ? `<button class="btn slim" onclick="openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}</div>`;
+        <div class="sub">✅ finished${w?' · ⚖️ '+t.weight.net+' kg':''}</div></div></div>`;
+    }).join('')}</div>`:''}
+    ${voided.length?`<div class="card"><h2>🚫 Voided today (${voided.length})</h2>${voided.map(j=>{
+      const c=client(j.clientId);
+      return `<div class="item"><div class="grow"><div class="title" style="opacity:.55">${esc(c?c.name:'?')}</div>
+        <div class="sub">🚫 Voided${j._voidReason?' · '+esc(j._voidReason):''} — kept in the office record, off your list tomorrow</div></div></div>`;
     }).join('')}</div>`:''}`;
 }
 /* phase 2 of a trip: DO+bin photos were taken at the client site; the weighbridge
@@ -980,10 +1012,16 @@ async function reassignJob(id){
 async function voidJob(id){
   const invoiced = S.trips.some(t=>t.jobId===id && t.invoiced);
   if(invoiced){ alert('This job has an invoiced trip and cannot be voided.'); return; }
-  if(!confirm('Void this job? It stays on record in the Trips sheet (marked VOID) for dispute purposes, but disappears from active lists.')) return;
+  const isDriver = S.role.kind==='driver';
+  const msg = isDriver
+    ? 'Cancel this job? Use this if the client cancelled. It drops off your list tomorrow and the office keeps a record — you do not need to do anything else.'
+    : 'Void this job? It stays on record in the Trips sheet (marked VOID) for dispute purposes, but disappears from active lists.';
+  if(!confirm(msg)) return;
+  const reason = (prompt(isDriver ? 'Reason (optional) — e.g. client cancelled:' : 'Reason for voiding (optional):', isDriver ? 'Client cancelled' : '')||'').trim();
   closeSheet();
-  await api('voidJob', {id});
-  render(); toast('Job voided');
+  const by = isDriver ? ((driver(S.role.driverId)||{}).name || 'driver') : 'office';
+  await api('voidJob', {id, voidedOn:TODAY, reason, by});
+  render(); toast(isDriver ? 'Job cancelled — office notified' : 'Job voided');
 }
 /* operator confirms a job a driver added themselves — records who/when in the shared state
    (persists in the Supabase app_state blob, syncs to every device). Frontend-only, no schema change. */
@@ -1122,9 +1160,12 @@ function vJobCard(){
         <tbody>
         ${trips.map((t,i)=>{
           const c = client(t.clientId), ty = ttype(t.typeId);
+          /* weighbridge phase 2: finished trips live here now, so the driver adds the
+             back-at-yard weight from the Job Card. Only weighable jobs (not Sell/Dump/vessel). */
+          const needsWeight = !(t.weight && t.weight.gross) && t.jobType!=='Sell' && t.jobType!=='Dump' && t.doType!=='vessel';
           return `<tr onclick="openTripDetail(${t.id})" style="cursor:pointer">
             <td>${i+1}</td>
-            <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span></td>
+            <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span>${S.role.kind==='driver' && needsWeight ? `<br><button class="btn slim" style="margin-top:6px" onclick="event.stopPropagation(); openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}</td>
             <td>${esc(t.timeStart||'—')}<br>${esc(t.timeEnd||'')}</td>
             <td style="text-align:right"><b>${money(tripPay(t))}</b></td>
           </tr>`;
