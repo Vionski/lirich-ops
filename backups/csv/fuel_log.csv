@@ -1,1 +1,11 @@
-id,vehicle_id,fill_date,litres,cost,odometer_km,entered_by
+id,vehicle_id,fill_date,litres,cost,odometer_km,entered_by,source,fuel_type,cartrack_co2_g,synced_at
+1,XE4491D,2026-07-28,122.20,,,cartrack-est,cartrack,diesel,,2026-07-29 04:17:15.452+00
+2,XE5457Y,2026-07-28,65.80,,,cartrack-est,cartrack,diesel,,2026-07-29 04:17:15.953+00
+3,XE6221D,2026-07-28,85.30,,,cartrack-est,cartrack,diesel,,2026-07-29 04:17:16.444+00
+4,XE8496P,2026-07-28,0.00,,,cartrack-est,cartrack,diesel,,2026-07-29 04:17:16.888+00
+5,XE7126P,2026-07-28,59.15,,,cartrack-est,cartrack,diesel,,2026-07-29 04:17:17.313+00
+6,XE4491D,2026-07-29,99.25,,,cartrack-est,cartrack,diesel,,2026-07-29 19:00:09.608+00
+7,XE5457Y,2026-07-29,36.30,,,cartrack-est,cartrack,diesel,,2026-07-29 19:00:11.15+00
+8,XE6221D,2026-07-29,141.75,,,cartrack-est,cartrack,diesel,,2026-07-29 19:00:12.135+00
+9,XE8496P,2026-07-29,94.55,,,cartrack-est,cartrack,diesel,,2026-07-29 19:00:13.527+00
+10,XE7126P,2026-07-29,89.75,,,cartrack-est,cartrack,diesel,,2026-07-29 19:00:13.972+00

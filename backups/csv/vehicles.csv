@@ -1,8 +1,7 @@
 vehicle_id,vtype,active
-XE5457Y,,t
-XE6221D,,t
-XE4491D,,t
-XE8496,,t
-XE6204D,,t
-XE7116D,,t
-XE7126P,,t
+XE5457Y,diesel,t
+XE6221D,diesel,t
+XE4491D,diesel,t
+XE6204D,diesel,t
+XE7126P,diesel,t
+XE8496P,diesel,t
