@@ -828,6 +828,7 @@ function jobRow(j){
       <div class="title">${esc(c?c.name:'?')} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>${j._test?' <span class="chip st-void">TEST</span>':''}${j._bydriver?(j._confirmed?' <span class="chip st-done">BY DRIVER ✓</span>':' <span class="chip st-assigned">BY DRIVER — CONFIRM</span>'):''}</div>
       <div class="sub">${esc(c?cSite(c,j.siteIdx).addr:'')}</div>
       <div class="sub">${esc(ty?ty.label:j.task)} · ${esc(j.binSize)} ${esc(j.waste)} · ${d?esc(d.name):'—'}</div>
+      <div class="sub">📅 ${fmtDate(j.date)}</div>
     </div>
     <div class="pay">${ty && !ty.perKm ? money(ty.base) : 'by km'}</div>
   </div>`;
@@ -856,8 +857,11 @@ function vJobs(){
 function weightPending(j){
   if(j.status!=='done') return false;
   const t = S.trips.find(x=>x.jobId===j.id);
-  if(!t || (t.weight && t.weight.gross)) return false;
-  if(t.jobType==='Sell' || t.jobType==='Dump' || t.doType==='vessel') return false;
+  /* "weighed" = a weight record exists, INCLUDING an explicit 0 (client-weighed jobs) */
+  if(!t || t.weight != null) return false;
+  /* every LAND job gets a weight (dump/disposal sites weigh at the bridge; recyclables sold by weight);
+     only vessel jobs are volume-based and never weighed. Enter 0 if the client weighs it. */
+  if(t.doType==='vessel') return false;
   return true;
 }
 function driverJobCard(j){
@@ -867,7 +871,7 @@ function driverJobCard(j){
   const started = j.status==='in_progress';
   const wp = weightPending(j);        /* finished but weighbridge weight still missing */
   const trip = S.trips.find(t=>t.jobId===j.id);
-  const hasWeight = trip && trip.weight && trip.weight.gross;
+  const hasWeight = trip && trip.weight != null;
   /* weighing (phase 2) only unlocks once every required BIN photo for this job type is
      actually on the trip — a Save-for-later with bin photos still missing must not let the
      driver skip ahead to weighing before that proof exists. DO photo is excluded on purpose:
@@ -948,12 +952,18 @@ function openWeighForm(tripId){
       <div><label class="f">TARE (kg)</label><input type="number" id="tf-tare" min="0" placeholder="from photo" oninput="tfNet()"></div>
       <div><label class="f">NET (kg)</label><input type="number" id="tf-net" readonly></div>
     </div>
-    <div style="margin-top:14px"><button class="btn" onclick="saveWeigh(${t.id})">✅ Save weighbridge</button></div>`);
+    <div class="muted" style="margin-top:6px;font-size:12px">If the client weighs it (not us), tap "Client weighs" to finish with 0.</div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="saveWeigh(${t.id})">✅ Save weighbridge</button>
+      <button class="btn ghost" onclick="$('#tf-gross').value=0;$('#tf-tare').value=0;tfNet();saveWeigh(${t.id})">Client weighs — finish (0)</button>
+    </div>`);
 }
 async function saveWeigh(id){
   const t = S.trips.find(x=>x.id===id); if(!t) return;
-  const gross = Number($('#tf-gross').value)||0, tare = Number($('#tf-tare').value)||0;
-  if(!gross || !tare){ toast('⚠️ Need both gross and tare — snap the scale or type them'); return; }
+  /* 0 is a VALID weight — some jobs are weighed by the client, not us. Only block a truly blank entry. */
+  const gv=($('#tf-gross').value||'').trim(), tv=($('#tf-tare').value||'').trim();
+  if(gv==='' && tv===''){ toast('⚠️ Enter the weight — or tap "Client weighs" to finish with 0'); return; }
+  const gross = Number(gv)||0, tare = Number(tv)||0;
   closeSheet(); toast('Saving weighbridge…');
   /* upload the scale photos to Drive, then attach weight + photos to the existing trip */
   const jobtag = t.jobId ? t.jobId : ('T'+t.id);
@@ -1048,7 +1058,8 @@ async function voidJob(id){
     : 'Void this job? It stays on record in the Trips sheet (marked VOID) for dispute purposes, but disappears from active lists.';
   const ok = await lrConfirm(msg, {okText: isDriver ? 'Cancel job' : 'Void job', cancelText: 'Keep job', danger:true});
   if(!ok) return;
-  const reason = ((await lrPrompt(isDriver ? 'Reason (optional) — e.g. client cancelled:' : 'Reason for voiding (optional):', isDriver ? 'Client cancelled' : ''))||'').trim();
+  /* drivers are NOT asked for a reason — cancelling is one tap; the office reconciles it later */
+  const reason = isDriver ? 'Client cancelled' : ((await lrPrompt('Reason for voiding (optional):', ''))||'').trim();
   closeSheet();
   const by = isDriver ? ((driver(S.role.driverId)||{}).name || 'driver') : 'office';
   await api('voidJob', {id, voidedOn:TODAY, reason, by});
@@ -1073,8 +1084,9 @@ function openJobForm(presetClientId){
       : 'This replaces the WhatsApp message to the driver. Client, yard and contact pull from the CRM database.'}</p>
     <label class="f">JOB DATE <span style="font-weight:600">(defaults to today${isDriver?'':' — pick ahead to schedule in advance'})</span></label>
     <input type="date" id="jf-date" value="${TODAY}">
-    <label class="f">CLIENT</label>
-    <select id="jf-client" onchange="jfClientChanged()">${S.clients.map(c=>`<option value="${c.id}" ${c.id===presetClientId?'selected':''}>${esc(c.name)}${c.salesRep?' · '+c.salesRep:''}</option>`).join('')}</select>
+    <label class="f">CLIENT <span style="font-weight:600">(type to search)</span></label>
+    <input id="jf-client" list="jf-clientlist" autocomplete="off" placeholder="Type customer name…" oninput="jfClientChanged()" value="${presetClientId?esc((client(presetClientId)||{}).name||''):''}">
+    <datalist id="jf-clientlist">${S.clients.map(c=>`<option value="${esc(c.name)}"></option>`).join('')}</datalist>
     <label class="f">YARD / ADDRESS</label>
     <select id="jf-site" onchange="jfSiteChanged()"></select>
     <label class="f">CONTACT PERSON</label>
@@ -1118,18 +1130,20 @@ function refreshJobFormOptions(){
     keep('#jf-size', binOptions().map(s=>`<option>${esc(s)}</option>`).join(''));
     keep('#jf-waste', selOpts(wasteOptions()));
     keep('#jf-dump', '<option value="">— select at trip time —</option>'+selOpts(dumpOptions()));
-    const csel = $('#jf-client');
-    if(csel){
-      const v = csel.value;
-      csel.innerHTML = S.clients.map(c=>`<option value="${c.id}">${esc(c.name)}${c.salesRep?' · '+c.salesRep:''}</option>`).join('');
-      if([...csel.options].some(o=>o.value===v)) csel.value = v;
-      jfClientChanged();
-    }
+    const dl = $('#jf-clientlist');
+    if(dl){ dl.innerHTML = S.clients.map(c=>`<option value="${esc(c.name)}"></option>`).join(''); jfClientChanged(); }
     if(note) note.textContent = '✅ Options synced live from the Google Sheet ("Customer DB" tab).';
   });
 }
+/* resolve the typed customer name in the type-ahead back to a client id */
+function jfClientId(){
+  const v=($('#jf-client').value||'').trim().toLowerCase();
+  const c=(S.clients||[]).find(x=>(x.name||'').toLowerCase()===v);
+  return c?c.id:'';
+}
 function jfClientChanged(){
-  const c = client($('#jf-client').value);
+  const c = client(jfClientId());
+  if(!c) return; /* still typing / no exact customer match yet */
   $('#jf-site').innerHTML = (c.sites||[]).map((s,i)=>
     `<option value="${i}">${esc(s.label)}${s.label?' — ':''}${esc(s.addr)}</option>`).join('')
     || '<option value="0">— no address on file —</option>';
@@ -1142,19 +1156,21 @@ function jfClientChanged(){
 /* re-price when the yard/address changes — the same client can charge differently per site */
 function jfSiteChanged(){
   autoDistance();
-  const c = client($('#jf-client').value);
-  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0);
+  const c = client(jfClientId());
+  if(c && $('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0);
 }
 async function saveJob(){
   const isDriver = S.role.kind==='driver';
   /* a driver adding a job assigns it to themselves; the operator picks the driver */
   const driverId = isDriver ? S.role.driverId : Number($('#jf-driver').value);
-  const c = client($('#jf-client').value);
+  const cid = jfClientId();
+  const c = client(cid);
+  if(!c){ toast('⚠️ Pick a customer from the list'); return; }
   const jtSel = $('#jf-jobtype').selectedOptions[0];
   const jobType = $('#jf-jobtype').value;
   const price = jtSel ? (Number(jtSel.dataset.price)||0) : 0;
   const j = {
-    clientId: $('#jf-client').value,
+    clientId: cid,
     siteIdx: Number($('#jf-site').value)||0, contactIdx: Number($('#jf-contact').value)||0,
     jobType, price,
     surcharges: $$('#jf-sur input:checked').map(i=>i.value), /* driver form has none → [] */
@@ -1193,7 +1209,7 @@ function vJobCard(){
           const c = client(t.clientId), ty = ttype(t.typeId);
           /* weighbridge phase 2: finished trips live here now, so the driver adds the
              back-at-yard weight from the Job Card. Only weighable jobs (not Sell/Dump/vessel). */
-          const needsWeight = !(t.weight && t.weight.gross) && t.jobType!=='Sell' && t.jobType!=='Dump' && t.doType!=='vessel';
+          const needsWeight = (t.weight == null) && t.doType!=='vessel';
           return `<tr onclick="openTripDetail(${t.id})" style="cursor:pointer">
             <td>${i+1}</td>
             <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span>${S.role.kind==='driver' && needsWeight ? `<br><button class="btn slim" style="margin-top:6px" onclick="event.stopPropagation(); openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}</td>
@@ -1268,14 +1284,14 @@ function openTripForm(opts){
         <div class="edo-head">
           <div class="edo-brand">
             <img src="logo.png" alt="Lirich Resources" class="edo-logo">
-            <div class="edo-tag">( Lead Resources To Quality )</div>
+            <div class="edo-tag">( Enrichment of Resources )</div>
             <div class="edo-cn">利瑞资源私人有限公司</div>
           </div>
           <div class="edo-co">
             <b>LIRICH RESOURCES PTE LTD</b>
             <span>Warehouse: 23, Gul Drive Singapore 629471</span>
             <span>Office: 18 Boon Lay Way #09-123 Tradehub 21 (S) 609966</span>
-            <span>Tel: 6717 6688 &nbsp;Fax: 6793 2309</span>
+            <span>Tel: 6793 0173 &nbsp;Fax: 6793 2309</span>
           </div>
         </div>
 
@@ -2023,10 +2039,10 @@ const DO_LETTERHEAD = `
     <img class="doh-logo" src="${LOGO_URL}" alt="Lirich Resources">
     <div class="doh-co">
       <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
-      <div class="doh-tag">(Lead Resources To Quality)</div>
+      <div class="doh-tag">(Enrichment of Resources)</div>
       <div class="doh-addr">Warehouse: 23, Gul Drive Singapore 629471<br>
       Office: 18 Boon Lay Way #09-123 Tradehub 21 (S) 609966<br>
-      Tel: 6717 6688 &nbsp; Fax: 6793 2309</div>
+      Tel: 6793 0173 &nbsp; Fax: 6793 2309</div>
     </div>
   </div>`;
 function doPrintHTML(t){
@@ -2128,7 +2144,7 @@ async function emailDOPrompt(id){
   const t = S.trips.find(x=>x.id===id); if(!t) return;
   const c = client(t.clientId);
   const suggested = (cContact(c,0) && cContact(c,0).email) || '';
-  const to = prompt(`Email the digital DO to which address?\n(${c?c.name:''})`, suggested);
+  const to = await lrPrompt(`Email the digital DO to which address? (${c?c.name:''})`, suggested, {okText:'Send'});
   if(!to) return;
   toast('Sending DO…');
   try{
@@ -2341,7 +2357,7 @@ function havKm(a, b){
 }
 async function autoDistance(){
   const el = $('#jf-dist'); if(!el) return;
-  const c = client($('#jf-client').value); if(!c) return;
+  const c = client(jfClientId()); if(!c) return;
   const addr = cSite(c, Number($('#jf-site').value)||0).addr;
   const dump = $('#jf-dump') ? $('#jf-dump').value : '';
   if(!addr || !dump){ el.placeholder = 'auto (pick yard + dumping first)'; return; }
