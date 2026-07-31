@@ -1,4 +1,4 @@
-const CACHE = 'lirich-ops-v50';
+const CACHE = 'lirich-ops-v51';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json',
   './logo.png', './icon-192.png', './icon-512.png'];
 

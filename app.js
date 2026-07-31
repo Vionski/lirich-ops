@@ -1253,6 +1253,12 @@ async function saveJob(){
 /* Official DRIVER DAILY JOB CARD print — matches the paper template (08 Operations Samples
    "2) driver job card.jpeg"): SN | Customer & Location | Bin In/Out | Time Start/End |
    Dispose To | Tonnage | Trip Charge | Remarks, with totals + signature blocks. */
+/* fixed driver -> vehicle assignment (Michelle, 31 Jul 2026) — mirrors the operator console JC_VEH */
+const DRIVER_VEHICLE = {'KARTHIK':'XE5457Y','SATHISH':'XE6221D','LIU':'XE8496P','KUMAR':'XE4491D','YAOJUN':'XE7126P','YAO JUN':'XE7126P'};
+function driverVehicle(name){
+  const k=(name||'').trim().toUpperCase().replace(/\s+/g,' ');
+  return DRIVER_VEHICLE[k] || DRIVER_VEHICLE[k.replace(/ /g,'')] || '';
+}
 function jobCardHTML(driverId, date){
   const d = driver(driverId) || {name:''};
   const trips = driverTrips(driverId, date);
@@ -1298,7 +1304,7 @@ function jobCardHTML(driverId, date){
     <div class="jc-title">DRIVER DAILY JOB CARD</div>
     <div class="jc-head">
       <div class="f"><b>DRIVER:</b> <span class="jc-line">${esc(d.name)}</span></div>
-      <div class="f"><b>VEHICLE:</b> <span class="jc-line">&nbsp;</span></div>
+      <div class="f"><b>VEHICLE:</b> <span class="jc-line">${esc(driverVehicle(d.name)||'')||'&nbsp;'}</span></div>
       <div class="f"><b>DATE:</b> <span class="jc-line">${esc(fmtDate(date))}</span></div>
     </div>
     <table class="jc">
