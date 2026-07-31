@@ -1,8 +1,9 @@
 id,domain,key,route,value,unit,basis,source_ref,valid_from
-1,fuel,diesel,,2.678000,kgCO2e/L,indicative - verify before external reporting,,2026-07-24
-2,grid,sg_grid,,0.402000,kgCO2e/kWh,EMA 2024 - verify,,2026-07-24
-3,waste,general_waste,WtE,0.350000,tCO2e/t,indicative - verify,,2026-07-24
-4,avoided,general_waste,recovery,0.460000,tCO2e/t,indicative - verify,,2026-07-24
-5,avoided,paper,recovery,0.900000,tCO2e/t,indicative - verify,,2026-07-24
-6,avoided,plastics,recovery,1.100000,tCO2e/t,indicative - verify,,2026-07-24
-7,avoided,metals,recovery,1.500000,tCO2e/t,indicative - verify,,2026-07-24
+3,waste,general_waste,WtE,0.111500,tCO2e/t,"SEFR 2025 (Singapore Emission Factors Registry, NEA-sourced, netzerohub.sg): general waste incineration/WtE 0.1115 tCO2e/t. Rebased 2026-07-31 (was indicative 0.35).",,2026-07-31
+4,avoided,general_waste,recovery,0.111500,tCO2e/t,Avoided WtE emissions per tonne diverted to recovery = SEFR general-waste incineration factor 0.1115 tCO2e/t (conservative; excludes material-recovery credits). Rebased 2026-07-31 (was indicative 0.46).,,2026-07-31
+1,fuel,diesel,,2.678000,kgCO2e/L,Diesel 2.678 kgCO2e/L - IPCC 2006 / NEA M&R-aligned default. Confirmed 2026-07-31.,,2026-07-24
+2,grid,sg_grid,,0.402000,kgCO2e/kWh,EMA Singapore Grid Emission Factor 2024 = 0.402 kgCO2/kWh (official; basis for carbon-tax reporting from Jan 2026).,,2026-07-24
+5,avoided,paper,recovery,0.900000,tCO2e/t,"Material-recovery credit - indicative only, NOT used in live carbon calc (general-waste avoided factor applies). Verify vs SEFR before any client-facing use.",,2026-07-24
+6,avoided,plastics,recovery,1.100000,tCO2e/t,"Material-recovery credit - indicative only, NOT used in live carbon calc (general-waste avoided factor applies). Verify vs SEFR before any client-facing use.",,2026-07-24
+7,avoided,metals,recovery,1.500000,tCO2e/t,"Material-recovery credit - indicative only, NOT used in live carbon calc (general-waste avoided factor applies). Verify vs SEFR before any client-facing use.",,2026-07-24
+8,waste,plastics,WtE,2.762500,tCO2e/t,SEFR 2025 (NEA-sourced): plastics incineration 2.7625 tCO2e/t.,,2026-07-31
