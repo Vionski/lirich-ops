@@ -473,6 +473,16 @@ function ttype(id){ return TRIP_TYPES.find(t=>t.id===id); }
 function binByNo(no){ return S.bins.find(b=>b.no===no); }
 function cSite(c, i){ return (c && c.sites && (c.sites[i] || c.sites[0])) || {label:'', addr:''}; }
 function cContact(c, i){ return (c && c.contacts && (c.contacts[i] || c.contacts[0])) || null; }
+/* effective contact for a job: a per-job override (name/phone typed on the job form) wins,
+   otherwise fall back to the CRM contact-on-file. Lets the office give the driver the actual
+   person to call at THIS site/job without editing the customer record. */
+function jobContact(j){
+  const base = cContact(client(j.clientId), j.contactIdx) || {};
+  if(j && (j.contactName || j.contactPhone)){
+    return { name: j.contactName || base.name || '', phone: j.contactPhone || base.phone || '' };
+  }
+  return base.name || base.phone ? { name: base.name||'', phone: base.phone||'' } : null;
+}
 function tonnTotal(t){ return Math.round(((Number(t.tonnage)||0) + (Number(t.tonnAdj)||0))*100)/100; }
 function weightNet(t){ const w=t.weight||{}; return Math.round((((Number(w.gross)||0)-(Number(w.tare)||0)) + (Number(t.weightAdj)||0))*100)/100; }
 function curUser(){ return USERS.find(u=>u.id === (S.auth && S.auth.userId)); }
@@ -609,7 +619,7 @@ function exitViewAs(){
 /* ---------------- login ---------------- */
 let loginSel = null;
 function renderLogin(){
-  $('#header').innerHTML = `<div><div class="htitle"><img src="logo.png" alt="" class="hlogo">Lirich Resources</div><div class="hsub">Waste logistics · 23 Gul Drive</div></div>`;
+  $('#header').innerHTML = `<div class="lr-brand"><div class="lr-line1"><span class="lr-wm">LIRICH GROUP</span><span class="lr-cn">利瑞集团</span></div><div class="lr-tag">Enrichment of Resources</div><div class="hsub">Waste logistics · 23 Gul Drive</div></div>`;
   $('#nav').innerHTML = '';
   $('#fab').style.display = 'none';
   /* a personal link (?u=d3) locks this device to one driver's account */
@@ -735,7 +745,7 @@ function renderHeader(){
     pill = `${avatarHTML(d)} ${esc(d.name)} ▾`;
   }
   $('#header').innerHTML = `
-    <div><div class="htitle"><img src="logo.png" alt="" class="hlogo">Lirich Resources</div><div class="hsub">${sub}</div></div>
+    <div class="lr-brand"><div class="lr-line1"><span class="lr-wm">LIRICH GROUP</span><span class="lr-cn">利瑞集团</span></div><div class="lr-tag">Enrichment of Resources</div><div class="hsub">${sub}</div></div>
     <button class="role-pill" onclick="openRoleSheet()">${pill}</button>`;
 }
 function renderNav(){
@@ -867,7 +877,7 @@ function weightPending(j){
 function driverJobCard(j){
   const c = client(j.clientId);
   const site = cSite(c, j.siteIdx);
-  const person = cContact(c, j.contactIdx);
+  const person = jobContact(j);
   const started = j.status==='in_progress';
   const wp = weightPending(j);        /* finished but weighbridge weight still missing */
   const trip = S.trips.find(t=>t.jobId===j.id);
@@ -997,7 +1007,7 @@ function openJobDetail(id){
   const isDriver = S.role.kind==='driver';
   const mine = isDriver && j.driverId===S.role.driverId;
   const site = cSite(c, j.siteIdx);
-  const person = cContact(c, j.contactIdx);
+  const person = jobContact(j);
   openSheet(sheetTitle(`Job #${j.id} <span class="chip st-${j.status}">${STATUS_LABEL[j.status]}</span>`) + `
     <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0">
       <div class="title" style="font-weight:800; font-size:15px">${esc(c.name)} <span class="tag ${c.type}">${c.type.toUpperCase()}</span></div>
@@ -1020,6 +1030,8 @@ function openJobDetail(id){
           <div style="margin-top:6px; font-weight:700">🛠️ ${esc(jobTypeLabel(j))} · 💵 <b>${money(jobPay(j))}</b></div>
           <div style="margin-top:9px"><button class="btn" onclick="confirmDriverJob(${j.id})">✅ Confirm this job</button></div>
         </div>`) : ''}
+    ${S.role.kind==='operator' && j.status==='assigned' ? `
+      <button class="btn" style="margin:8px 0 2px" onclick="closeSheet(); openJobForm(null, ${j.id})">✏️ Edit job <span style="font-weight:600; opacity:.8">(not yet accepted)</span></button>` : ''}
     ${S.role.kind==='operator' && j.status!=='void' ? `
       <label class="f">REASSIGN DRIVER</label>
       <div class="row">
@@ -1073,24 +1085,34 @@ async function confirmDriverJob(id){
   render(); toast('Driver job confirmed ✅');
 }
 
-function openJobForm(presetClientId){
+/* #24: when set, the job form is EDITING an existing un-accepted job instead of adding one */
+let JF_EDIT = null;
+function openJobForm(presetClientId, editJobId){
   /* the same form serves both roles. A DRIVER adding their own job doesn't pick a driver
      (it's them) and doesn't set surcharges (those are office fees) — everything else is
      identical, and the job they create flows through the exact same accept→e-DO→weigh path. */
   const isDriver = S.role.kind==='driver';
-  openSheet(sheetTitle(isDriver ? 'Add a job' : 'Assign a job') + `
+  const editJob = editJobId!=null ? S.jobs.find(x=>x.id===editJobId) : null;
+  JF_EDIT = editJob || null;
+  if(editJob) presetClientId = editJob.clientId; /* prefill the client type-ahead */
+  openSheet(sheetTitle(isDriver ? 'Add a job' : (editJob ? `Edit job #${editJob.id}` : 'Assign a job')) + `
     <p class="muted">${isDriver
       ? 'Add a job you\'re doing that wasn\'t assigned to you. It goes to your list and the office sees it too.'
       : 'This replaces the WhatsApp message to the driver. Client, yard and contact pull from the CRM database.'}</p>
     <label class="f">JOB DATE <span style="font-weight:600">(defaults to today${isDriver?'':' — pick ahead to schedule in advance'})</span></label>
-    <input type="date" id="jf-date" value="${TODAY}">
+    <input type="date" id="jf-date" value="${editJob ? esc(editJob.date||TODAY) : TODAY}">
     <label class="f">CLIENT <span style="font-weight:600">(type to search)</span></label>
     <input id="jf-client" list="jf-clientlist" autocomplete="off" placeholder="Type customer name…" oninput="jfClientChanged()" value="${presetClientId?esc((client(presetClientId)||{}).name||''):''}">
     <datalist id="jf-clientlist">${S.clients.map(c=>`<option value="${esc(c.name)}"></option>`).join('')}</datalist>
     <label class="f">YARD / ADDRESS</label>
     <select id="jf-site" onchange="jfSiteChanged()"></select>
-    <label class="f">CONTACT PERSON</label>
+    <label class="f">CONTACT PERSON <span style="font-weight:600">(from the CRM)</span></label>
     <select id="jf-contact"></select>
+    <label class="f">ON-SITE CONTACT FOR THIS JOB <span style="font-weight:600">(optional — overrides the contact above, for this job only)</span></label>
+    <div class="grid2">
+      <div><input id="jf-cname-ovr" placeholder="Name (optional)" value="${editJob?esc(editJob.contactName||''):''}"></div>
+      <div><input id="jf-cphone-ovr" inputmode="tel" placeholder="Phone (optional)" value="${editJob?esc(editJob.contactPhone||''):''}"></div>
+    </div>
     <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(${isDriver?'your pay for this job':'the driver sees this price'} — set per site)</span></label>
     <select id="jf-jobtype">${jobTypeOptions(presetClientId||S.clients[0].id, 0)}</select>
     ${isDriver ? '' : `<label class="f">DRIVER · VEHICLE</label>
@@ -1104,16 +1126,24 @@ function openJobForm(presetClientId){
     <label class="f">DUMPING LOCATION <span style="font-weight:600">(shows as "Dispose to" on the driver's job)</span></label>
     <select id="jf-dump" onchange="autoDistance()"><option value="">— select —</option>${selOpts(dumpOptions())}</select>
     <label class="f">DISTANCE — YARD ➜ DUMPING (KM) <span style="font-weight:600">(auto-estimated, adjust if needed)</span></label>
-    <input type="number" id="jf-dist" step="0.1" min="0" placeholder="auto">
+    <input type="number" id="jf-dist" step="0.1" min="0" placeholder="auto" value="${editJob&&editJob.distance?editJob.distance:''}">
     ${isDriver ? '' : `<label class="f">SURCHARGES / EXTRA FEES (TICK IF ANY) <span style="font-weight:600">(added to driver pay; editable after the job is done)</span></label>
     <div id="jf-sur">${SURCHARGES.map(s=>`
-      <label class="checkline"><input type="checkbox" value="${s.id}"> ${esc(s.label)}
+      <label class="checkline"><input type="checkbox" value="${s.id}" ${editJob&&(editJob.surcharges||[]).includes(s.id)?'checked':''}> ${esc(s.label)}
         <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>`}
     <div class="muted" id="jf-sync" style="margin-top:4px">Options come from the "Customer DB" tab of the Google Sheet.</div>
     <label class="f">${isDriver?'NOTES':'INSTRUCTIONS FOR DRIVER'}</label>
-    <textarea id="jf-notes" rows="2" placeholder="Gate code, contact on site, timing…"></textarea>
-    <div style="margin-top:16px"><button class="btn" onclick="saveJob()">${isDriver?'Add job':'Assign job'}</button></div>`);
+    <textarea id="jf-notes" rows="2" placeholder="Gate code, contact on site, timing…">${editJob?esc(editJob.instructions||''):''}</textarea>
+    <div style="margin-top:16px"><button class="btn" onclick="saveJob()">${isDriver?'Add job':(editJob?'Save changes':'Assign job')}</button></div>`);
   jfClientChanged();
+  /* edit mode: apply the remaining stored values once the selects exist (jfClientChanged
+     already restored site/contact/jobtype from JF_EDIT) */
+  if(editJob){
+    if($('#jf-driver')) $('#jf-driver').value = String(editJob.driverId);
+    if($('#jf-size') && editJob.binSize) $('#jf-size').value = editJob.binSize;
+    if($('#jf-waste') && editJob.waste) $('#jf-waste').value = editJob.waste;
+    if($('#jf-dump')) $('#jf-dump').value = editJob.dumpTo || '';
+  }
   refreshJobFormOptions();
 }
 /* live-refresh the pulldowns from the Google Sheet while the form is open */
@@ -1150,7 +1180,12 @@ function jfClientChanged(){
   $('#jf-contact').innerHTML = (c.contacts||[]).map((p,i)=>
     `<option value="${i}">${esc(p.name)}${p.phone?' · '+esc(p.phone):''}</option>`).join('')
     || '<option value="0">— no contact on file —</option>';
-  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0); /* prices are per-site */
+  /* #24 edit mode: restore the job's saved site/contact before pricing the job type */
+  if(JF_EDIT && JF_EDIT.clientId===c.id){
+    $('#jf-site').value = String(JF_EDIT.siteIdx||0);
+    $('#jf-contact').value = String(JF_EDIT.contactIdx||0);
+  }
+  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0, JF_EDIT && JF_EDIT.clientId===c.id ? JF_EDIT.jobType : undefined); /* prices are per-site */
   autoDistance();
 }
 /* re-price when the yard/address changes — the same client can charge differently per site */
@@ -1169,9 +1204,12 @@ async function saveJob(){
   const jtSel = $('#jf-jobtype').selectedOptions[0];
   const jobType = $('#jf-jobtype').value;
   const price = jtSel ? (Number(jtSel.dataset.price)||0) : 0;
+  const cOvrName = ($('#jf-cname-ovr').value||'').trim();
+  const cOvrPhone = ($('#jf-cphone-ovr').value||'').trim();
   const j = {
     clientId: cid,
     siteIdx: Number($('#jf-site').value)||0, contactIdx: Number($('#jf-contact').value)||0,
+    contactName: cOvrName, contactPhone: cOvrPhone, /* per-job on-site contact override (blank = use CRM contact) */
     jobType, price,
     surcharges: $$('#jf-sur input:checked').map(i=>i.value), /* driver form has none → [] */
     binSize: $('#jf-size').value, waste: $('#jf-waste').value || 'General',
@@ -1184,9 +1222,25 @@ async function saveJob(){
   if(isDriver) j._bydriver = true; /* so the office can see this one was added by the driver, not assigned */
   /* denormalised display fields for the Google Sheet "Jobs" tab */
   j._client = c ? c.name : ''; j._addr = cSite(c, j.siteIdx).addr;
-  j._contact = (cContact(c, j.contactIdx)||{}).name || '';
+  j._contact = (jobContact(j)||{}).name || ''; j._contactPhone = (jobContact(j)||{}).phone || '';
   j._driver = driver(driverId).name; j._task = jobType;
   if(isTestDriver(driverId)) j._test = true; /* keeps the test account out of the Sheet + reports */
+  /* #24: EDIT an existing un-accepted job — patch it instead of adding a new one */
+  if(JF_EDIT){
+    const target = S.jobs.find(x=>x.id===JF_EDIT.id);
+    if(target && target.status!=='assigned'){
+      JF_EDIT = null; closeSheet();
+      await lrInfo('This job has already been accepted by the driver — it can no longer be edited. Void it and assign a new job instead.');
+      render(); return;
+    }
+    const editId = JF_EDIT.id; JF_EDIT = null;
+    delete j.status; delete j.createdAt; /* keep the original status + created time */
+    closeSheet(); toast('Saving changes…');
+    await api('updateJob', {id: editId, patch: j});
+    render();
+    toast(`Job #${editId} updated ✅ — the driver sees the new details`);
+    return;
+  }
   closeSheet(); toast('Saving job to database…');
   await api('addJob', {job:j});
   render();
@@ -1196,12 +1250,89 @@ async function saveJob(){
 /* ============================================================
    DRIVER · JOB CARD
    ============================================================ */
+/* Official DRIVER DAILY JOB CARD print — matches the paper template (08 Operations Samples
+   "2) driver job card.jpeg"): SN | Customer & Location | Bin In/Out | Time Start/End |
+   Dispose To | Tonnage | Trip Charge | Remarks, with totals + signature blocks. */
+function jobCardHTML(driverId, date){
+  const d = driver(driverId) || {name:''};
+  const trips = driverTrips(driverId, date);
+  const rows = [];
+  trips.forEach((t,i)=>{
+    const c = client(t.clientId);
+    const j = t.jobId ? S.jobs.find(x=>x.id===t.jobId) : null;
+    const addr = j ? (cSite(client(j.clientId), j.siteIdx)||{}).addr||'' : '';
+    const ton = (t.tonnage!=null && t.tonnage!=='') ? t.tonnage : (t.weight!=null ? t.weight : '');
+    rows.push(`<tr><td class="c">${i+1}</td><td>${esc(c?c.name:'')}${addr?`<div class="jc-sub">${esc(addr)}</div>`:''}</td>
+      <td class="c">${esc(t.binIn||'')}</td><td class="c">${esc(t.binOut||'')}</td>
+      <td class="c">${esc(t.timeStart||'')}</td><td class="c">${esc(t.timeEnd||'')}</td>
+      <td class="c">${esc(t.disposeTo||(j&&j.dumpTo)||'')}</td><td class="c">${esc(ton)}</td>
+      <td class="r">${tripPay(t)?money(tripPay(t)):''}</td><td>${esc(t.remarks||'')}</td></tr>`);
+  });
+  for(let i=trips.length;i<10;i++){ rows.push(`<tr class="blank"><td class="c">${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`); }
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Driver Daily Job Card — ${esc(d.name)} ${esc(fmtDate(date))}</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif; color:#111; max-width:860px; margin:18px auto; padding:0 14px; font-size:12.5px}
+    .jc-co{font-weight:800; font-size:15px; text-align:center}
+    .jc-title{font-weight:800; font-size:13.5px; text-align:center; text-decoration:underline; margin:2px 0 10px}
+    .jc-head{display:flex; justify-content:space-between; gap:18px; margin:8px 0 10px}
+    .jc-head .f{flex:1} .jc-head b{display:inline-block; min-width:64px}
+    .jc-line{border-bottom:1px solid #333; display:inline-block; min-width:150px; padding:0 4px}
+    table.jc{width:100%; border-collapse:collapse; font-size:12px}
+    table.jc th, table.jc td{border:1px solid #444; padding:5px 6px; vertical-align:top}
+    table.jc th{background:#f0f0f0; font-size:11px; text-transform:uppercase}
+    td.c{text-align:center} td.r{text-align:right}
+    .jc-sub{font-size:10.5px; color:#555}
+    tr.blank td{height:26px}
+    .jc-tot{display:flex; gap:26px; margin-top:10px; font-size:12.5px}
+    .jc-tot b{margin-right:6px}
+    .jc-sig{display:flex; gap:26px; margin-top:26px}
+    .jc-sig .s{flex:1} .jc-sig .l{border-top:1px solid #333; margin-top:34px; font-size:11px; color:#444; padding-top:3px}
+    .jc-note{margin-top:14px; font-size:10.5px; font-style:italic; color:#555}
+    .jc-actions{margin:14px 0; display:flex; gap:10px}
+    .jc-actions button{padding:9px 15px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer}
+    .jc-print{background:#050A30; color:#fff} .jc-close{background:#eee}
+    @media print{ .jc-actions{display:none} body{margin:0; max-width:none} }
+  </style></head><body>
+    <div class="jc-actions"><button class="jc-print" onclick="window.print()">🖨️ Print / Save as PDF</button><button class="jc-close" onclick="window.close()">Close</button></div>
+    <div class="jc-co">LIRICH RESOURCES PTE LTD</div>
+    <div class="jc-title">DRIVER DAILY JOB CARD</div>
+    <div class="jc-head">
+      <div class="f"><b>DRIVER:</b> <span class="jc-line">${esc(d.name)}</span></div>
+      <div class="f"><b>VEHICLE:</b> <span class="jc-line">&nbsp;</span></div>
+      <div class="f"><b>DATE:</b> <span class="jc-line">${esc(fmtDate(date))}</span></div>
+    </div>
+    <table class="jc">
+      <tr><th rowspan="2">SN</th><th rowspan="2">Customer &amp; Location</th><th colspan="2">Bin No.</th><th colspan="2">Time</th><th rowspan="2">Dispose To</th><th rowspan="2">Tonnage</th><th rowspan="2">Trip Charge</th><th rowspan="2">Remarks</th></tr>
+      <tr><th>In</th><th>Out</th><th>Start</th><th>End</th></tr>
+      ${rows.join('')}
+    </table>
+    <div class="jc-tot">
+      <div><b>TOTAL TRIPS OF DAY:</b> ${trips.length}</div>
+      <div><b>TOTAL TRIP CHARGE:</b> ${money(payOf(trips))}</div>
+      <div><b>MILEAGE START:</b> ______</div>
+      <div><b>MILEAGE END:</b> ______</div>
+    </div>
+    <div class="jc-sig">
+      <div class="s"><div class="l">DRIVER SIGNATURE</div></div>
+      <div class="s"><div class="l">CHECKED BY</div></div>
+      <div class="s"><div class="l">APPROVED BY</div></div>
+    </div>
+    <div class="jc-note">Generated from the Lirich driver app — completed jobs for the day. Please submit the job card when finishing work.</div>
+  </body></html>`;
+}
+function printJobCard(){
+  const w = window.open('', '_blank');
+  if(!w){ toast('⚠️ Pop-up blocked — allow pop-ups to print the job card'); return; }
+  w.document.write(jobCardHTML(S.role.driverId, TODAY));
+  w.document.close();
+}
 function vJobCard(){
   const d = driver(S.role.driverId);
   const trips = driverTrips(d.id, TODAY);
   $('#main').innerHTML = `
     <div class="card">
       <h2>📋 Daily Job Card — ${esc(d.name)} · ${fmtDate(TODAY)}</h2>
+      <div style="margin:4px 0 10px"><button class="btn slim" onclick="printJobCard()">🖨️ Print job card (official format)</button></div>
       <table class="jt">
         <thead><tr><th>#</th><th>CUSTOMER / BIN</th><th>TIME</th><th class="right" style="text-align:right">CHARGE</th></tr></thead>
         <tbody>
@@ -1284,13 +1415,12 @@ function openTripForm(opts){
         <div class="edo-head">
           <div class="edo-brand">
             <img src="logo.png" alt="Lirich Resources" class="edo-logo">
-            <div class="edo-tag">( Enrichment of Resources )</div>
+            <div class="edo-tag">(Enrichment of Resources)</div>
             <div class="edo-cn">利瑞资源私人有限公司</div>
           </div>
           <div class="edo-co">
             <b>LIRICH RESOURCES PTE LTD</b>
-            <span>Warehouse: 23, Gul Drive Singapore 629471</span>
-            <span>Office: 18 Boon Lay Way #09-123 Tradehub 21 (S) 609966</span>
+            <span>23 Gul Drive, Singapore 629471</span>
             <span>Tel: 6793 0173 &nbsp;Fax: 6793 2309</span>
           </div>
         </div>
@@ -2040,8 +2170,7 @@ const DO_LETTERHEAD = `
     <div class="doh-co">
       <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
       <div class="doh-tag">(Enrichment of Resources)</div>
-      <div class="doh-addr">Warehouse: 23, Gul Drive Singapore 629471<br>
-      Office: 18 Boon Lay Way #09-123 Tradehub 21 (S) 609966<br>
+      <div class="doh-addr">23 Gul Drive, Singapore 629471<br>
       Tel: 6793 0173 &nbsp; Fax: 6793 2309</div>
     </div>
   </div>`;
@@ -2357,6 +2486,7 @@ function havKm(a, b){
 }
 async function autoDistance(){
   const el = $('#jf-dist'); if(!el) return;
+  if(JF_EDIT && el.value){ return; } /* editing: keep the job's saved distance unless cleared */
   const c = client(jfClientId()); if(!c) return;
   const addr = cSite(c, Number($('#jf-site').value)||0).addr;
   const dump = $('#jf-dump') ? $('#jf-dump').value : '';

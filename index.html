@@ -9,6 +9,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<!-- website branding fonts (Cinzel wordmark + Ma Shan Zheng calligraphy); fall back to serif/KaiTi offline -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Lirich brand: navy carries structure (header, chrome, money), orange is reserved
@@ -36,6 +40,26 @@ header{
 .hlogo{height:26px; width:auto; flex:none; display:block}
 body.big-ui .hlogo{height:30px}
 .hsub{font-size:11.5px; opacity:.85; margin-top:2px; font-weight:600}
+/* ---- LIRICH GROUP branding block (matches lirichgroup.com header) ---- */
+.lr-brand{line-height:1.06}
+.lr-line1{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.lr-wm{
+  font-family:'Cinzel',Georgia,'Times New Roman',serif;
+  font-weight:700; font-size:19px; letter-spacing:.06em; white-space:nowrap;
+  background:linear-gradient(100deg,rgba(0,0,0,0) 40%,rgba(255,255,255,.95) 50%,rgba(0,0,0,0) 60%),
+            linear-gradient(105deg,#6e5312,#c89b18 10%,#ffe9a3 19%,#fffdf4 24%,#e2b31f 32%,#8a6a12 44%,#ffd75e 56%,#fffdf0 64%,#c49a1e 74%,#5e4610 87%,#8a6a1f);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+}
+.lr-cn{
+  font-family:'Ma Shan Zheng',KaiTi,STKaiti,'Kaiti SC',cursive;
+  font-size:15px; color:#fff; letter-spacing:.14em;
+}
+.lr-tag{
+  font-family:'Trebuchet MS',Trebuchet,Helvetica,Arial,sans-serif;
+  font-size:8.5px; letter-spacing:.34em; text-transform:uppercase; color:#eaf1ff; margin-top:2px;
+}
+body.big-ui .lr-wm{font-size:22px}
+body.big-ui .lr-cn{font-size:17px}
 .role-pill{
   display:flex; align-items:center; gap:7px; border:none; cursor:pointer;
   background:rgba(255,255,255,.16); color:#fff; border-radius:999px;
