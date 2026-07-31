@@ -571,7 +571,9 @@ const NAVS = {
     {id:'jobs',  ico:'🗂️', label:'Jobs'},
     {id:'bins',  ico:'🗑️', label:'Bins'},
     {id:'earn',  ico:'💵', label:'Earnings'},
-    {id:'crm',   ico:'🏢', label:'CRM'},
+    /* CRM tab REMOVED (Michelle, 1 Aug 2026) — master data lives in the SSOT and is
+       edited ONLY in the web operator console; keeping an app edit surface risked
+       divergence. vCRM() etc. kept as dead code for the trip-history drill-down. */
   ],
   driver: [
     {id:'myjobs', ico:'🗂️', label:'My Jobs'},
