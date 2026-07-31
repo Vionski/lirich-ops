@@ -1,0 +1,745 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lirich Operator Console</title>
+<style>
+  :root{--navy:#1B2A4A;--orange:#E07C2E;--line:#e4e7ec;--muted:#5b6472;--bg:#f7f8fa;--ok:#1f7a44;--err:#b3261e}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1b2540;background:var(--bg)}
+  header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;font-weight:800;letter-spacing:.2px}
+  header .tag{font-size:12px;color:#aec3e6}
+  header .who{margin-left:auto;font-size:12.5px;color:#cdd8ee}
+  .bar{display:flex;gap:10px;align-items:center;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .bar input[type=search]{flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600}
+  button.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+  button.primary:disabled{opacity:.5;cursor:default}
+  button.ghost{background:#fff;color:var(--navy)}
+  .wrap{padding:14px 20px}
+  .status{font-size:13px;color:var(--muted);min-height:18px}
+  .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+  .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff;max-height:66vh}
+  table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;white-space:nowrap}
+  thead th{position:sticky;top:0;background:var(--navy);color:#fff;font-weight:700;padding:8px 10px;text-align:left;z-index:2}
+  thead th.price{background:#243a63;width:78px;white-space:nowrap;padding:8px 6px;text-align:center}
+  td input{border:0;background:transparent;padding:8px 10px;font:inherit;width:100%;min-width:90px}
+  td.price input{text-align:right;min-width:78px;width:78px;padding:8px 6px}
+  td.key input{color:var(--muted);font-weight:600}
+  td.narrow input{min-width:68px;width:68px;max-width:none;font-size:11px;color:var(--muted)}
+  thead th.narrow{background:#2b3c5e;font-size:11px;width:68px;white-space:nowrap}
+  thead th.col-cust{width:auto} td.col-cust input{min-width:160px}
+  thead th.col-loc{width:100%} td.col-loc input{min-width:120px}
+  thead th.col-ct,thead th.col-ph{white-space:nowrap} td.col-ct input,td.col-ph input{min-width:100px}
+  tr.dirty td{background:#fff7ef}
+  tr:hover td{background:#f2f6fc} tr.dirty:hover td{background:#ffefdd}
+  .legend{font-size:12px;color:var(--muted);margin:8px 2px}
+  .audit{margin-top:16px}
+  .audit h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:0 0 8px}
+  .audit ul{list-style:none;margin:0;padding:0;font-size:12.5px}
+  .audit li{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-bottom:6px}
+  .audit b{color:var(--navy)} .audit .who{color:var(--orange);font-weight:700} .audit .t{color:var(--muted)}
+  button.addbtn{border-color:var(--navy);color:var(--navy);font-weight:700}
+  .modal-bg{position:fixed;inset:0;background:rgba(20,30,55,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:36px 16px;overflow:auto}
+  .modal-bg.show{display:flex}
+  .modal{background:#fff;border-radius:12px;width:100%;max-width:580px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}
+  .modal>.mh{background:var(--navy);color:#fff;padding:14px 18px;font-weight:800;font-size:16px}
+  .modal .mbody{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .modal .mbody .full{grid-column:1 / -1}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12px;color:var(--muted);font-weight:600}
+  .field input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;width:100%}
+  .field input[readonly]{background:#f2f4f7;color:var(--muted)}
+  .field .hint{font-size:11px;color:var(--muted);min-height:13px}
+  .pricerow{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+  .pricerow .plabel{grid-column:1/-1;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:-4px}
+  .modal .mfoot{padding:12px 18px;display:flex;gap:10px;align-items:center;justify-content:flex-end;border-top:1px solid var(--line)}
+  .modal .mstatus{font-size:12.5px;color:var(--err);margin-right:auto}
+</style></head>
+<body>
+<header>
+  <h1>Lirich Operator Console</h1><span class="tag">Master data · audited</span>
+  <span class="who" id="who">…</span>
+</header>
+<div class="tabs" style="display:flex;gap:6px;padding:8px 14px 0">
+  <button class="tabbtn" data-view="master" type="button" style="border:none;background:#e9edf8;color:#0a1b4d;font-weight:700;padding:9px 16px;border-radius:9px 9px 0 0;cursor:pointer">Master data</button>
+  <button class="tabbtn" data-view="coll" type="button" style="border:none;background:transparent;color:#6e7691;font-weight:700;padding:9px 16px;border-radius:9px 9px 0 0;cursor:pointer">Collections / DO</button>
+  <button class="tabbtn" data-view="jobcard" type="button" style="border:none;background:transparent;color:#6e7691;font-weight:700;padding:9px 16px;border-radius:9px 9px 0 0;cursor:pointer">Job card / Salary</button>
+  <button class="tabbtn" data-view="samples" type="button" style="border:none;background:transparent;color:#6e7691;font-weight:700;padding:9px 16px;border-radius:9px 9px 0 0;cursor:pointer">Report samples</button>
+  <button class="tabbtn" data-view="nea" type="button" style="border:none;background:transparent;color:#6e7691;font-weight:700;padding:9px 16px;border-radius:9px 9px 0 0;cursor:pointer">NEA Register</button>
+</div>
+<div id="viewMaster">
+<div class="bar">
+  <input type="search" id="q" placeholder="Filter by site, client, address…">
+  <button class="addbtn" id="addsite">+ Add site</button>
+  <button class="ghost" id="reload">Reload</button>
+  <button class="primary" id="save" disabled>Save changes</button>
+</div>
+<div class="wrap">
+  <div class="status" id="status">Loading…</div>
+  <div class="legend">Editable: client name, address, contact, and prices. Site ID / Client ID are keys (edit carefully). Changed rows are highlighted; only they are saved — each as an audited record.</div>
+  <div class="tablewrap"><table id="grid"><thead></thead><tbody></tbody></table></div>
+  <div class="audit"><h3>Recent changes</h3><ul id="auditlist"><li class="t">—</li></ul></div>
+</div>
+</div>
+<div id="viewColl" style="display:none">
+  <div class="bar">
+    <input type="search" id="cq" placeholder="Filter by DO no, site, waste…">
+    <button class="ghost" id="creload" type="button">Reload</button>
+  </div>
+  <div class="wrap">
+    <div class="status" id="cstatus">Loading…</div>
+    <div class="legend">Collections are <b>immutable</b>. A weight/volume correction is recorded as an audited <b>adjustment</b> — the raw DO is never changed, and reports use the corrected value.</div>
+    <div class="tablewrap"><table id="cgrid"><thead><tr><th>DO&nbsp;no</th><th>Date</th><th>Site</th><th>Waste</th><th>Gross&nbsp;kg</th><th>Tare&nbsp;kg</th><th>Adj&nbsp;kg</th><th>Net&nbsp;kg</th><th>Source</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="audit"><h3>Recent adjustments</h3><ul id="adjlist"><li class="t">—</li></ul></div>
+  </div>
+</div>
+<div id="viewJobcard" style="display:none">
+  <div class="bar">
+    <select id="jc-driver" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px"></select>
+    <input type="date" id="jc-date" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px">
+    <select id="jc-vehicle" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px">
+      <option value="">Vehicle…</option><option>XE4491D</option><option>XE5457Y</option><option>XE6204D</option><option>XE6221D</option><option>XE7126P</option><option>XE8496P</option>
+    </select>
+    <button class="ghost" id="jc-load" type="button">Load</button>
+    <button class="primary" id="jc-print" type="button">🖨️ Print job card</button>
+  </div>
+  <div class="wrap">
+    <div class="status" id="jc-status">Pick a driver and date, then Load.</div>
+    <div class="legend">Values from the <b>driver app</b> show in normal text. <span style="color:#c05600;font-weight:700">Orange</span> = edited by the office (original kept + audited). Click a highlighted cell's original value to see history in Recent changes.</div>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;margin:6px 0 10px;font-size:13.5px">
+      <div>Mileage start: <input id="jc-mil-s" data-fk="hdr:mileage_start" class="jc-ed" style="width:90px;padding:5px 7px;border:1px solid var(--line);border-radius:7px"></div>
+      <div>Mileage end: <input id="jc-mil-e" data-fk="hdr:mileage_end" class="jc-ed" style="width:90px;padding:5px 7px;border:1px solid var(--line);border-radius:7px"></div>
+      <div id="jc-day-tot" style="font-weight:700"></div>
+      <div id="jc-mtd" style="font-weight:700;color:var(--navy)"></div>
+    </div>
+    <div class="tablewrap"><table id="jc-grid"><thead><tr><th>SN</th><th>Customer &amp; Location</th><th>Bin In</th><th>Bin Out</th><th>Start</th><th>End</th><th>Dispose To</th><th>Tonnage</th><th>Trip charge</th><th>Remarks</th></tr></thead><tbody></tbody></table></div>
+    <div class="audit"><h3>Recent job-card edits</h3><ul id="jc-adjlist"><li class="t">—</li></ul></div>
+  </div>
+</div>
+<div id="viewSamples" style="display:none">
+  <div class="wrap">
+    <div class="legend" style="margin-top:10px">Report formats Lirich produces for clients &amp; agencies, independent of the dashboard — stored on the official drive (M365 sign-in required). Open, Save-As, and fill for the period needed.</div>
+    <div class="tablewrap" style="max-height:none"><table><thead><tr><th>Report / template</th><th>Where</th></tr></thead><tbody id="samples-body"></tbody></table></div>
+  </div>
+</div>
+<div id="viewNea" style="display:none">
+  <div class="bar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <label style="font-weight:700;color:#0a1b4d">NEA Daily Register</label>
+    <input type="date" id="nea-from" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px">
+    <input type="date" id="nea-to" style="padding:8px 10px;border:1px solid var(--line);border-radius:8px">
+    <button class="ghost" id="nea-load" type="button">Load</button>
+    <button class="primary" id="nea-print" type="button">&#128424;&#65039; Print register</button>
+    <span id="nea-status" class="status"></span>
+  </div>
+  <div class="muted" style="padding:0 14px 6px">Live from the SSOT in the NEA GWDF Daily Register format (template: Daily and Monthly Register, Lirich drive). Incoming = collections brought to the yard + gate log; Products = Sell jobs; Stored = stock-takes; Residual = yard-out disposals. Rows missing dispose-to are excluded &mdash; drivers must record it.</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 10px">
+    <div style="border:1px solid var(--line);border-radius:10px;padding:10px">
+      <b style="color:#0a1b4d">1 &middot; Incoming Waste</b>
+      <div class="tablewrap" style="max-height:260px"><table><thead><tr><th>Date</th><th>Waste type (NEA)</th><th>Source</th><th>Name &amp; address</th><th>Tonnes</th></tr></thead><tbody id="nea-in"></tbody></table></div>
+    </div>
+    <div style="border:1px solid var(--line);border-radius:10px;padding:10px">
+      <b style="color:#0a1b4d">2 &middot; Products Recovered or Produced</b>
+      <div class="tablewrap" style="max-height:260px"><table><thead><tr><th>Date</th><th>Product</th><th>Destination</th><th>Name</th><th>Tonnes</th></tr></thead><tbody id="nea-pr"></tbody></table></div>
+    </div>
+    <div style="border:1px solid var(--line);border-radius:10px;padding:10px">
+      <b style="color:#0a1b4d">3 &middot; Stored Waste</b>
+      <div class="tablewrap" style="max-height:220px"><table><thead><tr><th>Date</th><th>Waste type</th><th>Tonnes</th><th>Remarks</th></tr></thead><tbody id="nea-st"></tbody></table></div>
+    </div>
+    <div style="border:1px solid var(--line);border-radius:10px;padding:10px">
+      <b style="color:#0a1b4d">4 &middot; Residual Waste Disposed</b>
+      <div class="tablewrap" style="max-height:220px"><table><thead><tr><th>Date</th><th>Waste type</th><th>Tonnes</th><th>Destination</th><th>GWC engaged</th></tr></thead><tbody id="nea-rd"></tbody></table></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 16px">
+    <div style="border:1px dashed var(--line);border-radius:10px;padding:10px">
+      <b style="color:#0a1b4d">Gate log &mdash; third-party waste received</b> <span class="muted">(e.g. another GWC delivering to the yard)</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <input type="date" id="gi-date" style="padding:7px;border:1px solid var(--line);border-radius:7px">
+        <input id="gi-type" placeholder="Waste type" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:150px">
+        <input id="gi-src" placeholder="Source name" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:170px">
+        <input id="gi-addr" placeholder="Source address" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:200px">
+        <input id="gi-qty" placeholder="Tonnes" inputmode="decimal" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:80px">
+        <button class="primary" id="gi-add" type="button">Add</button>
+      </div>
+    </div>
+    <div style="border:1px dashed var(--line);border-radius:10px;padding:10px">
+      <b style="color:#0a1b4d">Stock-take &mdash; waste stored at yard</b> <span class="muted">(enter per type on stock-take day)</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <input type="date" id="st-date" style="padding:7px;border:1px solid var(--line);border-radius:7px">
+        <input id="st-type" placeholder="Waste type" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:170px">
+        <input id="st-qty" placeholder="Tonnes" inputmode="decimal" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:90px">
+        <input id="st-rem" placeholder="Remarks (optional)" style="padding:7px;border:1px solid var(--line);border-radius:7px;width:190px">
+        <button class="primary" id="st-add" type="button">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="modalbg">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="mh">Add new site</div>
+    <div class="mbody">
+      <div class="field full">
+        <label>Customer name</label>
+        <input id="m_customer" list="custlist" autocomplete="off" placeholder="Type to search existing, or type a new name…">
+        <datalist id="custlist"></datalist>
+        <span class="hint" id="m_custhint"></span>
+      </div>
+      <div class="field">
+        <label>Client ID (auto)</label>
+        <input id="m_client" placeholder="—">
+        <span class="hint" id="m_clienthint"></span>
+      </div>
+      <div class="field">
+        <label>Site ID (auto)</label>
+        <input id="m_site" readonly placeholder="—">
+        <span class="hint">Generated from client + next number</span>
+      </div>
+      <div class="field full"><label>Service location / address</label><input id="m_addr"></div>
+      <div class="field"><label>Contact name</label><input id="m_cname"></div>
+      <div class="field"><label>Phone</label><input id="m_phone"></div>
+      <div class="field full"><label>Contact email</label><input id="m_email"></div>
+      <div class="pricerow" id="m_prices"><span class="plabel">Prices (optional — leave blank if not applicable)</span></div>
+    </div>
+    <div class="mfoot">
+      <span class="mstatus" id="m_status"></span>
+      <button class="ghost" id="m_cancel">Cancel</button>
+      <button class="primary" id="m_save">Add site</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var OP="https://zjtvrlbyfeirnrlqgefo.supabase.co/functions/v1/operator";
+  var JOBS=["Exchange","Collect","Delivery","Sell","Dump","Load"];
+  var COLS=[{k:"customer_name",t:"Customer",cls:"col-cust"},
+    {k:"address",t:"Service Location",cls:"col-loc"},{k:"contact_name",t:"Contact",cls:"col-ct"},{k:"contact_phone",t:"Phone",cls:"col-ph"}]
+    .concat(JOBS.map(function(j){return{k:"price_"+j,t:j,price:1};}))
+    .concat([{k:"site_id",t:"Site ID",key:1,narrow:1},{k:"client_id",t:"Client ID",key:1,narrow:1}]);
+  function tok(){try{return (window.top&&window.top.LR_TOKEN)||window.LR_TOKEN||"";}catch(e){return window.LR_TOKEN||"";}}
+  function api(action,payload){
+    return fetch(OP+"?token="+encodeURIComponent(tok()),{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify(Object.assign({action:action},payload||{}))}).then(function(r){return r.json().then(function(j){return{status:r.status,j:j};});});
+  }
+  var rows=[], dirty={};
+  var sites=[], customers=[], custByName={}, clientSet={};
+  function setStatus(m,c){var s=document.getElementById("status");s.textContent=m;s.className="status"+(c?(" "+c):"");}
+  function esc(v){return v==null?"":String(v);}
+  function attr(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
+  function normName(v){return String(v==null?"":v).trim().toLowerCase();}
+  function buildRows(sites,customers,rate){
+    var cname={}; (customers||[]).forEach(function(c){cname[c.client_id]=c.name;});
+    var price={}; (rate||[]).forEach(function(r){ (price[r.site_id]=price[r.site_id]||{})[r.job_type]=r.price; });
+    return (sites||[]).map(function(s){
+      var row={site_id:s.site_id,client_id:s.client_id,customer_name:cname[s.client_id]||s.site_name||"",
+        address:s.address||"",contact_name:s.contact_name||"",contact_phone:s.contact_phone||""};
+      JOBS.forEach(function(j){ row["price_"+j]=(price[s.site_id]&&price[s.site_id][j]!=null)?price[s.site_id][j]:""; });
+      return row;
+    });
+  }
+  function render(){
+    var q=(document.getElementById("q").value||"").toLowerCase();
+    var thead=document.querySelector("#grid thead"), tbody=document.querySelector("#grid tbody");
+    thead.innerHTML="<tr>"+COLS.map(function(c){return "<th class='"+(c.price?"price":"")+(c.narrow?" narrow":"")+(c.cls?(" "+c.cls):"")+"'>"+c.t+"</th>";}).join("")+"</tr>";
+    tbody.innerHTML="";
+    rows.forEach(function(row,i){
+      if(q){var hay=(row.site_id+" "+row.client_id+" "+row.customer_name+" "+row.address).toLowerCase();if(hay.indexOf(q)<0)return;}
+      var tr=document.createElement("tr"); tr.dataset.i=i; if(dirty[i])tr.className="dirty";
+      COLS.forEach(function(c){
+        var td=document.createElement("td"); td.className=(c.price?"price ":"")+(c.key?"key ":"")+(c.narrow?"narrow ":"")+(c.cls||"");
+        var inp=document.createElement("input"); inp.value=esc(row[c.k]); inp.dataset.k=c.k;
+        if(c.price){inp.inputMode="decimal";}
+        inp.addEventListener("input",function(){ row[c.k]=inp.value; dirty[i]=true; tr.className="dirty"; refreshSave(); });
+        td.appendChild(inp); tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+  function refreshSave(){var n=Object.keys(dirty).length;var b=document.getElementById("save");b.disabled=!n;b.textContent=n?("Save "+n+" change"+(n>1?"s":"")):"Save changes";}
+  function load(){
+    setStatus("Loading master data…");
+    if(!tok()){setStatus("Not signed in (no token). Open this page while logged in.","err");return;}
+    Promise.all([api("read",{what:"sites"}),api("read",{what:"customers"}),api("read",{what:"rate_card"})]).then(function(res){
+      if(res[0].status!==200){setStatus("Load failed ("+res[0].status+"): "+(res[0].j.error||""),"err");return;}
+      document.getElementById("who").textContent="signed in as "+(res[0].j.actor||"?")+" · "+(res[0].j.role||"");
+      sites=res[0].j.data||[]; customers=res[1].j.data||[];
+      custByName={}; clientSet={};
+      customers.forEach(function(c){custByName[normName(c.name)]=c;clientSet[String(c.client_id||"").toUpperCase()]=1;});
+      fillDatalist();
+      rows=buildRows(sites,customers,res[2].j.data); dirty={}; refreshSave();
+      render(); setStatus(rows.length+" sites loaded.","ok"); loadAudit();
+    }).catch(function(e){setStatus("Network error: "+e,"err");});
+  }
+  function loadAudit(){
+    api("read",{what:"audit"}).then(function(r){
+      var list=document.getElementById("auditlist"); var d=(r.j&&r.j.data)||[];
+      if(!d.length){list.innerHTML="<li class='t'>No changes yet.</li>";return;}
+      list.innerHTML=d.slice(0,12).map(function(a){
+        return "<li><span class='who'>"+esc(a.actor)+"</span> <b>"+esc(a.action)+"</b> "+esc(a.entity_id)+
+          " <span class='t'>· "+new Date(a.at).toLocaleString()+"</span></li>";
+      }).join("");
+    });
+  }
+  function save(){
+    var idx=Object.keys(dirty).map(Number); if(!idx.length)return;
+    var customers=[],sites=[],rate=[];
+    var seen={};
+    idx.forEach(function(i){
+      var r=rows[i];
+      if(r.client_id && !seen[r.client_id]){seen[r.client_id]=1; customers.push({client_id:r.client_id,name:r.customer_name});}
+      sites.push({site_id:r.site_id,client_id:r.client_id,site_name:r.customer_name,address:r.address,contact_name:r.contact_name,contact_phone:r.contact_phone});
+      JOBS.forEach(function(j){var v=r["price_"+j];if(v!==""&&v!=null)rate.push({site_id:r.site_id,job_type:j,price:v});});
+    });
+    setStatus("Saving "+idx.length+" row(s)…");
+    document.getElementById("save").disabled=true;
+    var steps=[];
+    if(customers.length)steps.push(api("master.upsert",{table:"customers",rows:customers}));
+    if(sites.length)steps.push(api("master.upsert",{table:"sites",rows:sites}));
+    if(rate.length)steps.push(api("master.upsert",{table:"rate_card",rows:rate}));
+    Promise.all(steps).then(function(res){
+      var bad=res.filter(function(x){return x.status!==200||(x.j.result&&x.j.result.error);});
+      if(bad.length){setStatus("Save error: "+JSON.stringify(bad[0].j),"err");refreshSave();return;}
+      dirty={}; setStatus("Saved. Changes recorded in the audit log.","ok"); render(); refreshSave(); loadAudit();
+    }).catch(function(e){setStatus("Save failed: "+e,"err");refreshSave();});
+  }
+  /* ---- Add-site modal ---- */
+  function fillDatalist(){
+    var dl=document.getElementById("custlist"); if(!dl)return;
+    dl.innerHTML=customers.map(function(c){return '<option value="'+attr(c.name)+'">';}).join("");
+  }
+  function suggestClientId(name){
+    var alpha=String(name||"").toUpperCase().replace(/[^A-Z ]/g,"").trim();
+    var words=alpha.split(/\s+/).filter(Boolean), base;
+    if(words.length>=2){var ini=words.map(function(w){return w[0];}).join("");base=ini.length>=3?ini.slice(0,4):words[0].slice(0,3);}
+    else base=(words[0]||"").slice(0,3);
+    base=base.replace(/[^A-Z]/g,"");
+    if(base.length<2)base=(alpha.replace(/ /g,"")+"XXX").slice(0,3);
+    var code=base,n=1; while(clientSet[code]){n++;code=base.slice(0,3)+n;} return code;
+  }
+  function nextSiteId(cid){
+    cid=String(cid||"").toUpperCase().replace(/[^A-Z0-9]/g,""); if(!cid)return "";
+    var max=0, re=new RegExp("^"+cid+"_(\\d+)$");
+    sites.forEach(function(s){var m=String(s.site_id||"").toUpperCase().match(re);if(m){var n=parseInt(m[1],10);if(n>max)max=n;}});
+    var s=String(max+1); while(s.length<3)s="0"+s; return cid+"_"+s;
+  }
+  function mEl(id){return document.getElementById(id);}
+  function updateSiteId(){mEl("m_site").value=nextSiteId(mEl("m_client").value);}
+  function onCustomerInput(){
+    var name=mEl("m_customer").value, existing=custByName[normName(name)], ci=mEl("m_client");
+    if(existing){
+      ci.value=existing.client_id; ci.readOnly=true;
+      mEl("m_custhint").textContent="Existing customer · "+existing.client_id;
+      mEl("m_clienthint").textContent="Locked to existing customer";
+    }else{
+      ci.readOnly=false;
+      ci.value=name.trim()?suggestClientId(name):"";
+      mEl("m_custhint").textContent=name.trim()?"New customer — will be created on save":"";
+      mEl("m_clienthint").textContent=ci.value?"Auto-suggested — edit to match your house style":"";
+    }
+    updateSiteId();
+  }
+  function openModal(){
+    ["m_customer","m_client","m_site","m_addr","m_cname","m_phone","m_email"].forEach(function(id){mEl(id).value="";});
+    Array.prototype.forEach.call(document.querySelectorAll("#m_prices input"),function(i){i.value="";});
+    mEl("m_status").textContent=""; mEl("m_custhint").textContent=""; mEl("m_clienthint").textContent="";
+    mEl("m_client").readOnly=false; mEl("m_save").disabled=false;
+    mEl("modalbg").classList.add("show"); mEl("m_customer").focus();
+  }
+  function closeModal(){mEl("modalbg").classList.remove("show");}
+  function saveNew(){
+    var name=mEl("m_customer").value.trim(), cid=mEl("m_client").value.trim().toUpperCase(), sid=mEl("m_site").value.trim();
+    var st=mEl("m_status");
+    if(!name){st.textContent="Enter a customer name.";return;}
+    if(!cid){st.textContent="Client ID missing.";return;}
+    if(!/^[A-Z0-9]{2,6}$/.test(cid)){st.textContent="Client ID must be 2–6 letters/digits.";return;}
+    if(!sid){st.textContent="Site ID missing.";return;}
+    if(sites.some(function(s){return String(s.site_id).toUpperCase()===sid.toUpperCase();})){sid=nextSiteId(cid);mEl("m_site").value=sid;}
+    var addr=mEl("m_addr").value.trim(), cn=mEl("m_cname").value.trim(), ph=mEl("m_phone").value.trim(), em=mEl("m_email").value.trim();
+    var isNew=!custByName[normName(name)];
+    var steps=[];
+    if(isNew)steps.push(api("master.upsert",{table:"customers",rows:[{client_id:cid,name:name}]}));
+    steps.push(api("master.upsert",{table:"sites",rows:[{site_id:sid,client_id:cid,site_name:name,address:addr,contact_name:cn,contact_phone:ph,contact_email:em,active:true}]}));
+    var rate=[];
+    JOBS.forEach(function(j){var v=(mEl("mp_"+j).value||"").trim();if(v!=="")rate.push({site_id:sid,job_type:j,price:v});});
+    if(rate.length)steps.push(api("master.upsert",{table:"rate_card",rows:rate}));
+    st.textContent="Saving…"; mEl("m_save").disabled=true;
+    Promise.all(steps).then(function(res){
+      mEl("m_save").disabled=false;
+      var bad=res.filter(function(x){return x.status!==200||(x.j&&x.j.result&&x.j.result.error);});
+      if(bad.length){st.textContent="Save error: "+JSON.stringify(bad[0].j).slice(0,200);return;}
+      if(isNew){var c={client_id:cid,name:name};customers.push(c);custByName[normName(name)]=c;clientSet[cid]=1;fillDatalist();}
+      sites.push({site_id:sid,client_id:cid,site_name:name,address:addr,contact_name:cn,contact_phone:ph,contact_email:em});
+      var row={site_id:sid,client_id:cid,customer_name:name,address:addr,contact_name:cn,contact_phone:ph};
+      JOBS.forEach(function(j){var v=(mEl("mp_"+j).value||"").trim();row["price_"+j]=v;});
+      rows.unshift(row); render(); closeModal();
+      setStatus("Added "+sid+" ("+name+"). Recorded in the audit log.","ok"); loadAudit();
+    }).catch(function(e){mEl("m_save").disabled=false;st.textContent="Save failed: "+e;});
+  }
+  mEl("m_prices").insertAdjacentHTML("beforeend",JOBS.map(function(j){return '<div class="field"><label>'+j+'</label><input id="mp_'+j+'" inputmode="decimal"></div>';}).join(""));
+  /* ---- Collections / DO tab (Phase 4: audited weight/volume adjustments) ---- */
+  var COLL=[], ADJ=[], collLoaded=false;
+  function setCStatus(m,c){var s=document.getElementById("cstatus");if(s){s.textContent=m;s.className="status"+(c?(" "+c):"");}}
+  function adjMap(){var m={};ADJ.forEach(function(a){if(a.field==="net_kg"||a.field==="vol_total_m3"){if(!m[a.do_no])m[a.do_no]={};if(m[a.do_no][a.field]===undefined)m[a.do_no][a.field]=a.new_value;}});return m;}
+  function loadCollections(){
+    setCStatus("Loading collections…","");
+    Promise.all([api("read",{what:"collections",filters:{limit:1500}}),api("read",{what:"adjustments",filters:{limit:100}})]).then(function(res){
+      COLL=(res[0]&&res[0].j&&res[0].j.data)||[]; ADJ=(res[1]&&res[1].j&&res[1].j.data)||[]; collLoaded=true;
+      setCStatus(COLL.length+" collections loaded","ok"); renderColl(); renderAdj();
+    }).catch(function(e){setCStatus("Load failed: "+e,"err");});
+  }
+  function renderColl(){
+    var q=(document.getElementById("cq").value||"").toLowerCase(), m=adjMap();
+    var rows=COLL.filter(function(r){return !q||[r.do_no,r.site_id,r.waste_type,r.vessel_name].join(" ").toLowerCase().indexOf(q)>-1;});
+    var tb=document.querySelector("#cgrid tbody"); tb.innerHTML="";
+    rows.slice(0,800).forEach(function(r){
+      var adj=m[r.do_no]||{};
+      /* weighing-chit model: Net = Gross - Tare (+ operator Adjustment).
+         The audited value is net_kg; Adj = effective net - raw net; the shown
+         Gross carries the adjustment so the arithmetic on screen matches the chit. */
+      var rawNet=(r.net_kg==null?null:Number(r.net_kg));
+      var effNet=(adj.net_kg!==undefined?Number(adj.net_kg):rawNet);
+      var delta=(effNet!=null&&rawNet!=null)?Math.round((effNet-rawNet)*100)/100:(effNet!=null&&rawNet==null?effNet:0);
+      var gross=(r.gross_kg==null?null:Number(r.gross_kg)), tare=(r.tare_kg==null?null:Number(r.tare_kg));
+      function num(v){return v==null||isNaN(v)?"—":String(Math.round(v*100)/100);}
+      var grossCell = gross==null?"—":(delta?('<span style="text-decoration:line-through;color:#9aa">'+num(gross)+'</span> <b style="color:#c05600">'+num(gross+delta)+'</b>'):num(gross));
+      var adjCell = delta?('<b style="color:#c05600">'+(delta>0?'+':'')+num(delta)+'</b>'):'—';
+      var netCell = (effNet==null)?"—":(delta&&rawNet!=null?('<span style="text-decoration:line-through;color:#9aa">'+num(rawNet)+'</span> <b>'+num(effNet)+'</b> <span title="adjusted" style="color:#c4860a">&#9998;</span>'):num(effNet));
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td>'+esc(r.do_no)+'</td><td>'+esc(r.do_date||"—")+'</td><td>'+esc(r.site_id||"—")+'</td><td>'+esc(r.waste_type||"—")+'</td><td>'+grossCell+'</td><td>'+num(tare)+'</td><td>'+adjCell+'</td><td>'+netCell+'</td><td class="muted">'+esc(r.source||"")+'</td><td><button class="ghost" type="button">Adjust</button></td>';
+      tr.querySelector("button").addEventListener("click",function(){adjustFlow(r);});
+      tb.appendChild(tr);
+    });
+  }
+  function renderAdj(){
+    var ul=document.getElementById("adjlist"); ul.innerHTML="";
+    if(!ADJ.length){ul.innerHTML='<li class="t">No adjustments yet.</li>';return;}
+    ADJ.slice(0,30).forEach(function(a){
+      var li=document.createElement("li");
+      li.innerHTML='<b>'+esc(a.do_no)+'</b> · '+esc(a.field)+': '+esc(a.old_value==null?"—":a.old_value)+' &rarr; <b>'+esc(a.new_value)+'</b> · <span class="muted">'+esc(a.reason)+' · '+esc(a.adjusted_by)+'</span>';
+      ul.appendChild(li);
+    });
+  }
+  function adjustFlow(r){
+    var field="net_kg";
+    var m=adjMap(), adj=m[r.do_no]||{};
+    var rawNet=(r.net_kg==null?null:Number(r.net_kg));
+    var effNet=(adj.net_kg!==undefined?Number(adj.net_kg):rawNet);
+    var gross=(r.gross_kg==null?null:Number(r.gross_kg)), tare=(r.tare_kg==null?null:Number(r.tare_kg));
+    if(effNet==null&&gross!=null&&tare!=null) effNet=gross-tare;
+    if(effNet==null&&r.vol_total_m3!=null) effNet=Math.round(Number(r.vol_total_m3)*1000);
+    var base=(effNet==null?0:effNet);
+    var info="DO "+r.do_no+"  ·  Gross "+(gross==null?"—":gross)+"  Tare "+(tare==null?"—":tare)+"  Net "+(effNet==null?"—":base)+" kg";
+    var av=window.prompt("Weight ADJUSTMENT in kg for "+info+"\nPositive adds, negative subtracts (added to gross; Net = Gross + Adj - Tare):","");
+    if(av==null||String(av).trim()==="")return;
+    var a=Number(String(av).replace(/[+ ]/g,""));
+    if(isNaN(a)){setCStatus("Adjustment must be a number (e.g. 100 or -50).","err");return;}
+    var nv=Math.round((base+a)*100)/100;
+    var reason="Weight adjustment "+(a>0?"+":"")+a+" kg (chit model: net = gross + adj - tare)";
+    setCStatus("Saving adjustment…","");
+    api("adjustment.add",{do_no:r.do_no,field:field,new_value:nv,reason:reason}).then(function(res){
+      var rr=res&&res.j&&res.j.result;
+      if(rr&&rr.ok){setCStatus("Adjustment saved — DO "+r.do_no+" "+field+" → "+nv+" (audited).","ok"); loadCollections();}
+      else{setCStatus("Adjustment failed: "+((rr&&rr.error)||JSON.stringify(res)).slice(0,120),"err");}
+    }).catch(function(e){setCStatus("Adjustment failed: "+e,"err");});
+  }
+  /* ---- Job card / Salary (Phase 5): official DRIVER DAILY JOB CARD, app data +
+     audited operator overrides (append-only), Cartrack mileage prefill, MTD totals ---- */
+  var JC_SUR={after7:8,after7v:5,midnight:5,penjuru:10,spot:8,wait2:10,wait4:20,sunph:5}; /* mirror of app SURCHARGES */
+  var JC={state:null,trips:[],ovr:{},drv:null,date:null,inited:false};
+  function jcPay(t){var p=Number(t.price)||0;(t.surcharges||[]).forEach(function(id){if(JC_SUR[id]!=null)p+=JC_SUR[id];});return Math.round(p*100)/100;}
+  function jcMoney(v){return '$'+(Number(v)||0).toFixed(2);}
+  function jcClientName(st,id){var c=(st.clients||[]).find(function(x){return x.id===id});return c?c.name:'';}
+  function jcSiteAddr(st,t){var j=t.jobId!=null?(st.jobs||[]).find(function(x){return x.id===t.jobId}):null;if(!j)return '';var c=(st.clients||[]).find(function(x){return x.id===j.clientId});var s0=c&&c.sites&&(c.sites[j.siteIdx]||c.sites[0]);return s0?(s0.addr||s0.label||''):'';}
+  function jcLatestOvr(rows){var m={};(rows||[]).forEach(function(r){m[r.field_key]=r;});return m;}
+  function setJc(m,c){var s0=document.getElementById('jc-status');if(s0){s0.textContent=m;s0.className='status'+(c?(' '+c):'');}}
+  /* fixed driver -> vehicle assignment (Michelle, 31 Jul 2026) so picking the
+     driver auto-selects their truck and pulls that day's Cartrack mileage */
+  var JC_VEH={'KARTHIK':'XE5457Y','SATHISH':'XE6221D','LIU':'XE8496P','KUMAR':'XE4491D','YAOJUN':'XE7126P','YAO JUN':'XE7126P'};
+  function jcAutoVehicle(){
+    var dsel=document.getElementById('jc-driver');
+    var name=(dsel.options[dsel.selectedIndex]&&dsel.options[dsel.selectedIndex].text||'').trim().toUpperCase().replace(/\s+/g,' ');
+    var reg=JC_VEH[name]||JC_VEH[name.replace(/ /g,'')];
+    if(reg){var v=document.getElementById('jc-vehicle');
+      for(var i=0;i<v.options.length;i++){if(v.options[i].value===reg||v.options[i].text===reg){v.selectedIndex=i;return;}}}
+  }
+  async function jcInit(){
+    if(JC.inited)return; JC.inited=true;
+    document.getElementById('jc-driver').addEventListener('change',jcAutoVehicle);
+    document.getElementById('jc-date').value=new Date().toISOString().slice(0,10);
+    setJc('Loading drivers…','');
+    var r=await api('read',{what:'app_state'});
+    var st=r.j&&r.j.data;
+    if(!st||st.error){setJc('Could not load driver-app data.','err');return;}
+    JC.state=st;
+    var seen={},opts=['<option value="">Driver…</option>'];
+    (st.jobs||[]).forEach(function(j){ if(j.driverId!=null&&!seen[j.driverId]){seen[j.driverId]=1;opts.push('<option value="'+j.driverId+'">'+esc(j._driver||('Driver '+j.driverId))+'</option>');} });
+    (st.trips||[]).forEach(function(t){ if(t.driverId!=null&&!seen[t.driverId]){seen[t.driverId]=1;opts.push('<option value="'+t.driverId+'">Driver '+t.driverId+'</option>');} });
+    document.getElementById('jc-driver').innerHTML=opts.join('');
+    setJc('Pick a driver and date, then Load.','');
+  }
+  async function jcLoad(){
+    var dsel=document.getElementById('jc-driver'), date=document.getElementById('jc-date').value;
+    if(!dsel.value){setJc('Pick a driver.','err');return;}
+    setJc('Loading…','');
+    var res=await Promise.all([
+      api('read',{what:'app_state'}),
+      api('read',{what:'jobcard_overrides',filters:{card_date:date,driver_id:dsel.value}})
+    ]);
+    var st=res[0].j&&res[0].j.data, ov=(res[1].j&&res[1].j.data)||[];
+    if(!st||st.error){setJc('Could not load app data.','err');return;}
+    JC.state=st;JC.drv=Number(dsel.value);JC.date=date;JC.ovr=jcLatestOvr(ov);
+    JC.trips=(st.trips||[]).filter(function(t){return t.driverId===JC.drv&&t.date===date;});
+    var ms=document.getElementById('jc-mil-s'), me=document.getElementById('jc-mil-e');
+    ms.value='';me.value='';ms.dataset.app='';me.dataset.app='';ms.style.background='';me.style.background='';ms.style.borderColor='';me.style.borderColor='';ms.title='';me.title='';
+    if(!document.getElementById('jc-vehicle').value) jcAutoVehicle();
+    var veh=document.getElementById('jc-vehicle').value;
+    if(veh){
+      var od=await api('read',{what:'odometer',filters:{vehicle_id:veh,date:date}});
+      var row=od.j&&od.j.data&&od.j.data[0];
+      if(row){ var end=row.odometer_km!=null?Number(row.odometer_km):null; var dist=Number(row.distance_km)||0; var start=end!=null?Math.round(end-dist):null;
+        if(start!=null){ms.value=start;ms.dataset.app=String(start);} if(end!=null){me.value=end;me.dataset.app=String(end);} }
+    }
+    [['jc-mil-s','hdr:mileage_start'],['jc-mil-e','hdr:mileage_end']].forEach(function(p){
+      var o=JC.ovr[p[1]], el=document.getElementById(p[0]);
+      if(o){el.value=o.new_value||'';el.style.background='#fff3e6';el.style.borderColor='#c05600';el.title='Edited by '+(o.actor||'office')+' · app/Cartrack value: '+(o.old_value||'—');}
+    });
+    jcRender();
+  }
+  function jcVal(t,f){
+    var fk='trip:'+t.id+':'+f, o=JC.ovr[fk];
+    var app = f==='tonnage' ? ((t.tonnage!=null&&t.tonnage!=='')?t.tonnage:(t.weight!=null?t.weight:'')) : (f==='charge' ? jcPay(t) : (t[f]||''));
+    return {app:app, cur:(o?o.new_value:app), edited:!!o, actor:(o?o.actor:'')};
+  }
+  function jcRender(){
+    var tb=document.querySelector('#jc-grid tbody');tb.innerHTML='';
+    JC.trips.forEach(function(t,i){
+      var tr=document.createElement('tr');
+      function td(html){var d=document.createElement('td');d.innerHTML=html;d.style.padding='7px 9px';tr.appendChild(d);return d;}
+      td(String(i+1));
+      td(esc(jcClientName(JC.state,t.clientId))+'<div style="font-size:11px;color:#5b6472">'+esc(jcSiteAddr(JC.state,t))+'</div>');
+      td(esc(t.binIn||''));td(esc(t.binOut||''));td(esc(t.timeStart||''));td(esc(t.timeEnd||''));td(esc(t.disposeTo||''));
+      ['tonnage','charge','remarks'].forEach(function(f){
+        var v=jcVal(t,f);
+        var d=document.createElement('td');d.style.padding='2px 4px';
+        if(v.edited){ d.style.background='#fff3e6'; d.title='Edited by '+(v.actor||'office')+' · driver-app value: '+v.app;
+          var so=document.createElement('div');so.style.cssText='text-decoration:line-through;color:#9aa;font-size:10.5px;padding-left:6px';so.textContent=String(v.app);d.appendChild(so); }
+        var inp=document.createElement('input');
+        inp.value=v.cur==null?'':v.cur;
+        inp.style.cssText='border:0;background:transparent;font:inherit;width:'+(f==='remarks'?'170px':'82px')+';padding:5px 6px'+(f!=='remarks'?';text-align:right':'')+(v.edited?';color:#c05600;font-weight:700':'');
+        inp.dataset.fk='trip:'+t.id+':'+f; inp.dataset.app=String(v.app==null?'':v.app);
+        inp.addEventListener('change',function(){jcSave(inp);});
+        d.appendChild(inp); tr.appendChild(d);
+      });
+      tb.appendChild(tr);
+    });
+    if(!JC.trips.length)tb.innerHTML='<tr><td colspan="10" style="padding:14px;color:#5b6472">No completed trips for this driver on this date.</td></tr>';
+    var day=JC.trips.reduce(function(a,t){return a+(Number(jcVal(t,'charge').cur)||0);},0);
+    document.getElementById('jc-day-tot').textContent='Day: '+JC.trips.length+' trips · '+jcMoney(day);
+    var mon=(JC.date||'').slice(0,7);
+    var mt=(JC.state.trips||[]).filter(function(t){return t.driverId===JC.drv&&(t.date||'').slice(0,7)===mon;});
+    var mtd=mt.reduce(function(a,t){var o=JC.ovr['trip:'+t.id+':charge'];return a+(o?(Number(o.new_value)||0):jcPay(t));},0);
+    document.getElementById('jc-mtd').textContent='Month-to-date '+mon+': '+mt.length+' trips · '+jcMoney(mtd)+' (charge edits for other days not included)';
+    setJc(JC.trips.length+' trip(s) loaded for '+JC.date+'. Edit any orange-able cell — changes save instantly, audited.','ok');
+    jcAudit();
+  }
+  async function jcSave(inp){
+    if(JC.date==null||JC.drv==null)return;
+    var fk=inp.dataset.fk, nv=inp.value, o=JC.ovr[fk];
+    var cur=o?o.new_value:inp.dataset.app;
+    if(String(nv)===String(cur))return;
+    var r=await api('jobcard.set',{card_date:JC.date,driver_id:JC.drv,field_key:fk,old_value:inp.dataset.app,new_value:nv});
+    var rr=r.j&&r.j.result;
+    if(rr&&rr.ok){ JC.ovr[fk]=rr.override; if(fk.indexOf('hdr:')===0){ jcLoad(); } else { jcRender(); } }
+    else{ setJc('Save failed: '+((rr&&rr.error)||r.status),'err'); }
+  }
+  async function jcAudit(){
+    var r=await api('read',{what:'jobcard_overrides',filters:{card_date:JC.date,driver_id:JC.drv,limit:100}});
+    var d=(r.j&&r.j.data)||[], ul=document.getElementById('jc-adjlist');
+    if(!d.length){ul.innerHTML='<li class="t">No office edits for this card — everything is as the driver recorded it.</li>';return;}
+    ul.innerHTML=d.slice(-15).reverse().map(function(a){
+      return '<li><span class="who">'+esc(a.actor||'office')+'</span> <b>'+esc(a.field_key)+'</b>: '+esc(a.old_value==null?'—':a.old_value)+' &rarr; <b>'+esc(a.new_value==null?'—':a.new_value)+'</b> <span class="t">· '+new Date(a.at).toLocaleString()+'</span></li>';
+    }).join('');
+  }
+  function jcPrint(){
+    if(!JC.state||JC.drv==null){alert('Load a driver + date first.');return;}
+    var dname=(document.getElementById('jc-driver').selectedOptions[0]||{}).textContent||'';
+    var veh=document.getElementById('jc-vehicle').value||'';
+    var ms=document.getElementById('jc-mil-s').value||'______', me=document.getElementById('jc-mil-e').value||'______';
+    var rows='',edited=false;
+    JC.trips.forEach(function(t,i){
+      function cell(f,alignR){var v=jcVal(t,f);if(v.edited)edited=true;return '<td class="'+(alignR?'r':'c')+'">'+esc(String(v.cur==null?'':v.cur))+(v.edited?'<span class="ed">*</span>':'')+'</td>';}
+      rows+='<tr><td class="c">'+(i+1)+'</td><td>'+esc(jcClientName(JC.state,t.clientId))+'<div class="sub">'+esc(jcSiteAddr(JC.state,t))+'</div></td>'+
+        '<td class="c">'+esc(t.binIn||'')+'</td><td class="c">'+esc(t.binOut||'')+'</td><td class="c">'+esc(t.timeStart||'')+'</td><td class="c">'+esc(t.timeEnd||'')+'</td><td class="c">'+esc(t.disposeTo||'')+'</td>'+
+        cell('tonnage',false)+cell('charge',true)+cell('remarks',false)+'</tr>';
+    });
+    for(var i=JC.trips.length;i<10;i++){rows+='<tr class="bl"><td class="c">'+(i+1)+'</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';}
+    var day=JC.trips.reduce(function(a,t){return a+(Number(jcVal(t,'charge').cur)||0);},0);
+    var w=window.open('','_blank'); if(!w){alert('Allow pop-ups to print');return;}
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Driver Daily Job Card — '+esc(dname)+' '+esc(JC.date)+'</title><style>'+
+      'body{font-family:Arial,sans-serif;color:#111;max-width:880px;margin:18px auto;padding:0 14px;font-size:12.5px}'+
+      '.co{font-weight:800;font-size:15px;text-align:center}.ti{font-weight:800;font-size:13.5px;text-align:center;text-decoration:underline;margin:2px 0 10px}'+
+      '.hd{display:flex;justify-content:space-between;gap:18px;margin:8px 0 10px}.hd b{margin-right:5px}.ln{border-bottom:1px solid #333;display:inline-block;min-width:130px;padding:0 4px}'+
+      'table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #444;padding:5px 6px;vertical-align:top}th{background:#f0f0f0;font-size:11px;text-transform:uppercase}'+
+      'td.c{text-align:center}td.r{text-align:right}.sub{font-size:10.5px;color:#555}tr.bl td{height:26px}.ed{color:#c05600;font-weight:800}'+
+      '.tot{display:flex;gap:26px;margin-top:10px}.sig{display:flex;gap:26px;margin-top:26px}.sig .s{flex:1}.sig .l{border-top:1px solid #333;margin-top:34px;font-size:11px;color:#444;padding-top:3px}'+
+      '.nt{margin-top:12px;font-size:10.5px;font-style:italic;color:#555}.ac{margin:14px 0}.ac button{padding:9px 15px;border-radius:8px;border:none;font-weight:700;cursor:pointer;background:#050A30;color:#fff}'+
+      '@media print{.ac{display:none}body{margin:0;max-width:none}}</style></head><body>'+
+      '<div class="ac"><button onclick="window.print()">🖨️ Print / Save as PDF</button></div>'+
+      '<div class="co">LIRICH RESOURCES PTE LTD</div><div class="ti">DRIVER DAILY JOB CARD</div>'+
+      '<div class="hd"><div><b>DRIVER:</b><span class="ln">'+esc(dname)+'</span></div><div><b>VEHICLE:</b><span class="ln">'+esc(veh)+'</span></div><div><b>DATE:</b><span class="ln">'+esc(JC.date)+'</span></div></div>'+
+      '<table><tr><th rowspan="2">SN</th><th rowspan="2">Customer &amp; Location</th><th colspan="2">Bin No.</th><th colspan="2">Time</th><th rowspan="2">Dispose To</th><th rowspan="2">Tonnage</th><th rowspan="2">Trip Charge</th><th rowspan="2">Remarks</th></tr>'+
+      '<tr><th>In</th><th>Out</th><th>Start</th><th>End</th></tr>'+rows+'</table>'+
+      '<div class="tot"><div><b>TOTAL TRIPS OF DAY:</b> '+JC.trips.length+'</div><div><b>TOTAL TRIP CHARGE:</b> '+jcMoney(day)+'</div><div><b>MILEAGE START:</b> '+esc(ms)+'</div><div><b>MILEAGE END:</b> '+esc(me)+'</div></div>'+
+      '<div class="sig"><div class="s"><div class="l">DRIVER SIGNATURE</div></div><div class="s"><div class="l">CHECKED BY</div></div><div class="s"><div class="l">APPROVED BY</div></div></div>'+
+      '<div class="nt">Generated from the Lirich driver app + operator console.'+(edited?' Values marked <span class="ed">*</span> were edited by the office; the driver-app originals are retained in the audit log.':'')+'</div>'+
+      '</body></html>');
+    w.document.close();
+  }
+  /* ---- Report samples library (#81): official-drive templates independent of the dashboard ---- */
+  var SP='https://lirichresourcessg-my.sharepoint.com/my?id=%2Fpersonal%2Fmichelle%5Fchen%5Flirichresources%5Fsg%2FDocuments%2FLirich%20Operations';
+  var SAMPLES=[
+    ['NEA Report, OTC Summary &amp; Poh Tiong Choon','Weekly/periodic NEA reporting pack + OTC summary formats','%2F05%20Client%20Reports%2FNEA%20Report%2C%20OTC%20Summary%20%26%20Poh%20Tiong%20Choon'],
+    ['Client weekly report (sample)','Format for the weekly client report — 08 Operations Samples','%2F08%20Operations%20Samples'],
+    ['Driver daily job card (paper template)','The official job-card layout this tab reproduces','%2F08%20Operations%20Samples'],
+    ['ST Engineering — invoices + disposal forms','Monthly per-stream invoice + Disposal Form &amp; Weighing Chit evidence','%2F05%20Client%20Reports%2FST%20Engineering'],
+    ['PIL — DO / OCR / management reports','Vessel DO formats + monthly management report','%2F05%20Client%20Reports%2FPIL'],
+    ['Savills (Blue Hub)','Client DO scans + reports','%2F05%20Client%20Reports%2FSavills'],
+    ['Vehicle maintenance records','07 Vehicle Maintenance','%2F07%20Vehicle%20Maintenance'],
+    ['Master data + pricing workbooks','00 Master Data (Lirich Master Data.xlsx / Lirich Pricing.xlsx)','%2F00%20Master%20Data']
+  ];
+  var samplesLoaded=false;
+  function loadSamples(){
+    if(samplesLoaded)return; samplesLoaded=true;
+    document.getElementById('samples-body').innerHTML=SAMPLES.map(function(r){
+      return '<tr><td style="padding:9px 11px"><b>'+r[0]+'</b><div style="font-size:12px;color:#5b6472">'+r[1]+'</div></td><td style="padding:9px 11px"><a href="'+SP+r[2]+'" target="_blank" rel="noopener" style="color:#0a5bd3;font-weight:700">Open on official drive ↗</a></td></tr>';
+    }).join('');
+  }
+  /* ---- NEA GWDF Daily Register (task #85): live from the SSOT, template =
+     "Daily and Monthly Register" xlsx on the Lirich drive ---- */
+  var NEA_MAP={"general waste":"Industrial and Commercial Waste","wood waste":"Wood Waste","wood":"Wood Waste",
+    "metal waste":"Scrap Metal","scrap metal":"Scrap Metal","plastic waste":"Plastic Waste","food waste":"Food Waste",
+    "hardcore waste":"Construction & Demolition Waste","carton":"Paper","paper":"Paper","concrete stone":"Construction & Demolition Waste"};
+  function neaType(w){var k=String(w||"").trim().toLowerCase();return NEA_MAP[k]||((w||"")+" *");}
+  var NEA={inb:[],pr:[],st:[],rd:[]};
+  function neaStatus(m,c){var el=document.getElementById("nea-status");if(el){el.textContent=m;el.className="status"+(c?(" "+c):"");}}
+  function siteName(sid){var st=(sites||[]).find(function(x){return x.site_id===sid;});if(!st)return{name:sid||"",addr:""};
+    var cn=(customers||[]).find(function(c){return c.client_id===st.client_id;});
+    return {name:(cn?cn.name:st.client_id)||"",addr:st.address||""};}
+  function tonnes(r){ if(r.net_kg!=null&&r.net_kg!=="")return Math.round(Number(r.net_kg)/10)/100;
+    if(r.vol_total_m3!=null&&r.vol_total_m3!=="")return Math.round(Number(r.vol_total_m3)*100)/100; return null;}
+  function isYard(d){return /lirich/i.test(d||"");}
+  function loadNea(){
+    var f=document.getElementById("nea-from").value,t=document.getElementById("nea-to").value;
+    if(!f||!t){neaStatus("Pick a date range.","err");return;}
+    neaStatus("Loading\u2026","");
+    var need=(sites&&sites.length)?Promise.resolve():Promise.all([api("read",{what:"sites"}),api("read",{what:"customers"})]).then(function(res){sites=res[0].j.data||[];customers=res[1].j.data||[];});
+    need.then(function(){return Promise.all([
+      api("read",{what:"collections",filters:{limit:5000}}),
+      api("read",{what:"yard_inbound",filters:{limit:2000}}),
+      api("read",{what:"yard_stock",filters:{limit:2000}})
+    ]);}).then(function(res){
+      var coll=(res[0].j&&res[0].j.data)||[], gin=(res[1].j&&res[1].j.data)||[], stk=(res[2].j&&res[2].j.data)||[];
+      function inR(d){return d&&d>=f&&d<=t;}
+      NEA.inb=[];NEA.pr=[];NEA.st=[];NEA.rd=[];
+      coll.forEach(function(r){
+        if(!inR(r.do_date))return;
+        var q=tonnes(r); if(q==null)return;
+        var jt=String(r.job_type||"").toLowerCase();
+        if(jt==="sell"){var sn=siteName(r.site_id);NEA.pr.push({date:r.do_date,prod:neaType(r.waste_type),dest:"Sold Locally",name:sn.name,q:q});return;}
+        if(isYard(r.dispose_to)){var sn2=siteName(r.site_id);NEA.inb.push({date:r.do_date,type:neaType(r.waste_type),src:"Local",name:sn2.name+(sn2.addr?" ("+sn2.addr+")":""),q:q});return;}
+        if(String(r.site_id||"").indexOf("LIR")===0&&r.dispose_to&&!isYard(r.dispose_to)){
+          NEA.rd.push({date:r.do_date,type:neaType(r.waste_type),q:q,dest:r.dispose_to,gwc:"Lirich Resources Pte Ltd"});return;}
+      });
+      gin.forEach(function(r){ if(!inR(r.log_date))return;
+        NEA.inb.push({date:r.log_date,type:neaType(r.waste_type),src:"Local",name:r.source_name+(r.source_addr?" ("+r.source_addr+")":""),q:Number(r.qty_t)});});
+      stk.forEach(function(r){ if(!inR(r.take_date))return;
+        NEA.st.push({date:r.take_date,type:r.waste_type,q:Number(r.qty_t),rem:r.remarks||""});});
+      ["inb","pr","st","rd"].forEach(function(k){NEA[k].sort(function(a,b){return a.date<b.date?-1:1;});});
+      renderNea();
+      neaStatus("Incoming "+NEA.inb.length+" \u00b7 Products "+NEA.pr.length+" \u00b7 Stored "+NEA.st.length+" \u00b7 Residual "+NEA.rd.length+" rows","ok");
+    }).catch(function(e){neaStatus("Load failed: "+e,"err");});
+  }
+  function renderNea(){
+    function fill(id,rows,cols){var tb=document.getElementById(id);tb.innerHTML=rows.map(function(r){return "<tr>"+cols.map(function(c){return "<td>"+esc(String(r[c]==null?"":r[c]))+"</td>";}).join("")+"</tr>";}).join("")||'<tr><td colspan="9" class="muted">none in range</td></tr>';}
+    fill("nea-in",NEA.inb,["date","type","src","name","q"]);
+    fill("nea-pr",NEA.pr,["date","prod","dest","name","q"]);
+    fill("nea-st",NEA.st,["date","type","q","rem"]);
+    fill("nea-rd",NEA.rd,["date","type","q","dest","gwc"]);
+  }
+  function neaPrint(){
+    var f=document.getElementById("nea-from").value,t=document.getElementById("nea-to").value;
+    function tbl(title,heads,rows,cols){
+      return '<h3>'+title+'</h3><table><tr>'+heads.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr>'+
+        rows.map(function(r,i){return '<tr><td>'+(i+1)+'</td>'+cols.map(function(c){return '<td>'+esc(String(r[c]==null?"":r[c]))+'</td>';}).join('')+'</tr>';}).join('')+'</table>';
+    }
+    var w=window.open('','_blank');
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>NEA Daily Register '+f+' to '+t+'</title>'+
+      '<style>body{font-family:"Times New Roman",serif;margin:26px;color:#000}h2{text-align:center;margin:2px 0}h3{margin:18px 0 6px}'+
+      'table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #000;padding:4px 6px;text-align:left}th{background:#f4e8c1}'+
+      '.sub{text-align:center;font-size:12px;margin:2px 0 14px}@media print{h3{page-break-after:avoid}}</style></head><body>'+
+      '<h2>DAILY REGISTER \u2014 LICENSED GENERAL WASTE DISPOSAL FACILITY</h2>'+
+      '<div class="sub">Lirich Resources Pte Ltd \u00b7 23 Gul Drive, Singapore 629471 \u00b7 Period: '+f+' to '+t+' \u00b7 generated from the Lirich SSOT (dMRV)</div>'+
+      tbl('1. Incoming Waste',['S/N','Date','Waste Type Received','Source','Source (name and address)','Quantity (Tonnes)'],NEA.inb,['date','type','src','name','q'])+
+      tbl('2. Products Recovered or Produced',['S/N','Date','Product','Destination','Destination (name)','Quantity (Tonnes)'],NEA.pr,['date','prod','dest','name','q'])+
+      tbl('3. Stored Waste',['S/N','Date','Waste Type Stored','Quantity (Tonnes)','Remarks'],NEA.st,['date','type','q','rem'])+
+      tbl('4. Residual Waste Disposed',['S/N','Date','Residual Waste Type','Quantity (Tonnes)','Destination','GWC engaged'],NEA.rd,['date','type','q','dest','gwc'])+
+      '<script>window.print();<\/script></body></html>');
+    w.document.close();
+  }
+  function yardAdd(kind){
+    var pay,label;
+    if(kind==="inbound"){
+      pay={log_date:document.getElementById("gi-date").value,waste_type:document.getElementById("gi-type").value.trim(),
+        source_name:document.getElementById("gi-src").value.trim(),source_addr:document.getElementById("gi-addr").value.trim(),
+        qty_t:document.getElementById("gi-qty").value.trim()};
+      if(!pay.log_date||!pay.waste_type||!pay.source_name||!pay.qty_t){neaStatus("Gate log needs date, type, source, tonnes.","err");return;}
+      label="Gate-log entry";
+    }else{
+      pay={take_date:document.getElementById("st-date").value,waste_type:document.getElementById("st-type").value.trim(),
+        qty_t:document.getElementById("st-qty").value.trim(),remarks:document.getElementById("st-rem").value.trim()};
+      if(!pay.take_date||!pay.waste_type||!pay.qty_t){neaStatus("Stock-take needs date, type, tonnes.","err");return;}
+      label="Stock-take entry";
+    }
+    neaStatus("Saving\u2026","");
+    api(kind==="inbound"?"yard.inbound.add":"yard.stock.add",pay).then(function(res){
+      var rr=res&&res.j&&res.j.result;
+      if(rr&&rr.ok){neaStatus(label+" saved (audited).","ok");loadNea();}
+      else neaStatus("Save failed: "+((rr&&rr.error)||JSON.stringify(res)).slice(0,120),"err");
+    }).catch(function(e){neaStatus("Save failed: "+e,"err");});
+  }
+  function switchView(v){
+    document.getElementById("viewMaster").style.display=(v==="master")?"":"none";
+    document.getElementById("viewColl").style.display=(v==="coll")?"":"none";
+    document.getElementById("viewJobcard").style.display=(v==="jobcard")?"":"none";
+    document.getElementById("viewSamples").style.display=(v==="samples")?"":"none";
+    document.getElementById("viewNea").style.display=(v==="nea")?"":"none";
+    if(v==="nea"&&!document.getElementById("nea-from").value){var d=new Date();var mm=String(d.getMonth()+1).padStart(2,"0");document.getElementById("nea-from").value=d.getFullYear()+"-"+mm+"-01";document.getElementById("nea-to").value=d.toISOString().slice(0,10);}
+    [].forEach.call(document.querySelectorAll(".tabbtn"),function(b){var on=b.getAttribute("data-view")===v;b.style.background=on?"#e9edf8":"transparent";b.style.color=on?"#0a1b4d":"#6e7691";});
+    if(v==="coll"&&!collLoaded)loadCollections();
+    if(v==="jobcard")jcInit();
+    if(v==="samples")loadSamples();
+  }
+  mEl("addsite").addEventListener("click",openModal);
+  mEl("m_cancel").addEventListener("click",closeModal);
+  mEl("m_save").addEventListener("click",saveNew);
+  mEl("m_customer").addEventListener("input",onCustomerInput);
+  mEl("m_client").addEventListener("input",function(){this.value=this.value.toUpperCase();updateSiteId();});
+  mEl("modalbg").addEventListener("click",function(e){if(e.target===this)closeModal();});
+  document.getElementById("reload").addEventListener("click",load);
+  document.getElementById("save").addEventListener("click",save);
+  document.getElementById("q").addEventListener("input",render);
+  [].forEach.call(document.querySelectorAll(".tabbtn"),function(b){b.addEventListener("click",function(){switchView(b.getAttribute("data-view"));});});
+  document.getElementById("nea-load").addEventListener("click",loadNea);
+  document.getElementById("nea-print").addEventListener("click",neaPrint);
+  document.getElementById("gi-add").addEventListener("click",function(){yardAdd("inbound");});
+  document.getElementById("st-add").addEventListener("click",function(){yardAdd("stock");});
+  document.getElementById("creload").addEventListener("click",loadCollections);
+  document.getElementById("cq").addEventListener("input",renderColl);
+  document.getElementById("jc-load").addEventListener("click",jcLoad);
+  document.getElementById("jc-print").addEventListener("click",jcPrint);
+  document.getElementById("jc-mil-s").addEventListener("change",function(){jcSave(this);});
+  document.getElementById("jc-mil-e").addEventListener("change",function(){jcSave(this);});
+  switchView("master");
+  load();
+})();
+</script>
+</body></html>
