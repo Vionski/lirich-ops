@@ -2425,10 +2425,17 @@ async function fetchSheetDB(){
    (Bin DB / Bin Inventory "Size" column) — you can't request a size Lirich doesn't own.
    Falls back to the Lists tab, then built-ins, only while the fleet has no sizes yet. */
 function binOptions(){
-  const fleet = [...new Set(S.bins.map(b=>(b.size||'').trim()).filter(Boolean))]
-    .sort((a,b)=>(parseFloat(a)||0)-(parseFloat(b)||0) || a.localeCompare(b));
-  if(fleet.length) return fleet;
-  return (S.sheetDB && S.sheetDB.binTypes && S.sheetDB.binTypes.length) ? S.sheetDB.binTypes : BIN_SIZES;
+  /* fleet sizes UNION the operator-maintained bin_type list (ref_lists in the SSOT) —
+     so the office can offer sizes/equipment (e.g. 3 ft, Compactor) even before the
+     individual assets are registered in the Bin DB. Non-numeric labels sort last. */
+  const extra = (S.sheetDB && S.sheetDB.binTypes) ? S.sheetDB.binTypes : [];
+  const all = [...new Set([...S.bins.map(b=>(b.size||'').trim()), ...extra.map(s=>String(s).trim())].filter(Boolean))]
+    .sort((a,b)=>{
+      const na=parseFloat(a), nb=parseFloat(b);
+      const ka=Number.isFinite(na)?na:1e9, kb=Number.isFinite(nb)?nb:1e9;
+      return ka-kb || a.localeCompare(b);
+    });
+  return all.length ? all : BIN_SIZES;
 }
 /* dropdown builders — Google Sheet lists first, built-in fallbacks otherwise */
 function wasteOptions(){
