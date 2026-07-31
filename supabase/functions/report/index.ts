@@ -7,10 +7,11 @@
    GET ?token=<ALL-admin>&client=PIL         → admin selects a client (token client_id=ALL)
    GET ?client=PIL&key=<READ_KEY>            → LEGACY, DISABLED in Step D (29 Jul 2026) → 403
 
-   Carbon is intentionally NOT computed here — the function returns raw
-   SSOT aggregates (volumes, per-category m3, tonnage, counts, per-vessel/site);
-   the dashboard keeps its own carbon methodology (1 m3 = 1000 kg, 0.35 tCO2e/t
-   WtE on disposal, recovery = avoided) and just feeds it live data.
+   Carbon IS computed here (single source of truth for methodology): raw SSOT
+   aggregates + carbonFrom() using factors pinned from the `factors` table.
+   REBASED 2026-07-31 to official SG sources: SEFR 2025 (NEA) general-waste
+   WtE 0.1115 tCO2e/t (disposal AND avoided-per-tonne-diverted, conservative);
+   density 1 m3 = 1,000 kg; recovery = 10% garbage assumption + SSOT sludge.
 
    Security (beta): gated by READ_KEY. RLS-on DB + read-only + the WordPress
    login gate in front. ⚠ A logged-in user could still request another client's
@@ -60,8 +61,8 @@ const n2 = (v: number) => Math.round((v || 0) * 100) / 100;
    Every figure is INDICATIVE / estimated from volume. The 10% is an
    assumption, not measured (Michelle, 27 Jul 2026). ============ */
 const RECYCLE_ASSUMPTION = 0.10; // beta placeholder: 10% of vessel non-sludge (garbage) waste assumed recycled/recovered, pending per-collection disposal route. Indicative, not measured.
-const EF_WTE_DEFAULT = 0.35;     // tCO2e/t — Singapore general waste to Waste-to-Energy. Indicative; verify vs NEA GHG M&R.
-const AV_RECOVER_DEFAULT = 0.90; // tCO2e/t avoided by diverting to recovery instead of WtE. Indicative.
+const EF_WTE_DEFAULT = 0.1115;     // tCO2e/t — SEFR 2025 (NEA-sourced, netzerohub.sg): SG general waste incineration/WtE. Rebased 2026-07-31.
+const AV_RECOVER_DEFAULT = 0.1115; // tCO2e/t avoided per tonne diverted = avoided WtE incineration (SEFR general-waste factor; conservative, excludes material credits). Rebased 2026-07-31.
 
 type Factors = {
   ef_wte: number; av_recover: number; source: string;
@@ -70,9 +71,9 @@ type Factors = {
 
 /* Pin the carbon factors from the `factors` table DETERMINISTICALLY (audit-safe):
    - candidates are sorted by a stable key first, so selection never depends on DB row order;
-   - WtE/disposal factor := the general-waste incineration/WtE row (~0.35);
-   - avoided factor := the GENERAL-waste diversion/avoided row explicitly (~0.46), not
-     whichever avoided row happens to be first (paper/plastic/metal are higher);
+   - WtE/disposal factor := the waste|general_waste row (SEFR 2025 official: 0.1115 tCO2e/t);
+   - avoided factor := the avoided|general_waste row (0.1115 = avoided WtE per tonne diverted,
+     conservative, excludes material-recovery credits), never paper/plastic/metal rows;
    - the exact rows used are returned in ef_factor/av_factor for the audit trail;
    - falls back to the documented defaults only if no row matches. */
 async function loadFactors(): Promise<Factors> {
@@ -88,10 +89,13 @@ async function loadFactors(): Promise<Factors> {
       } return NaN;
     };
     const blob = (r: any) => JSON.stringify(r).toLowerCase();
-    // WtE / incineration disposal factor for general waste (~0.35 tCO2e/t)
-    ef_factor = available.find((r) => /wte|waste.?to.?energy|inciner/.test(blob(r)) && num(r) > 0.15 && num(r) < 0.6);
-    // Avoided-by-diversion factor for GENERAL waste specifically (~0.46); fall back to any avoided row
-    av_factor = available.find((r) => /avoid|divert|recover/.test(blob(r)) && /general/.test(blob(r)) && num(r) > 0 && num(r) < 5)
+    // PRIMARY (deterministic, schema-exact): domain/key pin — waste|general_waste = the
+    // SEFR WtE disposal factor (0.1115); avoided|general_waste = avoided-WtE-per-tonne-diverted.
+    ef_factor = available.find((r) => r?.domain === "waste" && r?.key === "general_waste" && Number.isFinite(num(r)));
+    av_factor = available.find((r) => r?.domain === "avoided" && r?.key === "general_waste" && Number.isFinite(num(r)));
+    // FALLBACK (regex, schema-agnostic) — range widened to admit official SEFR-scale values (>=0.05)
+    if (!ef_factor) ef_factor = available.find((r) => /wte|waste.?to.?energy|inciner/.test(blob(r)) && num(r) > 0.05 && num(r) < 0.6);
+    if (!av_factor) av_factor = available.find((r) => /avoid|divert|recover/.test(blob(r)) && /general/.test(blob(r)) && num(r) > 0 && num(r) < 5)
       || available.find((r) => /avoid|divert|recover/.test(blob(r)) && num(r) > 0 && num(r) < 5);
     if (ef_factor) { ef_wte = num(ef_factor); source = "factors"; }
     if (av_factor) { av_recover = num(av_factor); source = "factors"; }
