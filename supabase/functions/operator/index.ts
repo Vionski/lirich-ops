@@ -102,7 +102,7 @@ function binRow(r: any) {
 function rateRow(r: any) {
   const site_id = s(r.site_id), job_type = s(r.job_type);
   if (!site_id || !job_type) return null;
-  return { site_id, job_type, price: num(r.price), valid_from: s(r.valid_from), created_by: "portal" };
+  return { site_id, job_type, price: num(r.price), valid_from: s(r.valid_from) || new Date().toISOString().slice(0, 10), created_by: "portal" };
 }
 const PK: Record<string, string> = { customers: "client_id", sites: "site_id", bins: "bin_id" };
 const SHAPER: Record<string, (r: any) => any> = { customers: customerRow, sites: siteRow, bins: binRow };
@@ -111,19 +111,26 @@ async function masterUpsert(table: string, rows: any[], actor: string) {
   if (!["customers", "sites", "bins", "rate_card"].includes(table)) return { error: "bad table" };
   if (!Array.isArray(rows) || !rows.length) return { table, upserted: 0 };
 
-  // rate_card = replace per site (no unique (site_id,job_type)); audit per site
+  // rate_card = replace per site (no unique (site_id,job_type)); audit per site + ROLLBACK on insert failure
   if (table === "rate_card") {
     const shaped = rows.map(rateRow).filter(Boolean) as any[];
     const siteIds = [...new Set(shaped.map((r) => r.site_id))];
     let count = 0;
     for (const sid of siteIds) {
-      const { data: before } = await supa.from("rate_card").select("job_type,price").eq("site_id", sid);
+      const { data: before } = await supa.from("rate_card").select("*").eq("site_id", sid);
       await supa.from("rate_card").delete().eq("site_id", sid);
       const ins = shaped.filter((r) => r.site_id === sid);
       const { error } = await supa.from("rate_card").insert(ins);
-      if (error) return { table, error: error.message, site_id: sid };
+      if (error) {
+        // rollback: re-insert the deleted rows so a bad edit never wipes a site's prices
+        if (before && before.length) {
+          const restore = before.map((b: any) => { const { id: _drop, ...keep } = b; return keep; });
+          await supa.from("rate_card").insert(restore);
+        }
+        return { table, error: error.message, site_id: sid, rolled_back: true };
+      }
       count += ins.length;
-      await audit(actor, "rate_card.replace", "rate_card", sid, before || [], ins.map((r) => ({ job_type: r.job_type, price: r.price })));
+      await audit(actor, "rate_card.replace", "rate_card", sid, (before || []).map((r: any) => ({ job_type: r.job_type, price: r.price })), ins.map((r) => ({ job_type: r.job_type, price: r.price })));
     }
     return { table, replaced_sites: siteIds.length, inserted: count };
   }
@@ -144,7 +151,7 @@ async function masterUpsert(table: string, rows: any[], actor: string) {
 }
 
 async function read(what: string, f: any) {
-  const lim = Math.min(Number(f?.limit) || 500, 2000);
+  const lim = Math.min(Number(f?.limit) || 500, 5000);
   if (what === "customers") return (await supa.from("customers").select("*").order("client_id").limit(lim)).data;
   if (what === "sites") return (await supa.from("sites").select("*").order("site_id").limit(lim)).data;
   if (what === "bins") return (await supa.from("bins").select("*").order("bin_id").limit(lim)).data;
@@ -155,8 +162,67 @@ async function read(what: string, f: any) {
     if (s(f?.site_id)) q = q.eq("site_id", s(f.site_id));
     return (await q).data;
   }
+  if (what === "adjustments") {
+    let q = supa.from("adjustments").select("*").order("id", { ascending: false }).limit(lim);
+    if (s(f?.do_no)) q = q.eq("do_no", s(f.do_no));
+    return (await q).data;
+  }
   if (what === "audit") return (await supa.from("audit_log").select("*").order("at", { ascending: false }).limit(lim)).data;
+  if (what === "app_state") {
+    // full driver-app state blob (jobs+trips with pay detail) — operator/admin only (enforced by caller)
+    const { data } = await supa.from("app_state").select("state").eq("id", 1).maybeSingle();
+    return data ? data.state : { error: "no app_state" };
+  }
+  if (what === "odometer") {
+    // Cartrack daily odometer for job-card mileage prefill: filters {vehicle_id, date}
+    let q = supa.from("odometer_log").select("*").order("read_date", { ascending: false }).limit(lim);
+    if (s(f?.vehicle_id)) q = q.eq("vehicle_id", s(f.vehicle_id));
+    if (s(f?.date)) q = q.eq("read_date", s(f.date));
+    return (await q).data;
+  }
+  if (what === "jobcard_overrides") {
+    let q = supa.from("jobcard_overrides").select("*").order("id", { ascending: true }).limit(lim);
+    if (s(f?.card_date)) q = q.eq("card_date", s(f.card_date));
+    if (f?.driver_id != null) q = q.eq("driver_id", Number(f.driver_id));
+    return (await q).data;
+  }
   return { error: "unknown read: " + what };
+}
+
+/* ---- Job card override: append-only, audited. App-sourced values are never
+   mutated; the console renders latest override per field_key with provenance. ---- */
+async function jobcardSet(card_date: string, driver_id: number, field_key: string, old_value: unknown, new_value: unknown, actor: string) {
+  if (!card_date || !field_key || !(driver_id >= 0)) return { error: "card_date, driver_id, field_key required" };
+  const row = {
+    card_date, driver_id, field_key,
+    old_value: old_value == null ? null : String(old_value),
+    new_value: new_value == null ? null : String(new_value),
+    actor,
+  };
+  const { data: ins, error } = await supa.from("jobcard_overrides").insert(row).select().single();
+  if (error) return { error: error.message };
+  await audit(actor, "jobcard.set", "jobcard", card_date + "|" + driver_id + "|" + field_key, { value: row.old_value }, { value: row.new_value });
+  return { ok: true, override: ins };
+}
+
+/* ---- Phase 4: weight/volume correction. `collections` raw is NEVER edited;
+   the correction is appended to `adjustments` (collections_effective view =
+   latest adjustment wins) + mirrored to audit_log. ---- */
+const ADJUSTABLE = ["net_kg", "vol_total_m3"]; // fields the collections_effective view honors
+async function adjustmentAdd(do_no: string, field: string, new_value: unknown, reason: string, actor: string) {
+  if (!do_no) return { error: "do_no required" };
+  if (!ADJUSTABLE.includes(field)) return { error: "field not adjustable: " + field + " (allowed: " + ADJUSTABLE.join(", ") + ")" };
+  const nv = num(new_value);
+  if (nv === null || nv < 0) return { error: "new_value must be a number >= 0" };
+  if (!reason) return { error: "reason required" };
+  const { data: coll } = await supa.from("collections").select("do_no,net_kg,vol_total_m3").eq("do_no", do_no).maybeSingle();
+  if (!coll) return { error: "unknown do_no: " + do_no };
+  const old_value = (coll as any)[field] == null ? null : String((coll as any)[field]);
+  const row = { do_no, field, old_value, new_value: String(nv), reason, adjusted_by: actor };
+  const { data: ins, error } = await supa.from("adjustments").insert(row).select().single();
+  if (error) return { error: error.message };
+  await audit(actor, "adjustment.add", "collections", do_no, { [field]: old_value }, { [field]: String(nv), reason });
+  return { ok: true, adjustment: ins };
 }
 
 Deno.serve(async (req) => {
@@ -189,7 +255,12 @@ Deno.serve(async (req) => {
     if (action === "master.upsert") {
       return json({ ok: true, actor, result: await masterUpsert(s(body.table) || "", body.rows || [], actor) });
     }
-    // adjustment.add is Phase 4 (collections UI) — stubbed here for shape
+    if (action === "adjustment.add") {
+      return json({ ok: true, actor, result: await adjustmentAdd(s(body.do_no) || "", s(body.field) || "", body.new_value, s(body.reason) || "", actor) });
+    }
+    if (action === "jobcard.set") {
+      return json({ ok: true, actor, result: await jobcardSet(s(body.card_date) || "", Number(body.driver_id), s(body.field_key) || "", body.old_value, body.new_value, actor) });
+    }
     return json({ error: "unknown action: " + action }, 400);
   } catch (e) {
     return json({ error: String(e) }, 500);
