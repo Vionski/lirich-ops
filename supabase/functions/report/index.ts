@@ -228,7 +228,7 @@ function timingSafeEq(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return r === 0;
 }
-async function verifyToken(token: string): Promise<{ client_id: string } | null> {
+async function verifyToken(token: string): Promise<{ client_id: string; role: string } | null> {
   if (!token || !LR_TOKEN_SECRET) return null;
   const dot = token.lastIndexOf(".");
   if (dot <= 0) return null;
@@ -238,12 +238,21 @@ async function verifyToken(token: string): Promise<{ client_id: string } | null>
   let decoded: string;
   try { decoded = atob(payload); } catch { return null; }
   const parts = decoded.split("|");
-  if (parts.length !== 2) return null;
-  const cid = parts[0].trim().toUpperCase();
-  const exp = Number(parts[1]);
+  let cid: string, role: string, exp: number;
+  if (parts.length === 2) {
+    /* legacy 2-part: client_id|expiry — role derived (ALL = admin, else client) */
+    cid = parts[0].trim().toUpperCase();
+    role = cid === "ALL" ? "admin" : "client";
+    exp = Number(parts[1]);
+  } else if (parts.length === 3) {
+    /* 3-part (#41 phase 2b / #84 SSO): client_id|role|expiry */
+    cid = parts[0].trim().toUpperCase();
+    role = parts[1].trim().toLowerCase();
+    exp = Number(parts[2]);
+  } else return null;
   if (!cid || !Number.isFinite(exp)) return null;
   if (Math.floor(Date.now() / 1000) > exp) return null; // expired
-  return { client_id: cid };
+  return { client_id: cid, role };
 }
 
 Deno.serve(async (req) => {
@@ -258,7 +267,9 @@ Deno.serve(async (req) => {
   let scoped: string, isAdmin = false, authMode: string;
   if (tok) {
     authMode = "token";
-    if (tok.client_id === "ALL") { isAdmin = true; scoped = reqClient; } // admin may select
+    if (tok.client_id === "ALL" || tok.role === "admin" || tok.role === "operator") {
+      isAdmin = true; scoped = reqClient; // staff (admin/operator) may select any client
+    }
     else { scoped = tok.client_id; } // FORCE this client — ?client is ignored entirely
   } else if (LEGACY_KEY_ENABLED && READ_KEY && (url.searchParams.get("key") || "") === READ_KEY) {
     authMode = "legacy-key";
