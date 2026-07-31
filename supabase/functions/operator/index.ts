@@ -158,7 +158,7 @@ async function read(what: string, f: any) {
   if (what === "rate_card") return (await supa.from("rate_card").select("*").order("site_id").order("job_type").limit(lim)).data;
   if (what === "jobs") return (await supa.from("jobs").select("*").order("date", { ascending: false }).limit(lim)).data;
   if (what === "collections") {
-    let q = supa.from("collections").select("do_no,do_date,do_type,trip_type,vessel_name,waste_type,net_kg,vol_total_m3,site_id,source").order("do_date", { ascending: false }).limit(lim);
+    let q = supa.from("collections").select("do_no,do_date,do_type,trip_type,vessel_name,waste_type,job_type,dispose_to,gross_kg,tare_kg,net_kg,vol_total_m3,site_id,source").order("do_date", { ascending: false }).limit(lim);
     if (s(f?.site_id)) q = q.eq("site_id", s(f.site_id));
     return (await q).data;
   }
@@ -167,6 +167,8 @@ async function read(what: string, f: any) {
     if (s(f?.do_no)) q = q.eq("do_no", s(f.do_no));
     return (await q).data;
   }
+  if (what === "yard_inbound") return (await supa.from("yard_inbound").select("*").order("log_date", { ascending: false }).limit(lim)).data;
+  if (what === "yard_stock") return (await supa.from("yard_stock").select("*").order("take_date", { ascending: false }).limit(lim)).data;
   if (what === "audit") return (await supa.from("audit_log").select("*").order("at", { ascending: false }).limit(lim)).data;
   if (what === "app_state") {
     // full driver-app state blob (jobs+trips with pay detail) — operator/admin only (enforced by caller)
@@ -257,6 +259,19 @@ Deno.serve(async (req) => {
     }
     if (action === "adjustment.add") {
       return json({ ok: true, actor, result: await adjustmentAdd(s(body.do_no) || "", s(body.field) || "", body.new_value, s(body.reason) || "", actor) });
+    }
+    if (action === "yard.inbound.add" || action === "yard.stock.add") {
+      const table = action === "yard.inbound.add" ? "yard_inbound" : "yard_stock";
+      const row: any = table === "yard_inbound"
+        ? { log_date: s(body.log_date), waste_type: s(body.waste_type), source_name: s(body.source_name), source_addr: s(body.source_addr), qty_t: num(body.qty_t), remarks: s(body.remarks), entered_by: actor }
+        : { take_date: s(body.take_date), waste_type: s(body.waste_type), qty_t: num(body.qty_t), remarks: s(body.remarks), entered_by: actor };
+      if (!row.waste_type || row.qty_t == null || row.qty_t < 0) return json({ result: { error: "waste_type and a non-negative qty_t are required" } });
+      if (table === "yard_inbound" && (!row.log_date || !row.source_name)) return json({ result: { error: "log_date and source_name are required" } });
+      if (table === "yard_stock" && !row.take_date) return json({ result: { error: "take_date is required" } });
+      const { data: ins, error } = await supa.from(table).insert(row).select().single();
+      if (error) return json({ result: { error: error.message } });
+      await audit(actor, action, table, String(ins.id), null, ins);
+      return json({ ok: true, actor, result: { ok: true, row: ins } });
     }
     if (action === "jobcard.set") {
       return json({ ok: true, actor, result: await jobcardSet(s(body.card_date) || "", Number(body.driver_id), s(body.field_key) || "", body.old_value, body.new_value, actor) });
