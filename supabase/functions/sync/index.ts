@@ -160,6 +160,7 @@ async function mirrorTrip(st: any, t: any) {
       gross_kg: w.gross ?? null, tare_kg: w.tare ?? null, net_kg: net,
       weigh_ticket_no: w.ticket || null,
       weight_source: net != null ? "weighbridge" : "volume_est",
+      dispose_to: t.disposeTo || null,
       photo_do_ref: pick(t.photos, ["do"]),
       photo_sig_ref: pick(t.photos, ["signature"]),
       photo_weigh_ref: pick(t.photos, ["gross", "tare"]),
