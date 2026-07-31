@@ -186,6 +186,11 @@ async function mirrorTrip(st: any, t: any) {
       if (b) row.bin_out = b.bin_id;
       else row.backfill_notes = [(row.backfill_notes || ""), `bin_out_raw=${t.binOut}`].filter(Boolean).join(" | ");
     }
+    if (t.doNo) {
+      /* the trip now has a real DO number — remove the APP-T placeholder row this
+         trip may have synced under earlier, so the upsert below cannot duplicate it */
+      await supa.from("collections").delete().eq("do_no", `APP-T${t.id}`).eq("source", "live");
+    }
     let { error: colErr } = await supa.from("collections").upsert(row, { onConflict: "do_no" });
     if (colErr && row.job_no) {
       /* most likely a job_no FK failure (the job hasn't mirrored) — a trip must
