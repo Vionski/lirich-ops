@@ -1,6 +1,7 @@
 # Nightly Supabase backup - commits CSV + SQL dumps to this private repo.
 # Setup: repo Settings > Secrets and variables > Actions > New repository secret
 # SUPABASE_DB_URL = Supabase connection string (Project Settings > Database, pooler URI port 6543, with password filled in).
+# SUPABASE_SERVICE_ROLE = Supabase service_role API key (Project Settings > API) - used ONLY to mirror the do-photos bucket. (#100)
 name: db-backup
 permissions:
   contents: write        # allow the workflow to push the backup commit
@@ -33,9 +34,30 @@ jobs:
         run: |
           export PATH="/usr/lib/postgresql/17/bin:$PATH"
           mkdir -p backups/csv
-          for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts; do
+          for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts app_state ref_lists audit_log jobcard_overrides yard_inbound yard_stock waste_routes interest_leads console_tabs console_users console_permissions pipeline_stages enquiries driver_base_salary salary_approvals notes; do
             psql "$DB" -c "\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
           done
+      - name: Mirror do-photos storage bucket (idempotent; skips until secret is set)
+        env:
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE }}
+        run: |
+          if [ -z "$KEY" ]; then echo "SUPABASE_SERVICE_ROLE secret not set - skipping photo mirror"; exit 0; fi
+          BASE="https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1"
+          mkdir -p backups/do-photos
+          curl -s -X POST "$BASE/object/list/do-photos" \
+            -H "Authorization: Bearer $KEY" -H "apikey: $KEY" -H "Content-Type: application/json" \
+            -d '{"prefix":"","limit":10000,"sortBy":{"column":"name","order":"asc"}}' > /tmp/dolist.json
+          COUNT=$(jq 'length' /tmp/dolist.json 2>/dev/null || echo 0)
+          echo "bucket lists $COUNT objects"
+          jq -r '.[].name' /tmp/dolist.json | while read -r name; do
+            [ -z "$name" ] && continue
+            if [ ! -f "backups/do-photos/$name" ]; then
+              mkdir -p "backups/do-photos/$(dirname "$name")"
+              curl -s -f -o "backups/do-photos/$name" "$BASE/object/do-photos/$name" \
+                -H "Authorization: Bearer $KEY" -H "apikey: $KEY" || echo "FAILED $name"
+            fi
+          done
+          echo "mirror holds $(find backups/do-photos -type f | wc -l) files"
       - name: Commit snapshot
         run: |
           git config user.name  "lirich-backup-bot"
