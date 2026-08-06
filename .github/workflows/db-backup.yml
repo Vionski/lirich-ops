@@ -34,7 +34,7 @@ jobs:
         run: |
           export PATH="/usr/lib/postgresql/17/bin:$PATH"
           mkdir -p backups/csv
-          for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts app_state ref_lists audit_log jobcard_overrides yard_inbound yard_stock waste_routes interest_leads console_tabs console_users console_permissions pipeline_stages enquiries driver_base_salary salary_approvals notes; do
+          for t in customers sites rate_card bins vehicles drivers factors facilities jobs collections onward_disposal adjustments fuel_log odometer_log maintenance approved_domains portal_accounts app_state ref_lists audit_log jobcard_overrides yard_inbound yard_stock waste_routes interest_leads console_tabs console_users console_permissions pipeline_stages enquiries driver_base_salary salary_approvals notes collection_reviews; do
             psql "$DB" -c "\copy (select * from $t) to 'backups/csv/$t.csv' with csv header" || true
           done
       - name: Mirror do-photos storage bucket (idempotent; skips until secret is set)
