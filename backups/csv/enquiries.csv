@@ -1,0 +1,15 @@
+id,pipeline,stage_id,title,company,contact_name,contact_email,contact_phone,services,message,value_sgd,owner,source,next_action,next_due,archived,archived_at,archived_by,created_at,updated_at
+1,marine,1,TEST - delete me,Testing,Test,,,,End-to-end Kanban test,,,console,,,t,2026-08-05 15:03:35.177+00,admin,2026-08-05 15:03:14.270103+00,2026-08-05 15:03:14.270103+00
+2,marine,1,Website enquiry,,,michelle.chen@lirichresources.sg,,MARINE - SLOPS DISPOSAL,"ENQUIRY TYPE: LIRICH RESOURCES
+
+New Inquiry from Lirichgroup.com: 
+
+From Mr TEST - Claude system verification (please ignore)
+
+Mr TEST - Claude system verification (please ignore) is from Lirich internal test and can be reached at 00000000 and via michelle.chen@lirichresources.sg.
+
+This is the general enquire message: TEST of the Marine enquiry routing - Kanban capture + Cc to Marcus. Safe to ignore and delete..
+
+Lirich Express services selected: 
+Lirich Resources services selected: MARINE - SLOPS DISPOSAL
+Lirich Innovate services selected:",,,contact-form,,,t,2026-08-05 15:08:42.466+00,admin,2026-08-05 15:07:27.437192+00,2026-08-05 15:07:27.437192+00

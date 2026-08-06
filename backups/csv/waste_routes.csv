@@ -1,0 +1,9 @@
+cat,material,factor_domain,factor_key,route,facility_id,is_recovered,carbon_basis,show_as,notes
+A,Plastics,waste,plastics,recycled,ASIARECY,t,fossil,own,Recycled by Asia Recycling. Fossil carbon - counts in full under NEA/IPCC.
+B,Food waste,waste,food,incineration,TSIP,f,biogenic,own,"NEA: biogenic CO2 reported as a SEPARATE line item, not in the fossil total."
+C,Domestic waste,waste,paper_cardboard,incineration,TSIP,f,biogenic,own,Represented by paper/cardboard. Largely biogenic - separate line under NEA.
+D,Cooking oil,,,recycled,GREENTEC,t,n/a,own,Collected by GreenTec for recycling. Not incinerated.
+E,Incinerator ashes,waste,metal,landfill,TMTS,f,inert,own,Already combusted on board. TMTS then Semakau.
+F,Operational waste,waste,other,incineration,TSIP,f,mixed,own,SEFR Other waste factor.
+I,E-waste,,,recycled,,t,n/a,other,MARPOL Cat I. Tracked fully in backend; DISPLAYED AS OTHERS on the client dashboard.
+OTHER,Other (from Remarks),,,unknown,,f,unknown,other,"Catch-all for any stream written in the DO Remarks column with no category of its own, e.g. oily rags. Description held in collections.other_desc; DISPLAYED AS OTHERS on the dashboard."

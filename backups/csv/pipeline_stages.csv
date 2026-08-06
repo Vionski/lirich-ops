@@ -1,0 +1,6 @@
+id,pipeline,name,sort_order,colour,is_won,is_lost,active,created_at
+1,marine,Enquiry,1,#C9A227,f,f,t,2026-08-05 05:40:22.576368+00
+2,marine,Site Visit / Survey,2,#0a5bd3,f,f,t,2026-08-05 05:40:22.576368+00
+3,marine,Proposal Sent,3,#E07C2E,f,f,t,2026-08-05 05:40:22.576368+00
+4,marine,Closed Won,4,#1e8e4e,t,f,t,2026-08-05 05:40:22.576368+00
+5,marine,Closed Lost,5,#c0392b,f,t,t,2026-08-05 05:40:22.576368+00

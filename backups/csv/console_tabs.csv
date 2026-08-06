@@ -1,0 +1,9 @@
+tab,label,sort_order,sensitive,notes
+master,Master data,1,t,"Client names, addresses, contacts and pricing. Commercially sensitive."
+collections,Collections / DO,2,t,Client tonnages and weight adjustments.
+jobcard,Job card / Salary,3,t,Driver pay. Restrict.
+samples,Report samples,4,f,Template links only.
+nea,NEA Register,5,f,Regulatory register.
+directory,Directory,6,f,Links and procedures. Safe for all staff.
+marine,Marine pipeline,7,f,Marine enquiries and deals.
+salary_approve,Salary approval,90,t,May approve/unlock monthly driver salaries

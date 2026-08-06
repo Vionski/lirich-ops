@@ -4,3 +4,9 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 13,43109,net_kg,3630,3630,Revert test adjustment (console Adjust verification) - back to original weighed value,legacy-key,2026-07-31 01:34:17.543742+00
 14,26065,net_kg,7710,7700,Weight correction (operator console),admin,2026-07-31 04:39:04.888932+00
 15,26065,net_kg,7710,7710,Weight correction (operator console),admin,2026-07-31 04:40:11.173156+00
+16,26095,net_kg,2040,2140,Weight adjustment +100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 08:23:55.837113+00
+17,26095,net_kg,2040,2040,Weight adjustment -100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 08:24:15.853138+00
+18,26095,net_kg,2040,2140,Weight adjustment +100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 09:52:31.911278+00
+19,26095,net_kg,2040,2040,Weight adjustment -100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 09:53:16.468341+00
+20,26095,net_kg,2040,2140,Weight adjustment +100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 09:57:55.893805+00
+21,26095,net_kg,2040,2040,Weight adjustment -100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 09:58:02.610972+00

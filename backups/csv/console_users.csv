@@ -1,0 +1,6 @@
+user_key,display_name,email,role,active,notes,created_at,wp_login
+michelle,Michelle Chen,michelle.chen@lirichresources.sg,admin,t,Data owner. Full access by role.,2026-08-05 05:58:37.697836+00,mondayblossomdesigns
+qris,Qris Loke,qrisloke@lirichresources.sg,admin,t,Managing Director. Full access by role.,2026-08-05 05:58:37.697836+00,qris
+sheryl,Sheryl Villareal,sheryl@lirichresources.sg,operator,t,Operations.,2026-08-05 05:58:37.697836+00,sheryl
+marcus,Marcus Tang,marcustang@lirichresources.sg,operator,t,"Marine sales. WP user id 5, username marcus, created 5 Aug 2026 by Michelle. Currently WP role SUBSCRIBER - deliberately NOT promoted to lirich_staff until per-tab enforcement is live, because lirich_staff currently grants the WHOLE console.",2026-08-05 05:58:37.697836+00,marcus
+patrick,Patrick,patrick@lirichresources.sg,operator,t,,2026-08-05 12:14:15.964414+00,patrick
