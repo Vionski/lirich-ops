@@ -243,6 +243,9 @@ id,site_id,job_type,price,valid_from,created_by
 2799,WRA_002,Delivery,8.00,2026-07-23,portal
 2800,WRA_002,Exchange,13.00,2026-07-23,portal
 2801,WRA_002,Load,21.00,2026-07-30,portal
+2844,JET_001,Exchange,23.00,2026-08-07,portal
+2845,JET_001,Collect,23.00,2026-08-07,portal
+2846,JET_001,Delivery,8.00,2026-08-07,portal
 2642,SUN_001,Collect,18.00,2026-07-23,portal
 2643,SUN_001,Delivery,8.00,2026-07-23,portal
 2644,SUN_001,Exchange,18.00,2026-07-23,portal

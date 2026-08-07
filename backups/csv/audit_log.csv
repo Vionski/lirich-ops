@@ -329,3 +329,8 @@ id,at,actor,action,entity,entity_id,before,after
 330,2026-08-06 13:50:30.594616+00,claude-phase-b,collections.photo_ref_path_backfill,collections,bulk-66,"{""form"": ""public URL"", ""count"": 66}","{""form"": ""storage path (signed on view via photo.sign)"", ""note"": ""#100 Phase B: private do-photos bucket"", ""count"": 66}"
 331,2026-08-06 14:42:26.864219+00,admin,collection.review,collection_reviews,23636,,"{""do_no"": ""23636"", ""reviewed"": true, ""reviewed_at"": ""2026-08-06T14:42:26.791+00:00"", ""reviewed_by"": ""michelle""}"
 332,2026-08-06 14:42:48.784737+00,admin,collection.review,collection_reviews,23636,"{""do_no"": ""23636"", ""reviewed"": true, ""reviewed_at"": ""2026-08-06T14:42:26.791+00:00"", ""reviewed_by"": ""michelle""}","{""do_no"": ""23636"", ""reviewed"": false, ""reviewed_at"": ""2026-08-06T14:42:48.715+00:00"", ""reviewed_by"": ""michelle""}"
+333,2026-08-07 03:09:14.310467+00,admin,stage.reorder,pipeline_stages,,,"{""order"": [2, 1, 3, 4, 5]}"
+334,2026-08-07 03:09:18.846579+00,admin,stage.reorder,pipeline_stages,,,"{""order"": [1, 2, 3, 4, 5]}"
+335,2026-08-07 10:40:24.907144+00,admin,customers.upsert,customers,JET,,"{""name"": ""Jetsin Construction"", ""client_id"": ""JET""}"
+336,2026-08-07 10:40:24.920475+00,admin,sites.upsert,sites,JET_001,,"{""active"": true, ""address"": ""Changi Airport T2, Basement Loading Bay 2"", ""site_id"": ""JET_001"", ""client_id"": ""JET"", ""site_name"": ""Jetsin Construction"", ""contact_name"": null, ""contact_email"": null, ""contact_phone"": null}"
+337,2026-08-07 10:40:24.950092+00,admin,rate_card.replace,rate_card,JET_001,[],"[{""price"": 23, ""job_type"": ""Exchange""}, {""price"": 23, ""job_type"": ""Collect""}, {""price"": 8, ""job_type"": ""Delivery""}]"
