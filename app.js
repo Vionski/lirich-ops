@@ -213,10 +213,34 @@ function vesselFieldsHTML(prefix, v){
       <div><label class="f">LOCATION</label><input type="text" id="${prefix}-loc" value="${esc(v.location||'')}" placeholder="e.g. B05"></div>
     </div>
     <label class="f">WASTE VOLUMES (m³) <span style="font-weight:600">(type from the SEF; leave blank if none)</span></label>
-    <div class="grid3">${VESSEL_CATS.map(c=>`
+    <div class="grid3">${VESSEL_CATS.filter(c=>c.k!=='oth').map(c=>`
       <div><label class="f" style="margin-top:2px">${esc(c.label)}</label>
-        <input type="number" step="0.01" min="0" id="${prefix}-${c.k}" value="${v[c.k]!=null?v[c.k]:''}" oninput="vesselTotal('${prefix}')"></div>`).join('')}</div>
+        <input type="number" step="0.01" min="0" id="${prefix}-${c.k}" value="${v[c.k]!=null&&v[c.k]!==0?v[c.k]:''}" oninput="vesselTotal('${prefix}')"></div>`).join('')}</div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:600">
+      <input type="checkbox" id="${prefix}-othcb" ${(v.oth||v.othDesc)?'checked':''} onchange="othToggle('${prefix}')" style="width:20px;height:20px">
+      <span>OTHERS — anything written in the Remarks column</span>
+    </label>
+    <div id="${prefix}-othwrap" style="display:${(v.oth||v.othDesc)?'block':'none'};margin-top:6px">
+      <div class="grid2">
+        <div><label class="f">WHAT WAS IT?</label>
+          <input type="text" id="${prefix}-othdesc" value="${esc(v.othDesc||'')}" placeholder="e.g. e-waste, oily rags, paint tins"></div>
+        <div><label class="f">VOLUME (m³)</label>
+          <input type="number" step="0.01" min="0" id="${prefix}-oth" value="${v.oth!=null&&v.oth!==0?v.oth:''}" oninput="vesselTotal('${prefix}')"></div>
+      </div>
+    </div>
     <div class="muted" style="margin-top:4px">Total: <b id="${prefix}-total">${v.total||0}</b> m³</div>`;
+}
+/* "Others" mirrors the Remarks column on the paper DO: tick it, then write what it
+   was and how much. Unticking clears both so a stray value can never be submitted. */
+function othToggle(prefix){
+  const cb=$('#'+prefix+'-othcb'), wrap=$('#'+prefix+'-othwrap');
+  if(!cb || !wrap) return;
+  wrap.style.display = cb.checked ? 'block' : 'none';
+  if(!cb.checked){
+    const d=$('#'+prefix+'-othdesc'), n=$('#'+prefix+'-oth');
+    if(d) d.value=''; if(n) n.value='';
+  } else { const d=$('#'+prefix+'-othdesc'); if(d) d.focus(); }
+  vesselTotal(prefix);
 }
 function vesselTotal(prefix){
   let t=0; VESSEL_CATS.forEach(c=>{ t += Number(($('#'+prefix+'-'+c.k)||{}).value)||0; });
@@ -226,6 +250,9 @@ function readVesselFields(prefix){
   if(!$('#'+prefix+'-name') && !$('#'+prefix+'-a')) return null;
   const v = {name:((($('#'+prefix+'-name')||{}).value)||'').trim(), location:((($('#'+prefix+'-loc')||{}).value)||'').trim()};
   let tot=0; VESSEL_CATS.forEach(c=>{ const n=Number(($('#'+prefix+'-'+c.k)||{}).value)||0; v[c.k]=n; tot+=n; });
+  const ocb=$('#'+prefix+'-othcb');
+  if(ocb && !ocb.checked){ tot -= (v.oth||0); v.oth=0; v.othDesc=''; }
+  else { v.othDesc = ((($('#'+prefix+'-othdesc')||{}).value)||'').trim(); }
   v.total = Math.round(tot*100)/100;
   return v;
 }
@@ -358,6 +385,12 @@ const VESSEL_CATS = [
   {k:'d', label:'D · Cooking oil'},
   {k:'e', label:'E · Incinerator ashes'},
   {k:'f', label:'F · Operational waste'},
+  /* extra streams that used to be written in the DO Remarks column and were
+     invisible in every total — captured properly since 8 Aug 2026 (Michelle). */
+  {k:'i',    label:'I · E-waste'},
+  {k:'rags', label:'Oily rags'},
+  {k:'med',  label:'Expired medicine'},
+  {k:'oth',  label:'Others'},
 ];
 
 /* ---------------- pricing engine ---------------- */
@@ -2211,7 +2244,8 @@ function doPrintHTML(t){
       <tr><th>TYPE OF WASTE</th><th>REMARKS (IF ANY)</th></tr>
       <tr><td>
         <table class="do-cats">
-          ${VESSEL_CATS.map(cat=>`<tr><td>Cat ${cat.k.toUpperCase()} : ${esc(cat.label.split('·')[1]||cat.label)}</td><td>${t.vessel&&t.vessel[cat.k]?t.vessel[cat.k]:'—'} m³</td></tr>`).join('')}
+          ${VESSEL_CATS.map(cat=>`<tr><td>${cat.k.length===1?('Cat '+cat.k.toUpperCase()+' : '+esc(cat.label.split('·')[1]||cat.label)):esc(cat.label)}</td><td>${t.vessel&&t.vessel[cat.k]?t.vessel[cat.k]:'—'} m³</td></tr>`).join('')}
+          ${t.vessel&&t.vessel.oth&&t.vessel.othDesc?`<tr><td>Others — what</td><td>${esc(t.vessel.othDesc)}</td></tr>`:''}
           <tr><td><b>Total</b></td><td><b>${t.vessel?t.vessel.total||0:0} m³</b></td></tr>
         </table>
       </td><td style="vertical-align:top">${esc(t.remarks||'')}</td></tr>
