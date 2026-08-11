@@ -450,6 +450,24 @@ function dumpRate(dumpTo){
   const s = disposalSites().find(x=>String(x.addr||'').trim().toLowerCase()===key);
   return s ? (Number((s.prices||{}).Dump)||0) : 0;
 }
+/* On a Lirich job the dumping location IS the price, so the pulldown shows it the same
+   way the job-type pulldown does — "NEA — $13.00" (Michelle, 11 Aug 2026). The option
+   VALUE stays the bare name, because that is what is stored in dumpTo and joined on.
+   For every other client the destination does not set the price, so no figure is shown. */
+function dumpSelectHTML(selected, withPrice){
+  return dumpOptions().map(d=>{
+    const r = withPrice ? dumpRate(d) : 0;
+    const label = !withPrice ? d : (r ? `${d} — ${money(r)}` : `${d} — no rate set`);
+    return `<option value="${esc(d)}" ${d===selected?'selected':''}>${esc(label)}</option>`;
+  }).join('');
+}
+/* rebuild the dumping-location list in place, keeping whatever is already picked */
+function jfRefreshDump(){
+  const el = $('#jf-dump'); if(!el) return;
+  const v = el.value;
+  el.innerHTML = '<option value="">— select —</option>' + dumpSelectHTML(v, isLirichClient(jfClientId()));
+  if([...el.options].some(o=>o.value===v)) el.value = v;
+}
 function jobTypeLabel(j){ return j.jobType || (ttype(j.task)||{}).label || j.task || ''; }
 /* full expected pay for a job = basic price + office-set surcharges */
 function jobPay(j){
@@ -1193,7 +1211,7 @@ function openJobForm(presetClientId, editJobId){
         <select id="jf-waste">${selOpts(wasteOptions(), wasteOptions()[0])}</select></div>
     </div>
     <label class="f">DUMPING LOCATION <span style="font-weight:600">(shows as "Dispose to" on the driver's job)</span></label>
-    <select id="jf-dump" onchange="autoDistance();jfPriceHint()"><option value="">— select —</option>${selOpts(dumpOptions())}</select>
+    <select id="jf-dump" onchange="autoDistance();jfPriceHint()"><option value="">— select —</option>${dumpSelectHTML(editJob?editJob.dumpTo:'', isLirichClient(presetClientId||S.clients[0].id))}</select>
     <label class="f">DISTANCE — YARD ➜ DUMPING (KM) <span style="font-weight:600">(auto-estimated, adjust if needed)</span></label>
     <input type="number" id="jf-dist" step="0.1" min="0" placeholder="auto" value="${editJob&&editJob.distance?editJob.distance:''}">
     ${isDriver ? '' : `<label class="f">SURCHARGES / EXTRA FEES (TICK IF ANY) <span style="font-weight:600">(added to driver pay; editable after the job is done)</span></label>
@@ -1229,7 +1247,7 @@ function refreshJobFormOptions(){
     keep('#jf-driver', driverSelectOptions());
     keep('#jf-size', binOptions().map(s=>`<option>${esc(s)}</option>`).join(''));
     keep('#jf-waste', selOpts(wasteOptions()));
-    keep('#jf-dump', '<option value="">— select at trip time —</option>'+selOpts(dumpOptions()));
+    keep('#jf-dump', '<option value="">— select at trip time —</option>'+dumpSelectHTML('', isLirichClient(jfClientId())));
     const dl = $('#jf-clientlist');
     if(dl){ dl.innerHTML = S.clients.map(c=>`<option value="${esc(c.name)}"></option>`).join(''); jfClientChanged(); }
     if(note) note.textContent = '✅ Options synced live from the Google Sheet ("Customer DB" tab).';
@@ -1257,6 +1275,7 @@ function jfClientChanged(){
   }
   if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0, JF_EDIT && JF_EDIT.clientId===c.id ? JF_EDIT.jobType : undefined); /* prices are per-site */
   autoDistance();
+  jfRefreshDump();   /* switching to/from Lirich re-labels the dumping list with prices */
   jfJobTypeChanged();
 }
 /* re-price when the yard/address changes — the same client can charge differently per site */
