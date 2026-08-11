@@ -148,7 +148,12 @@ const DRIVERS = [
 const BIN_SIZES = ['5ft','10ft','15ft','20ft','30ft'];
 const SALES = ['Marcus', 'Patrick'];
 /* customer job-request types — priced per customer in the "Customers" sheet (cols F-J) */
-const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load'];
+/* Compactor and 660L added 11 Aug 2026 (Michelle). They are priced per site like any
+   other job type; picking one also pre-fills the matching bin type, and 660L alone
+   asks how many bins, because one location can put out several 660L at once. */
+const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load','Compactor','660L'];
+const QTY_JOB_TYPES = ['660L'];                    /* job types priced per bin */
+const JOBTYPE_BIN = {Compactor:'Compactor', '660L':'660L'};  /* auto-filled bin type */
 
 /* Photo sections + which photo stamps which time, per job type.
    Lirich convention: Bin IN = the bin is IN at the client premises (empty, just dropped off),
@@ -417,9 +422,33 @@ function jobTypeOptions(clientId, siteIdx, selected){
   const c = client(clientId);
   const site = c && c.sites && c.sites[siteIdx];
   const prices = (site && site.prices) || (c && c.prices) || {};
+  /* A Lirich job means "come to our own yard, collect the rubbish and dump it".
+     There is nobody to charge for the pickup, so the site price is not used at all —
+     the DUMPING LOCATION sets the rate (Michelle, 11 Aug 2026). Every job type stays
+     available so the operator can still describe the work. */
+  if(isLirichClient(clientId)){
+    return JOB_TYPES.map(jt=>`<option value="${jt}" data-price="0" ${jt===selected?'selected':''}>${jt} — set by dumping location</option>`).join('');
+  }
   const avail = JOB_TYPES.filter(jt => prices[jt] != null);
   if(!avail.length) return '<option value="">— no price set for this site —</option>';
-  return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jt} — ${money(prices[jt])}</option>`).join('');
+  return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jt} — ${money(prices[jt])}${QTY_JOB_TYPES.includes(jt)?' each':''}</option>`).join('');
+}
+/* ---- Lirich-own jobs are priced by where the load goes, not where it came from ---- */
+function isLirichClient(clientId){
+  const c = client(clientId);
+  return !!c && /^lirich\b/i.test(String(c.name||'').trim());
+}
+/* the disposal facilities are ordinary priced sites; their "Dump" price is the rate
+   for a run to that place. Kept as data so Sheryl can change a rate without a release. */
+function disposalSites(){
+  const c = (S.clients||[]).find(x=>/^disposal facilities$/i.test(String(x.name||'').trim()));
+  return (c && c.sites) || [];
+}
+function dumpRate(dumpTo){
+  if(!dumpTo) return 0;
+  const key = String(dumpTo).trim().toLowerCase();
+  const s = disposalSites().find(x=>String(x.addr||'').trim().toLowerCase()===key);
+  return s ? (Number((s.prices||{}).Dump)||0) : 0;
 }
 function jobTypeLabel(j){ return j.jobType || (ttype(j.task)||{}).label || j.task || ''; }
 /* full expected pay for a job = basic price + office-set surcharges */
@@ -1149,7 +1178,12 @@ function openJobForm(presetClientId, editJobId){
       <div><input id="jf-cphone-ovr" inputmode="tel" placeholder="Phone (optional)" value="${editJob?esc(editJob.contactPhone||''):''}"></div>
     </div>
     <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(${isDriver?'your pay for this job':'the driver sees this price'} — set per site)</span></label>
-    <select id="jf-jobtype">${jobTypeOptions(presetClientId||S.clients[0].id, 0)}</select>
+    <select id="jf-jobtype" onchange="jfJobTypeChanged()">${jobTypeOptions(presetClientId||S.clients[0].id, 0)}</select>
+    <div id="jf-qtywrap" style="display:none;margin-top:6px">
+      <label class="f">HOW MANY 660L BINS AT THIS LOCATION? <span style="font-weight:600">(the price above is per bin)</span></label>
+      <input type="number" id="jf-qty" min="1" step="1" value="${editJob&&editJob.binQty?editJob.binQty:1}" onchange="jfPriceHint()" oninput="jfPriceHint()">
+    </div>
+    <div class="muted" id="jf-pricehint" style="margin-top:4px"></div>
     ${isDriver ? '' : `<label class="f">DRIVER · VEHICLE</label>
     <select id="jf-driver">${driverSelectOptions()}</select>`}
     <div class="grid2">
@@ -1159,7 +1193,7 @@ function openJobForm(presetClientId, editJobId){
         <select id="jf-waste">${selOpts(wasteOptions(), wasteOptions()[0])}</select></div>
     </div>
     <label class="f">DUMPING LOCATION <span style="font-weight:600">(shows as "Dispose to" on the driver's job)</span></label>
-    <select id="jf-dump" onchange="autoDistance()"><option value="">— select —</option>${selOpts(dumpOptions())}</select>
+    <select id="jf-dump" onchange="autoDistance();jfPriceHint()"><option value="">— select —</option>${selOpts(dumpOptions())}</select>
     <label class="f">DISTANCE — YARD ➜ DUMPING (KM) <span style="font-weight:600">(auto-estimated, adjust if needed)</span></label>
     <input type="number" id="jf-dist" step="0.1" min="0" placeholder="auto" value="${editJob&&editJob.distance?editJob.distance:''}">
     ${isDriver ? '' : `<label class="f">SURCHARGES / EXTRA FEES (TICK IF ANY) <span style="font-weight:600">(added to driver pay; editable after the job is done)</span></label>
@@ -1178,6 +1212,7 @@ function openJobForm(presetClientId, editJobId){
     if($('#jf-size') && editJob.binSize) $('#jf-size').value = editJob.binSize;
     if($('#jf-waste') && editJob.waste) $('#jf-waste').value = editJob.waste;
     if($('#jf-dump')) $('#jf-dump').value = editJob.dumpTo || '';
+    jfJobTypeChanged(true); /* show the qty box + live price, keep the saved bin type */
   }
   refreshJobFormOptions();
 }
@@ -1222,12 +1257,52 @@ function jfClientChanged(){
   }
   if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0, JF_EDIT && JF_EDIT.clientId===c.id ? JF_EDIT.jobType : undefined); /* prices are per-site */
   autoDistance();
+  jfJobTypeChanged();
 }
 /* re-price when the yard/address changes — the same client can charge differently per site */
 function jfSiteChanged(){
   autoDistance();
   const c = client(jfClientId());
   if(c && $('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0);
+  jfJobTypeChanged();
+}
+/* Compactor / 660L pre-fill the matching bin type (still changeable — an odd job must
+   never become impossible to record), and 660L reveals the bin-count box. */
+function jfJobTypeChanged(keepBin){
+  const jt = $('#jf-jobtype') ? $('#jf-jobtype').value : '';
+  const want = JOBTYPE_BIN[jt];
+  const sizeSel = $('#jf-size');
+  /* keepBin = reopening a saved job: never overwrite a bin type the operator chose */
+  if(want && !keepBin && sizeSel && [...sizeSel.options].some(o=>o.value===want)) sizeSel.value = want;
+  const wrap = $('#jf-qtywrap');
+  if(wrap){
+    const on = QTY_JOB_TYPES.includes(jt);
+    wrap.style.display = on ? 'block' : 'none';
+    if(!on && $('#jf-qty')) $('#jf-qty').value = 1;
+  }
+  jfPriceHint();
+}
+/* what the driver will actually be paid for this job, shown live while the form is filled */
+function jfUnitPrice(){
+  const sel = $('#jf-jobtype') && $('#jf-jobtype').selectedOptions[0];
+  const base = sel ? (Number(sel.dataset.price)||0) : 0;
+  return isLirichClient(jfClientId()) ? dumpRate($('#jf-dump') ? $('#jf-dump').value : '') : base;
+}
+function jfQty(){
+  const jt = $('#jf-jobtype') ? $('#jf-jobtype').value : '';
+  if(!QTY_JOB_TYPES.includes(jt)) return 1;
+  return Math.max(1, Math.floor(Number(($('#jf-qty')||{}).value)||1));
+}
+function jfPriceHint(){
+  const el = $('#jf-pricehint'); if(!el) return;
+  const unit = jfUnitPrice(), qty = jfQty(), lir = isLirichClient(jfClientId());
+  const dump = $('#jf-dump') ? $('#jf-dump').value : '';
+  let msg;
+  if(lir && !dump) msg = 'Lirich job — pick a dumping location to set the price.';
+  else if(lir && !unit) msg = `No Dump rate set yet for ${dump} — add it in the operator console.`;
+  else if(qty > 1) msg = `${money(unit)} x ${qty} bins = ${money(unit*qty)}`;
+  else msg = lir ? `Priced by dumping location (${dump}): ${money(unit)}` : '';
+  el.textContent = msg;
 }
 async function saveJob(){
   const isDriver = S.role.kind==='driver';
@@ -1236,16 +1311,19 @@ async function saveJob(){
   const cid = jfClientId();
   const c = client(cid);
   if(!c){ toast('⚠️ Pick a customer from the list'); return; }
-  const jtSel = $('#jf-jobtype').selectedOptions[0];
   const jobType = $('#jf-jobtype').value;
-  const price = jtSel ? (Number(jtSel.dataset.price)||0) : 0;
+  /* price rules (11 Aug 2026): a Lirich job is priced by its dumping location, not by
+     the pickup site; a 660L job is priced per bin. Everything else is the site price. */
+  const unitPrice = jfUnitPrice();
+  const binQty = jfQty();
+  const price = Math.round(unitPrice * binQty * 100) / 100;
   const cOvrName = ($('#jf-cname-ovr').value||'').trim();
   const cOvrPhone = ($('#jf-cphone-ovr').value||'').trim();
   const j = {
     clientId: cid,
     siteIdx: Number($('#jf-site').value)||0, contactIdx: Number($('#jf-contact').value)||0,
     contactName: cOvrName, contactPhone: cOvrPhone, /* per-job on-site contact override (blank = use CRM contact) */
-    jobType, price,
+    jobType, price, unitPrice, binQty,
     surcharges: $$('#jf-sur input:checked').map(i=>i.value), /* driver form has none → [] */
     binSize: $('#jf-size').value, waste: $('#jf-waste').value || 'General',
     dumpTo: $('#jf-dump').value,
@@ -2014,6 +2092,9 @@ async function saveTrip(final){
     date: TODAY, clientId, typeId,
     jobType: job ? (job.jobType||'') : '',
     price: job && job.price != null ? job.price : null,
+    /* 660L jobs are priced per bin — price above is already unit x qty; qty is kept
+       so the job card and the SSOT can show how many bins were handled (11 Aug 2026) */
+    binQty: job && job.binQty ? job.binQty : null,
     binOut, binIn, vehicleNo,
     timeStart, timeEnd,
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
@@ -2486,9 +2567,14 @@ function wasteOptions(){
     : ['General Waste','Wood Waste','Metal Waste','Plastic Waste','Hardcore Waste'];
 }
 function dumpOptions(){
-  return (S.sheetDB && S.sheetDB.dumpLocations && S.sheetDB.dumpLocations.length)
-    ? S.sheetDB.dumpLocations
-    : ['Lirich Resources Pte Ltd','NEA','WDL','Bee Joo','Kim Hock'];
+  /* one list, two sources: the operator's dump-location list and the priced disposal
+     sites. Union + dedupe so a rate can never exist for a place the driver cannot pick,
+     and a place can never be picked that has no rate row (11 Aug 2026). */
+  const listed = (S.sheetDB && S.sheetDB.dumpLocations) ? S.sheetDB.dumpLocations : [];
+  const priced = disposalSites().map(s=>s.addr).filter(Boolean);
+  const all = [...new Set([...listed, ...priced].map(s=>String(s).trim()).filter(Boolean))];
+  return all.length ? all.sort((a,b)=>a.localeCompare(b))
+                    : ['Lirich Resources Pte Ltd','NEA','WDL','Bee Joo','Kim Hock'];
 }
 function driverSelectOptions(selectedId){
   /* just the 5 drivers by name — vehicles are no longer tracked (drivers swap trucks) */
