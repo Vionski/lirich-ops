@@ -1773,7 +1773,7 @@ function photoThumbHTML(p){
   const off = tsOffDay(p.ts);
   return `<div class="thumb-cell">
       <div style="position:relative">
-        <img src="${p.thumb}" alt="photo" ${off?'style="outline:2px solid var(--red); outline-offset:-2px"':''}>
+        <img src="${p.thumb}" alt="photo" style="cursor:pointer${off?'; outline:2px solid var(--red); outline-offset:-2px':''}" onclick="viewFormPhoto('${p.id}')">
         <button class="icon-btn" style="position:absolute; top:-9px; right:-9px; background:var(--card); border-radius:50%; box-shadow:var(--shadow); font-size:10px; padding:3px 7px" onclick="removePhoto('${p.id}')">✕</button>
       </div>
       <div class="thumb-stamp ${off?'off':''}">${off?'⚠️ ':''}${fmtStamp(p.ts)}</div>
@@ -1782,9 +1782,34 @@ function photoThumbHTML(p){
 function removePhoto(id){ tripPhotos = tripPhotos.filter(p=>p.id!==id); renderFormThumbs(); updateTimesDisplay(); }
 function alreadySentThumbHTML(p){
   return `<div style="position:relative">
-      <img src="${p.thumb||p.url}" alt="photo" style="opacity:.75">
+      <img src="${p.thumb||p.url}" alt="photo" style="opacity:.75; cursor:pointer" onclick="viewFormPhoto('${p.id}')">
       <span class="tag" style="position:absolute; bottom:2px; left:2px; font-size:8px; background:var(--brand); color:#fff">SENT</span>
     </div>`;
+}
+/* Full-screen viewer for photos in the trip form. When the DO-number OCR misses,
+   the driver taps the uploaded photo, reads the number off the enlarged image and
+   types it in manually. Tap the image to toggle zoom; pinch also works. */
+function viewFormPhoto(id){
+  const p = tripPhotos.find(x=>x.id===id) || existingTripPhotos.find(x=>x && x.id===id);
+  if(!p) return;
+  const src = p.full || p.url || p.thumb;
+  if(!src){ toast('Photo not available'); return; }
+  const old = document.getElementById('photo-zoom-ov'); if(old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'photo-zoom-ov';
+  ov.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(6,10,20,.96); overflow:auto; -webkit-overflow-scrolling:touch';
+  ov.innerHTML = `
+    <div style="position:sticky; top:0; z-index:2; display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 14px; background:rgba(6,10,20,.88)">
+      <span style="color:#fff; font-weight:700; font-size:13px">🔍 Tap the photo to zoom in / out</span>
+      <button class="btn slim" style="background:#fff; color:var(--brand)" onclick="document.getElementById('photo-zoom-ov').remove()">✕ Close</button>
+    </div>
+    <img src="${src}" id="photo-zoom-img" alt="photo" style="display:block; width:100%; cursor:zoom-in">`;
+  document.body.appendChild(ov);
+  const img = ov.querySelector('#photo-zoom-img');
+  img.addEventListener('click', function(){
+    if(img.style.width === '250%'){ img.style.width='100%'; img.style.cursor='zoom-in'; }
+    else { img.style.width='250%'; img.style.cursor='zoom-out'; }
+  });
 }
 function renderFormThumbs(){
   /* driver form: one thumbs div per photo section — already-sent photos (resumed drafts) show first, read-only */
