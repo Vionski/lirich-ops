@@ -1081,8 +1081,10 @@ async function saveWeigh(id){
      and tell the driver plainly rather than letting a wrong-way-round weight reach the office. */
   if(!netIsValid(gross, tare)){
     tfNet();
-    await lrInfo('NET weight is negative (' + (gross-tare) + ' kg).\n\nGROSS = the FULL truck (heavier).\nTARE = the EMPTY truck (lighter).\n\nThey look swapped — check the two scale tickets and enter them again.');
-    return;
+    const swap = await lrConfirm('NET weight is negative (' + (gross-tare) + ' kg).\n\nGROSS = the FULL truck (heavier).\nTARE = the EMPTY truck (lighter).\n\nThey look entered the wrong way round. Swap them?\n\nGROSS ' + tare + ' kg  ·  TARE ' + gross + ' kg  ·  NET ' + (tare-gross) + ' kg', {okText:'Swap them', cancelText:'Let me re-enter'});
+    if(!swap) return;
+    tfSwapWeights();
+    return saveWeigh(id);
   }
   closeSheet(); toast('Saving weighbridge…');
   /* upload the scale photos to Drive, then attach weight + photos to the existing trip */
@@ -1752,9 +1754,19 @@ function tfNet(){
   });
   if(warn){
     warn.style.display = bad ? 'block' : 'none';
-    warn.textContent = bad ? '⚠️ NET is negative (' + net + ' kg) — GROSS and TARE look swapped. GROSS is the FULL truck, TARE is the EMPTY truck.' : '';
+    warn.innerHTML = bad
+      ? '⚠️ NET is negative (' + net + ' kg) — GROSS and TARE look swapped. GROSS is the FULL truck, TARE is the EMPTY truck.'
+        + '<div style="margin-top:8px"><button type="button" class="btn" style="padding:7px 13px;font-size:13px" onclick="tfSwapWeights()">🔁 Swap GROSS and TARE</button></div>'
+      : '';
   }
   return !bad;
+}
+/* one tap to correct the commonest weighbridge slip: the two figures keyed the wrong way round */
+function tfSwapWeights(){
+  const g = $('#tf-gross'), t = $('#tf-tare');
+  if(!g || !t) return;
+  const gv = g.value; g.value = t.value; t.value = gv;
+  tfNet();
 }
 /* shared guard so no weight path can ever store a negative net */
 function netIsValid(gross, tare){ return (Number(gross)||0) - (Number(tare)||0) >= 0; }
