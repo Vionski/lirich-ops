@@ -215,7 +215,11 @@ function vesselFieldsHTML(prefix, v){
   v = v || {};
   return `<div class="grid2">
       <div><label class="f">VESSEL NAME</label><input type="text" id="${prefix}-name" value="${esc(v.name||'')}" placeholder="e.g. KOTA SETIA"></div>
+      <div><label class="f">VOYAGE NO.</label><input type="text" id="${prefix}-voy" value="${esc(v.voyage||'')}" placeholder="e.g. 0415E"></div>
+    </div>
+    <div class="grid2">
       <div><label class="f">LOCATION</label><input type="text" id="${prefix}-loc" value="${esc(v.location||'')}" placeholder="e.g. B05"></div>
+      <div></div>
     </div>
     <label class="f">WASTE VOLUMES (m³) <span style="font-weight:600">(type from the SEF; leave blank if none)</span></label>
     <div class="grid3">${VESSEL_CATS.filter(c=>c.k!=='oth').map(c=>`
@@ -253,7 +257,7 @@ function vesselTotal(prefix){
 }
 function readVesselFields(prefix){
   if(!$('#'+prefix+'-name') && !$('#'+prefix+'-a')) return null;
-  const v = {name:((($('#'+prefix+'-name')||{}).value)||'').trim(), location:((($('#'+prefix+'-loc')||{}).value)||'').trim()};
+  const v = {name:((($('#'+prefix+'-name')||{}).value)||'').trim(), voyage:((($('#'+prefix+'-voy')||{}).value)||'').trim().toUpperCase(), location:((($('#'+prefix+'-loc')||{}).value)||'').trim()};
   let tot=0; VESSEL_CATS.forEach(c=>{ const n=Number(($('#'+prefix+'-'+c.k)||{}).value)||0; v[c.k]=n; tot+=n; });
   const ocb=$('#'+prefix+'-othcb');
   if(ocb && !ocb.checked){ tot -= (v.oth||0); v.oth=0; v.othDesc=''; }
@@ -2362,7 +2366,7 @@ function doPrintHTML(t){
       </div>
     </div>`;
   const body = isVessel ? `
-    <div class="do-field"><b>VESSEL NAME</b> : ${esc(t.vessel?t.vessel.name||'':'')}</div>
+    <div class="do-field"><b>VESSEL NAME</b> : ${esc(t.vessel?t.vessel.name||'':'')} &nbsp;&nbsp; <b>VOYAGE NO.</b> : ${esc(t.vessel&&t.vessel.voyage?t.vessel.voyage:'—')}</div>
     <div class="do-field"><b>LOCATION</b> : ${esc(t.vessel?t.vessel.location||'':'')} &nbsp;&nbsp; <b>DATE</b> : ${dateStr}</div>
     <div class="do-sef-title">SERVICE ENGAGEMENT FORM (SEF)</div>
     <table class="do-table">
