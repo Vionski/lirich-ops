@@ -917,6 +917,8 @@ function vDash(){
    JOBS (operator: all + filters · driver: mine)
    ============================================================ */
 let jobFilter = 'all';
+let jobDrvFilter = '';   /* Jobs tab: filter by driver (office fixing a finished job) */
+let jobDateFilter = '';  /* Jobs tab: filter by job date */
 function jobRow(j){
   const c = client(j.clientId), d = driver(j.driverId), ty = ttype(j.task);
   return `<div class="item tap" onclick="openJobDetail(${j.id})">
@@ -933,9 +935,21 @@ function vJobs(){
   const byDriverCount = S.jobs.filter(j=>j._bydriver).length;
   const F = [['all','All'],['assigned','Assigned'],['in_progress','In progress'],['done','Done'],['void','Void']];
   if(byDriverCount) F.push(['bydriver','By driver']); /* only show the tab once a driver has added one */
-  const list = S.jobs.filter(j=> jobFilter==='all' ? true
+  /* office needs to find a finished job fast when the console shows a problem, so the
+     status chips are joined by a driver picker and a date picker (Michelle, 14 Aug 2026) */
+  const list = S.jobs.filter(j=> (jobFilter==='all' ? true
       : jobFilter==='bydriver' ? !!j._bydriver
-      : j.status===jobFilter).slice().reverse();
+      : j.status===jobFilter))
+    .filter(j=> jobDrvFilter ? String(j.driverId)===String(jobDrvFilter) : true)
+    .filter(j=> jobDateFilter ? j.date===jobDateFilter : true)
+    .slice().sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')) || (b.id-a.id));
+  const drvSel = `<select id="jf-fdrv" onchange="jobDrvFilter=this.value; render()" style="flex:1 1 46%">
+      <option value="">All drivers</option>
+      ${DRIVERS.map(d=>`<option value="${d.id}" ${String(jobDrvFilter)===String(d.id)?'selected':''}>${esc(d.name)}</option>`).join('')}
+    </select>`;
+  const dateSel = `<input type="date" id="jf-fdate" value="${esc(jobDateFilter||'')}" onchange="jobDateFilter=this.value; render()" style="flex:1 1 34%">`;
+  const clearBtn = (jobDrvFilter||jobDateFilter)
+    ? `<button class="btn ghost slim" style="flex:0 0 auto" onclick="jobDrvFilter='';jobDateFilter='';render()">✕ Clear</button>` : '';
   $('#main').innerHTML = `
     <div class="ftabs">${F.map(([id,l])=>{
       const n = id==='all' ? S.jobs.length
@@ -943,8 +957,10 @@ function vJobs(){
         : S.jobs.filter(j=>j.status===id).length;
       return `<button class="${jobFilter===id?'on':''}" onclick="jobFilter='${id}'; render()">${l} (${n})</button>`;
     }).join('')}</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">${drvSel}${dateSel}${clearBtn}</div>
+    <div class="muted" style="margin-bottom:8px;font-size:12px">Showing <b>${list.length}</b> job${list.length===1?'':'s'}, newest first${jobDrvFilter?' · '+esc(driver(Number(jobDrvFilter)).name):''}${jobDateFilter?' · '+esc(jobDateFilter):''}</div>
     <div style="margin-bottom:10px"><button class="btn" onclick="openJobForm()">➕ Assign a new job</button></div>
-    <div class="card">${list.map(jobRow).join('') || '<div class="empty">No jobs in this filter.</div>'}</div>`;
+    <div class="card">${list.map(jobRow).join('') || '<div class="empty">No jobs match these filters.</div>'}</div>`;
 }
 /* big, one-tap driver card — action button lives right on the card */
 /* a finished job is only "truly done" when nothing is still pending. Right now the one pending
@@ -1048,6 +1064,7 @@ function openWeighForm(tripId){
       <div><label class="f">TARE (kg)</label><input type="number" id="tf-tare" min="0" placeholder="from photo" oninput="tfNet()"></div>
       <div><label class="f">NET (kg)</label><input type="number" id="tf-net" readonly></div>
     </div>
+    <div id="tf-netwarn" style="display:none;margin-top:8px;padding:9px 11px;border-radius:10px;background:#fdecec;border:1px solid #d33;color:#b00;font-weight:800;font-size:13px"></div>
     <div class="muted" style="margin-top:6px;font-size:12px">If the client weighs it (not us), tap "Client weighs" to finish with 0.</div>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="saveWeigh(${t.id})">✅ Save weighbridge</button>
@@ -1060,6 +1077,13 @@ async function saveWeigh(id){
   const gv=($('#tf-gross').value||'').trim(), tv=($('#tf-tare').value||'').trim();
   if(gv==='' && tv===''){ toast('⚠️ Enter the weight — or tap "Client weighs" to finish with 0'); return; }
   const gross = Number(gv)||0, tare = Number(tv)||0;
+  /* NET can never be negative: gross is the FULL truck, tare the EMPTY one. Block the save
+     and tell the driver plainly rather than letting a wrong-way-round weight reach the office. */
+  if(!netIsValid(gross, tare)){
+    tfNet();
+    await lrInfo('NET weight is negative (' + (gross-tare) + ' kg).\n\nGROSS = the FULL truck (heavier).\nTARE = the EMPTY truck (lighter).\n\nThey look swapped — check the two scale tickets and enter them again.');
+    return;
+  }
   closeSheet(); toast('Saving weighbridge…');
   /* upload the scale photos to Drive, then attach weight + photos to the existing trip */
   const jobtag = t.jobId ? t.jobId : ('T'+t.id);
@@ -1116,8 +1140,8 @@ function openJobDetail(id){
           <div style="margin-top:6px; font-weight:700">🛠️ ${esc(jobTypeLabel(j))} · 💵 <b>${money(jobPay(j))}</b></div>
           <div style="margin-top:9px"><button class="btn" onclick="confirmDriverJob(${j.id})">✅ Confirm this job</button></div>
         </div>`) : ''}
-    ${S.role.kind==='operator' && j.status==='assigned' ? `
-      <button class="btn" style="margin:8px 0 2px" onclick="closeSheet(); openJobForm(null, ${j.id})">✏️ Edit job <span style="font-weight:600; opacity:.8">(not yet accepted)</span></button>` : ''}
+    ${S.role.kind==='operator' && j.status!=='void' ? `
+      <button class="btn" style="margin:8px 0 2px" onclick="closeSheet(); openJobForm(null, ${j.id})">✏️ Edit job <span style="font-weight:600; opacity:.8">${j.status==='done'?'(finished — corrections flow to the console)':'(office correction)'}</span></button>` : ''}
     ${S.role.kind==='operator' && j.status!=='void' ? `
       <label class="f">REASSIGN DRIVER</label>
       <div class="row">
@@ -1364,15 +1388,32 @@ async function saveJob(){
   /* #24: EDIT an existing un-accepted job — patch it instead of adding a new one */
   if(JF_EDIT){
     const target = S.jobs.find(x=>x.id===JF_EDIT.id);
-    if(target && target.status!=='assigned'){
+    /* Michelle, 14 Aug 2026: the OFFICE may correct a job at any stage, including a finished
+       one — that is how a console problem gets fixed from the app. Drivers still cannot edit
+       a job once it is under way; a voided job is never editable. */
+    if(target && isDriver && target.status!=='assigned'){
       JF_EDIT = null; closeSheet();
-      await lrInfo('This job has already been accepted by the driver — it can no longer be edited. Void it and assign a new job instead.');
+      await lrInfo('This job has already been accepted — only the office can change it now.');
       render(); return;
     }
     const editId = JF_EDIT.id; JF_EDIT = null;
     delete j.status; delete j.createdAt; /* keep the original status + created time */
     closeSheet(); toast('Saving changes…');
     await api('updateJob', {id: editId, patch: j});
+    /* The console reads the TRIP, not the job — so an office correction on a finished job
+       must also patch the trip fields the SSOT mirrors, or the change would never reach
+       Collections/DO. Weight, times and photos are the driver's record and stay untouched. */
+    const tr = S.trips.find(x=>x.jobId===editId);
+    if(tr){
+      const tpatch = {
+        clientId: j.clientId, jobSiteIdx: j.siteIdx, jobType: j.jobType,
+        waste: j.waste, disposeTo: j.dumpTo, price: j.price, binQty: j.binQty,
+        distance: j.distance, surcharges: j.surcharges,
+        _client: j._client, _addr: j._addr, _type: j.jobType || tr._type,
+      };
+      await api('updateTrip', {id: tr.id, patch: tpatch});
+      toast('✅ Job + DO updated — console will show the change');
+    }
     render();
     toast(`Job #${editId} updated ✅ — the driver sees the new details`);
     return;
@@ -1697,8 +1738,26 @@ function tfTypeChanged(){
 }
 function tfNet(){
   const g = Number($('#tf-gross').value)||0, t = Number($('#tf-tare').value)||0;
-  $('#tf-net').value = g && t ? Math.max(0, g-t) : '';
+  const net = (g && t) ? (g-t) : '';
+  const box = $('#tf-net'); if(box) box.value = net;
+  /* a negative net means gross and tare were entered the wrong way round — the loaded
+     truck can never weigh less than the empty one. Show it in red and block the save. */
+  const bad = (net !== '' && net < 0);
+  const warn = $('#tf-netwarn');
+  [ '#tf-gross', '#tf-tare', '#tf-net' ].forEach(sel=>{
+    const el = $(sel); if(!el) return;
+    el.style.borderColor = bad ? '#d33' : '';
+    el.style.background  = bad ? '#fdecec' : '';
+    el.style.color       = bad ? '#b00' : '';
+  });
+  if(warn){
+    warn.style.display = bad ? 'block' : 'none';
+    warn.textContent = bad ? '⚠️ NET is negative (' + net + ' kg) — GROSS and TARE look swapped. GROSS is the FULL truck, TARE is the EMPTY truck.' : '';
+  }
+  return !bad;
 }
+/* shared guard so no weight path can ever store a negative net */
+function netIsValid(gross, tare){ return (Number(gross)||0) - (Number(tare)||0) >= 0; }
 function tfFormTrip(){
   return {
     typeId: $('#tf-type').value,
@@ -2027,12 +2086,22 @@ async function backgroundEnrich(tripId, doPhoto){
 /* final=true → "Done" (finalises the job); final=false → "Save" (keeps the job open so the
    driver can resume later, e.g. still waiting on the signed/office DO). Operator saves are
    always final — there's no draft concept on that side. */
+let TRIP_SAVING = false; /* one submission per job: blocks a double-tap creating a 2nd trip */
 async function saveTrip(final){
+  if(TRIP_SAVING){ toast('⏳ Already saving — one moment'); return; }
+  TRIP_SAVING = true;
+  try{ await saveTripInner(final); } finally { TRIP_SAVING = false; }
+}
+async function saveTripInner(final){
   const isDriver = S.role.kind==='driver';
   const jobId = $('#tf-job').value ? Number($('#tf-job').value) : null;
   const job = jobId ? S.jobs.find(j=>j.id===jobId) : null;
   const draftId = Number((($('#tf-draft')||{}).value))||0;
-  const draft = draftId ? S.trips.find(x=>x.id===draftId) : null;
+  /* ONE TRIP PER JOB (Michelle, 14 Aug 2026). The draft id is captured when the form opens;
+     if a trip already exists for this job — another tab, a slow double-tap, a second device —
+     we patch THAT trip instead of adding a second one. The server enforces the same rule. */
+  const draft = (draftId ? S.trips.find(x=>x.id===draftId) : null)
+             || (jobId ? S.trips.find(x=>x.jobId===jobId) : null);
   const clientId = job ? job.clientId : ($('#tf-client') ? $('#tf-client').value : S.clients[0].id);
   const c = client(clientId);
   /* weight is captured only in phase 2 now — these fields only exist on the operator's own form */
