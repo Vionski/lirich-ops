@@ -7,3 +7,10 @@ E,Incinerator ashes,waste,metal,landfill,TMTS,f,inert,own,Already combusted on b
 F,Operational waste,waste,other,incineration,TSIP,f,mixed,own,SEFR Other waste factor.
 I,E-waste,,,recycled,,t,n/a,other,MARPOL Cat I. Tracked fully in backend; DISPLAYED AS OTHERS on the client dashboard.
 OTHER,Other (from Remarks),,,unknown,,f,unknown,other,"Catch-all for any stream written in the DO Remarks column with no category of its own, e.g. oily rags. Description held in collections.other_desc; DISPLAYED AS OTHERS on the dashboard."
+LAND_WOOD,Wood,,,Recycled,,t,biogenic,own,Michelle 13 Aug 2026: wood recycled (route-confirmed). Receiving facility not yet named. STE land stream.
+LAND_CONCRETE,Concrete / Stone,,,Recycled,,t,inert,own,Michelle 14 Aug 2026: concrete stone recycled (route-confirmed). Receiving facility not yet named. STE land stream.
+LAND_FENDER,Fenders (rubber),,,Recycled,,t,fossil,own,Michelle 14 Aug 2026: fenders recycled (route-confirmed). Receiving facility not yet named. STE land stream.
+LAND_TYRE,Tyres,,,Recycled,,t,fossil,own,Michelle 14 Aug 2026: tyres recycled (route-confirmed). Receiving facility not yet named. STE land stream.
+LAND_GENERAL,General Waste,,,Disposal,,f,mixed,own,Michelle 14 Aug 2026: general waste NOT recycled (disposed). STE land stream.
+LAND_PAINT,Old Paint,,,Disposal,,f,fossil,own,Michelle 14 Aug 2026: old paint NOT recycled (disposed). STE land stream.
+LAND_MISC,Misc / Other,,,Disposal,,f,mixed,own,"Michelle 14 Aug 2026: misc NOT recycled (disposed). STE land stream (e.g. electrode stud ends, NDT chemical cans). OTC still pending."
