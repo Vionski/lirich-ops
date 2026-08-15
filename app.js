@@ -919,6 +919,34 @@ function vDash(){
 let jobFilter = 'all';
 let jobDrvFilter = '';   /* Jobs tab: filter by driver (office fixing a finished job) */
 let jobDateFilter = '';  /* Jobs tab: filter by job date */
+let jobSearch = '';      /* Jobs tab: free-text search — DO number or driver name */
+/* the DO number lives on the TRIP, not the job — resolve it for search + display */
+function jobDONo(j){
+  const t = S.trips.find(x=>x.jobId===j.id);
+  if(!t) return '';
+  return String(t.doNo || ('APP-T'+t.id));
+}
+/* ---- CLEARED = reviewed on Collections/DO *and* paid in a locked salary period ----
+   Such a DO is archived in the console. It leaves the driver's Done list and can no longer
+   be edited here: changing a record the driver has already been paid on would break the
+   audit trail the office and any verifier rely on. */
+function clearedSet(){
+  return new Set((S.sheetDB && S.sheetDB.clearedDOs) || []);
+}
+function tripIsCleared(t){
+  if(!t) return false;
+  const s = clearedSet();
+  if(!s.size) return false;
+  return s.has(String(t.doNo || ('APP-T'+t.id)).toUpperCase());
+}
+function jobIsCleared(j){
+  return tripIsCleared(S.trips.find(x=>x.jobId===j.id));
+}
+async function blockIfCleared(t){
+  if(!tripIsCleared(t)) return false;
+  await lrInfo('This DO has been checked by the office and the driver has already been paid for it.\n\nIt is archived under Cleared DOs in the console and can no longer be changed here.\n\nIf something is genuinely wrong, the office must unlock the salary period first.');
+  return true;
+}
 function jobRow(j){
   const c = client(j.clientId), d = driver(j.driverId), ty = ttype(j.task);
   return `<div class="item tap" onclick="openJobDetail(${j.id})">
@@ -942,14 +970,26 @@ function vJobs(){
       : j.status===jobFilter))
     .filter(j=> jobDrvFilter ? String(j.driverId)===String(jobDrvFilter) : true)
     .filter(j=> jobDateFilter ? j.date===jobDateFilter : true)
+    .filter(j=>{
+      if(!jobSearch) return true;
+      const q = jobSearch.trim().toLowerCase();
+      if(!q) return true;
+      const dn = jobDONo(j).toLowerCase();
+      const dv = ((driver(j.driverId)||{}).name || '').toLowerCase();
+      return dn.indexOf(q) !== -1 || dv.indexOf(q) !== -1;
+    })
     .slice().sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')) || (b.id-a.id));
   const drvSel = `<select id="jf-fdrv" onchange="jobDrvFilter=this.value; render()" style="flex:1 1 46%">
       <option value="">All drivers</option>
       ${DRIVERS.map(d=>`<option value="${d.id}" ${String(jobDrvFilter)===String(d.id)?'selected':''}>${esc(d.name)}</option>`).join('')}
     </select>`;
   const dateSel = `<input type="date" id="jf-fdate" value="${esc(jobDateFilter||'')}" onchange="jobDateFilter=this.value; render()" style="flex:1 1 34%">`;
-  const clearBtn = (jobDrvFilter||jobDateFilter)
-    ? `<button class="btn ghost slim" style="flex:0 0 auto" onclick="jobDrvFilter='';jobDateFilter='';render()">✕ Clear</button>` : '';
+  /* re-render on each keystroke wipes the box, so put the caret back straight after */
+  const searchBox = `<input type="search" id="jf-fq" value="${esc(jobSearch)}" placeholder="🔍 Search DO number or driver name"
+      oninput="jobSearch=this.value; render(); var b=document.getElementById('jf-fq'); if(b){b.focus(); b.setSelectionRange(b.value.length,b.value.length);}"
+      style="flex:1 1 100%">`;
+  const clearBtn = (jobDrvFilter||jobDateFilter||jobSearch)
+    ? `<button class="btn ghost slim" style="flex:0 0 auto" onclick="jobDrvFilter='';jobDateFilter='';jobSearch='';render()">✕ Clear</button>` : '';
   $('#main').innerHTML = `
     <div class="ftabs">${F.map(([id,l])=>{
       const n = id==='all' ? S.jobs.length
@@ -957,8 +997,8 @@ function vJobs(){
         : S.jobs.filter(j=>j.status===id).length;
       return `<button class="${jobFilter===id?'on':''}" onclick="jobFilter='${id}'; render()">${l} (${n})</button>`;
     }).join('')}</div>
-    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">${drvSel}${dateSel}${clearBtn}</div>
-    <div class="muted" style="margin-bottom:8px;font-size:12px">Showing <b>${list.length}</b> job${list.length===1?'':'s'}, newest first${jobDrvFilter?' · '+esc(driver(Number(jobDrvFilter)).name):''}${jobDateFilter?' · '+esc(jobDateFilter):''}</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">${searchBox}${drvSel}${dateSel}${clearBtn}</div>
+    <div class="muted" style="margin-bottom:8px;font-size:12px">Showing <b>${list.length}</b> job${list.length===1?'':'s'}, newest first${jobDrvFilter?' · '+esc(driver(Number(jobDrvFilter)).name):''}${jobDateFilter?' · '+esc(jobDateFilter):''}${jobSearch?' · 🔍 '+esc(jobSearch):''}</div>
     <div style="margin-bottom:10px"><button class="btn" onclick="openJobForm()">➕ Assign a new job</button></div>
     <div class="card">${list.map(jobRow).join('') || '<div class="empty">No jobs match these filters.</div>'}</div>`;
 }
@@ -1024,7 +1064,8 @@ function vMyJobs(){
   const todayActive = mine.filter(j=> (isOpen(j) && j.date===TODAY) || weightPending(j)).slice().reverse();
   /* LATE = still-open jobs carried over from earlier days, oldest → newest */
   const late      = mine.filter(j=> isOpen(j) && j.date<TODAY).sort((a,b)=> a.date<b.date?-1:(a.date>b.date?1:0));
-  const doneToday = mine.filter(j=> j.status==='done' && !weightPending(j) && j.date===TODAY).slice().reverse();
+  /* cleared = office-reviewed AND paid: it lives in the console archive, so it drops off here */
+  const doneToday = mine.filter(j=> j.status==='done' && !weightPending(j) && j.date===TODAY && !jobIsCleared(j)).slice().reverse();
   const voided    = mine.filter(j=> j.status==='void' && j.voidedOn===TODAY).slice().reverse();
   $('#main').innerHTML = `
     <h2 style="margin:8px 2px 12px; font-size:17px">🗂️ My jobs — ${fmtDate(TODAY)}</h2>
@@ -1073,6 +1114,7 @@ function openWeighForm(tripId){
 }
 async function saveWeigh(id){
   const t = S.trips.find(x=>x.id===id); if(!t) return;
+  if(await blockIfCleared(t)) return;
   /* 0 is a VALID weight — some jobs are weighed by the client, not us. Only block a truly blank entry. */
   const gv=($('#tf-gross').value||'').trim(), tv=($('#tf-tare').value||'').trim();
   if(gv==='' && tv===''){ toast('⚠️ Enter the weight — or tap "Client weighs" to finish with 0'); return; }
@@ -2370,6 +2412,7 @@ function openTripDetail(id){
   if(S.role.kind==='operator'){ setTimeSel('#te-ts', t.timeStart); setTimeSel('#te-te', t.timeEnd); }
 }
 async function saveTripEdit(id){
+  if(await blockIfCleared(S.trips.find(x=>x.id===id))) return;
   const t = S.trips.find(x=>x.id===id); if(!t) return;
   const gross = Number($('#te-gross').value)||0, tare = Number($('#te-tare').value)||0;
   const typeId = $('#te-type').value;
@@ -2668,6 +2711,8 @@ async function fetchSheetDB(){
       binTypes: [...new Set((d.binTypes||[]).filter(Boolean))],
       wasteTypes: [...new Set((d.wasteTypes||[]).filter(Boolean))],
       dumpLocations: [...new Set((d.dumpLocations||[]).filter(Boolean))],
+      /* DOs reviewed by the office AND paid in a locked salary period — frozen from here on */
+      clearedDOs: (d.clearedDOs||[]).map(x=>String(x).toUpperCase()),
     };
     persist();
     return true;
