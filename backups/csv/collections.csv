@@ -28,10 +28,10 @@ APP-T218,live,,2026-08-13,land,Exchange,,,,XE6221D,SATHISH,Exchange,General Wast
 24675,live,,2026-08-14,land,Exchange,ARC_001,,,XE7126P,YAO_JUN,Exchange,General Waste; Mixed Waste,5210,,,,,,,,,21470.0,14100.0,7370.0,LR192,,weighbridge,,,,,mssd3fv6-DO-350-1.jpg,,,,,,"app_trip_id=229 | dispose_to=Lirich Resources Pte Ltd | bin_photos=mssd3fis-BININ-350-1.jpg
 mssd3fqd-BINOUT-350-1.jpg | bin_out_raw=L48 | job_no=350",2026-08-14 06:33:14.288+00,,,Lirich Resources Pte Ltd,,,,,,1,
 26218,live,,2026-07-17,land,Exchange,ENG_001,,,,,Exchange,General Waste,,,,,,,,,,,,,,,volume_est,,,,,https://drive.google.com/uc?export=view&id=1-CyxHvyBN_IBRTt5dvT_6HqpxvGX75qx,https://drive.google.com/uc?export=view&id=1CyfT6Af8Q0HOzu_fAEJQEzXufiF9Rki6,,,,,app_trip_id=20 | vehicle_raw=X1234Y | job_no=28,2026-08-14 08:38:12.824+00,,,,,,,,,,
-24681,live,,2026-08-14,land,Collect,EVE_001,,,XE7126P,YAO_JUN,Collect,Metal Waste,,5106,,,,,,,,,,,,,volume_est,,,,,mssx63jm-DO-361-1.jpg,,,,,,"app_trip_id=235 | bin_photos=mssx62zc-BINOUT-361-1.jpg
-mssx63de-BINOUT-361-2.jpg | job_no=361",2026-08-14 12:24:40.767+00,,,,,,,,,1,
 24679,live,,2026-08-14,land,Exchange,SYST_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,,,,,,,,,17500.0,14100.0,3400.0,LR197,,weighbridge,,,,,mssx9tog-DO-363-1.jpg,,,,,,"app_trip_id=237 | bin_photos=mssx9t99-BININ-363-1.jpg
 mssx9tit-BINOUT-363-1.jpg | bin_in_raw=L48 | bin_out_raw=L29 | job_no=363",2026-08-14 12:27:44.407+00,,,,,,,,,1,
+24681,live,,2026-08-14,land,Collect,EVE_001,,,XE7126P,YAO_JUN,Collect,Metal Waste,,5106,,,,,,,,15650.0,14100.0,1550.0,LR205,,weighbridge,,,,,mssx63jm-DO-361-1.jpg,,,,,,"app_trip_id=235 | bin_photos=mssx62zc-BINOUT-361-1.jpg
+mssx63de-BINOUT-361-2.jpg | job_no=361",2026-08-15 10:16:32.037+00,,,,,,,,,1,
 26790,backfill,,2026-05-11,land,Exchange,PAX_001,,,XE6221D,,,General Waste,,5160,,,,,,,,14170.0,20880.0,6710.0,975,,weighbridge,,,,,,,,,,,remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898,2026-07-24 15:15:51.944859+00,,,,,,,,,,
 26795,backfill,,2026-05-11,land,Exchange,PAX_001,,,XE6221D,,,General Waste,,,,,,,,,,14230.0,19450.0,5220.0,983,,weighbridge,,,,,,,,,,,remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by AMIR-K12898,2026-07-24 15:15:51.944859+00,,,,,,,,,,
 26806,backfill,,2026-05-12,land,Exchange,PAX_001,,,XE6221D,,,General Waste,5135,,,,,,,,,14080.0,16420.0,2340.0,994,,weighbridge,,,,,,,,,,,remarks=Backfill DO + weighbridge (May 2026); 1x5FT; weighed by MUSTAFA,2026-07-24 15:15:51.944859+00,,,,,,,,,,
@@ -88,10 +88,15 @@ msrnom04-BINOUT-355-1.jpg | bin_out_raw=L27 | job_no=355",2026-08-13 15:11:49.56
 mssv68tf-BINOUT-359-1.jpg | bin_in_raw=L27 | job_no=359",2026-08-14 11:29:12.206+00,,,Lirich Resources Pte Ltd,,,,,,1,
 25266,live,,2026-08-12,land,Exchange,PAX_001,,,XE5457Y,KARTHIK,Exchange,General Waste,5221,5056,,,,,,,,16700.0,14610.0,2090.0,LR155,,weighbridge,,,,,msptiwrd-DO-272-1.jpg,,,,,,"app_trip_id=182 | dispose_to=Lirich Resources Pte Ltd | bin_photos=msptiw96-BININ-272-1.jpg
 msptiwl8-BINOUT-272-1.jpg | job_no=272",2026-08-14 17:13:36.579+00,,,Lirich Resources Pte Ltd,,,,,,1,
+24684,live,,2026-08-15,land,Exchange,QUA_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,,,,,,,,,16830.0,14100.0,2730.0,LR202,,weighbridge,,,,,mstvt3q0-DO-367-1.jpg,,,,,,"app_trip_id=242 | bin_photos=mstvt3cm-BININ-367-1.jpg
+mstvt3k5-BINOUT-367-1.jpg | bin_in_raw=L46 | bin_out_raw=L46 | job_no=367",2026-08-15 04:34:29.145+00,,,,,,,,,1,
+APP-T244,live,,2026-08-15,land,Dump,NEA_001,,,,YAO_JUN,Dump,General Waste,,,,,,,,,,23440.0,15550.0,7890.0,LR204,,weighbridge,,,,,,,,,,,app_trip_id=244 | bin_photos=mstvy116-BIN-369-1.jpg | job_no=369,2026-08-15 04:38:21.834+00,,,,,,,,,1,
+APP-T249,live,,2026-08-15,land,Exchange,,,,XE5457Y,SATHISH,Exchange,General Waste,,,,,,,,,,16190.0,14280.0,1910.0,LR210,,weighbridge,,,,,msuct0w3-DO-372-1.jpg,,,,,,app_trip_id=249 | dispose_to=Lirich Resources Pte Ltd | bin_in_raw=6006 | bin_out_raw=6006 | job_no=372,2026-08-15 12:30:39.4+00,,,Lirich Resources Pte Ltd,,,,,,1,
 APP-T153,live,,2026-08-11,land,Exchange,ALLI_003,,,XE4491D,,Exchange,General Waste,,,,,,,,,,,,,,,volume_est,,,,,,,,,,,"app_trip_id=153 | dispose_to=Lirich Resources Pte Ltd | bin_photos=msoiehk7-BININ-221-1.jpg
 msoiehrt-BINOUT-221-1.jpg | bin_in_raw=R21 | bin_out_raw=R21 | job_no=221",2026-08-11 10:20:13.669+00,,,Lirich Resources Pte Ltd,,,,,,,
 18622,backfill,,2026-04-28,vessel,PSA Vessel,PIL_001,KOTA DUNIA,B07,XE6221D,KARTHIK,,Vessel Waste,,,1.00,0.06,0.60,0.00,0.00,0.10,1.76,,,,,,volume_est,,,,,https://lirichresourcessg-my.sharepoint.com/personal/michelle_chen_lirichresources_sg/Documents/Lirich%20Operations/05%20Client%20Reports/PIL/DO/18622_KOTA-DUNIA.pdf,,,,,,remarks=Vessel DO backfill,2026-07-24 15:15:51.944859+00,,,,,,,,,,
 18752,backfill,,2026-05-29,vessel,PSA Vessel,PIL_001,KOTA RANCAK,B06,XE7126P,YAO_JUN,,Vessel Waste,,,0.40,0.00,0.60,0.02,0.00,0.20,1.22,,,,,,volume_est,,,,,https://lirichresourcessg-my.sharepoint.com/personal/michelle_chen_lirichresources_sg/Documents/Lirich%20Operations/05%20Client%20Reports/PIL/DO/18752_KOTA-RANCAK.pdf,,,,,,remarks=Vessel DO backfill; plate verify | plate verify,2026-07-24 15:15:51.944859+00,,,,,,,,,,
+APP-T246,live,,2026-08-15,land,Dump,NEA_001,,,,YAO_JUN,Dump,General Waste,,,,,,,,,,22820.0,15750.0,7070.0,LR207,,weighbridge,,,,,,,,,,,app_trip_id=246 | bin_photos=msu88b4z-BIN-371-1.jpg | job_no=371,2026-08-15 10:22:17.841+00,,,,,,,,,1,
 APP-T88,live,,2026-08-03,land,Exchange,ENGI_001,,,XE4491D,,Exchange,General Waste,5142,5064,,,,,,,,17900.0,16000.0,1900.0,LR127,,weighbridge,,,,,,,,,,,"app_trip_id=88 | dispose_to=Lirich Resources Pte Ltd | bin_photos=https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mscyjz0v-BININ-153-1.jpg
 https://zjtvrlbyfeirnrlqgefo.supabase.co/storage/v1/object/public/do-photos/mscyjz8u-BINOUT-153-1.jpg | job_no=153",2026-08-11 07:55:58.371+00,,,Lirich Resources Pte Ltd,,,,,,,
 23637,backfill,,2026-06-09,standard,,SAV_001,,,XE6221D,,,General Waste,,,,,,,,,,,,,,,volume_est,,,,,,,,,,,reocr 24Jul2026 from SAVILLS BLUE HUB (1) (1).pdf | bin_in_raw=L51 | bin_out_raw=L29 | location=Bay-109 | job=exchange,2026-07-24 15:45:07.605862+00,,,,,,,,,,
@@ -953,6 +958,9 @@ APP-T74,live,,2026-08-02,land,Load,NEA_001,,,XE7126P,YAO_JUN,Load,General Waste,
 APP-T135,live,,2026-08-11,land,Exchange,PAX_001,,,XE4491D,,Exchange,General Waste,,,,,,,,,,20000.0,19620.0,380.0,LR169,,weighbridge,,,,,,msnwajzo-SIG-241-1.jpg,,,,,app_trip_id=135 | dispose_to=Lirich Resources Pte Ltd | job_no=241,2026-08-13 04:50:28.071+00,,,Lirich Resources Pte Ltd,,,,,,,
 25256,live,,2026-08-11,land,Exchange,PAX_001,,,XE5457Y,KARTHIK,Exchange,General Waste,5060,5081,,,,,,,,17510.0,14650.0,2860.0,LR115,,weighbridge,,,,,mso09vr0-DO-240-1.jpg,,,,,,"app_trip_id=137 | dispose_to=Lirich Resources Pte Ltd | bin_photos=mso09va4-BININ-240-1.jpg
 mso09vm2-BINOUT-240-1.jpg | job_no=240",2026-08-14 17:13:32.346+00,,,Lirich Resources Pte Ltd,,,,,,,
+24657,live,,2026-08-08,land,Exchange,GSE_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,5197,,,,,,,,32170.0,14050.0,18120.0,LR112,,weighbridge,,,,,msk6i1jx-DO-234-1.jpg,,,,,,"app_trip_id=131 | bin_photos=msk6i0qg-BININ-234-1.jpg
+msk6i193-BINOUT-234-1.jpg
+msk6i1ez-BINOUT-234-2.jpg | bin_in_raw=L51 | job_no=234",2026-08-15 10:05:17.331+00,,,,,,,,,,
 APP-T125,live,,2026-08-08,land,Exchange,CAL_001,,,,SATHISH,Exchange,General Waste,,5116,,,,,,,,17340.0,14310.0,3030.0,LR105,,weighbridge,,,,,msjy7dtq-DO-8-1.jpg,msjy7dy1-SIG-8-1.jpg,,,,,"app_trip_id=125 | dispose_to=Lirich Resources Pte Ltd | bin_photos=msjy7deg-BININ-8-1.jpg
 msjy7doz-BINOUT-8-1.jpg | vehicle_raw=2234 | bin_in_raw=L807 | job_no=8",2026-08-08 05:44:17.323+00,,,Lirich Resources Pte Ltd,,,,,,,
 24651,live,,2026-08-07,land,Exchange,PAX_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,,,,,,,,,15970.0,14230.0,1740.0,LR100,,weighbridge,,,,,msinb4w3-DO-215-1.jpg,,,,,,"app_trip_id=117 | bin_photos=msinb4df-BININ-215-1.jpg
@@ -972,9 +980,6 @@ APP-T126,live,,2026-08-08,land,Exchange,GSE_001,,,XE8496P,,Exchange,General Wast
 APP-T128,live,,2026-08-08,land,Dump,LIR_001,,,,YAO_JUN,Dump,Wood Waste,,,,,,,,,,19920.0,15830.0,4090.0,LR109,,weighbridge,,,,,,,,,,,app_trip_id=128 | dispose_to=Kim Hock | bin_photos=msk6766b-BIN-228-1.jpg | job_no=228,2026-08-08 09:27:45.095+00,,,Kim Hock,,,,,,,
 24656,live,,2026-08-08,land,Exchange,PAX_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,,,,,,,,,15240.0,14460.0,780.0,LR111,,weighbridge,,,,,msk6fsv6-DO-225-1.jpg,,,,,,"app_trip_id=130 | dispose_to=Lirich Resources Pte Ltd | bin_photos=msk6fsdz-BININ-225-1.jpg
 msk6fsph-BINOUT-225-1.jpg | bin_in_raw=L22 | bin_out_raw=L51 | job_no=225",2026-08-08 09:34:32.295+00,,,Lirich Resources Pte Ltd,,,,,,,
-24657,live,,2026-08-08,land,Exchange,GSE_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,5197,,,,,,,,32170.0,18120.0,14050.0,LR112,,weighbridge,,,,,msk6i1jx-DO-234-1.jpg,,,,,,"app_trip_id=131 | bin_photos=msk6i0qg-BININ-234-1.jpg
-msk6i193-BINOUT-234-1.jpg
-msk6i1ez-BINOUT-234-2.jpg | bin_in_raw=L51 | job_no=234",2026-08-08 09:36:10.48+00,,,,,,,,,,
 APP-T132,live,,2026-08-08,land,Exchange,ART_001,,,XE7126P,YAO_JUN,Exchange,General Waste,5197,,,,,,,,,17630.0,14100.0,3530.0,LR113,,weighbridge,,,,,msk6jmmu-DO-235-1.jpg,,,,,,"app_trip_id=132 | bin_photos=msk6jmbv-BININ-235-1.jpg
 msk6jmim-BINOUT-235-1.jpg | bin_out_raw=L24 | job_no=235",2026-08-08 09:37:21.463+00,,,,,,,,,,
 25255,live,,2026-08-08,land,Exchange,ALLI_001,,,XE5457Y,KARTHIK,Exchange,General Waste,,,,,,,,,,16560.0,14180.0,2380.0,LR114,,weighbridge,,,,,mskd7f2x-DO-236-1.jpg,,,,,,"app_trip_id=133 | dispose_to=Lirich Resources Pte Ltd | bin_photos=mskd7ekn-BININ-236-1.jpg
@@ -1163,10 +1168,15 @@ APP-T212,live,,2026-08-13,land,Dump,NEA_001,,,,YAO_JUN,Dump,General Waste,,,,,,,
 mssviset-BINOUT-360-1.jpg | bin_in_raw=L22 | job_no=360",2026-08-14 11:38:57.039+00,,,Lirich Resources Pte Ltd,,,,,,1,
 APP-T238,live,,2026-08-14,land,Exchange,ENGI_001,,,XE6221D,SATHISH,Exchange,General Waste,5096,,,,,,,,,16050.0,14190.0,1860.0,LR198,,weighbridge,,,,,mst034tw-DO-343-1.jpg,,,,,,"app_trip_id=238 | dispose_to=Lirich Resources Pte Ltd | bin_photos=mst0349f-BININ-343-1.jpg
 mst034lz-BINOUT-343-1.jpg | bin_out_raw=L43 | job_no=343",2026-08-14 13:46:50.652+00,,,Lirich Resources Pte Ltd,,,,,,1,
+24682,live,,2026-08-15,land,Collect,ENGI_001,,,XE7126P,YAO_JUN,Collect,General Waste,,,,,,,,,,17360.0,14050.0,3310.0,LR201,,weighbridge,,,,,mstvq7ix-DO-366-1.jpg,,,,,,"app_trip_id=241 | bin_photos=mstvq6ju-BINOUT-366-1.jpg
+mstvq7bz-BINOUT-366-2.jpg | bin_out_raw=L806 | job_no=366",2026-08-15 04:32:53.473+00,,,,,,,,,1,
 APP-T240,live,,2026-08-14,land,Exchange,,,,XE5457Y,SATHISH,Exchange,General Waste,,,,,,,,,,17190.0,14260.0,2930.0,LR200,,weighbridge,,,,,mst0a2bs-DO-365-1.jpg,,,,,,app_trip_id=240 | dispose_to=Lirich Resources Pte Ltd | bin_in_raw=6005 | bin_out_raw=6005 | job_no=365,2026-08-14 13:52:44.05+00,,,Lirich Resources Pte Ltd,,,,,,1,
 APP-T139,live,,2026-08-11,land,Exchange,PAX_001,,,XE4491D,,Exchange,General Waste,,,,,,,,,,20470.0,19700.0,770.0,LR118,,weighbridge,,,,,,,"mso3uo63-GROSS-255-1.jpg
 mso3up4j-TARE-255-1.jpg",,,,"app_trip_id=139 | bin_photos=mso2vz95-BININ-255-1.jpg
 mso2vzlh-BINOUT-255-1.jpg | bin_in_raw=660 | bin_out_raw=660 | job_no=255",2026-08-14 17:13:33.408+00,,,,,,,,,,
+24685,live,,2026-08-15,land,Exchange,TOP_001,,,XE7126P,YAO_JUN,Exchange,General Waste,,5203,,,,,,,,17800.0,14050.0,3750.0,LR203,,weighbridge,,,,,mstvur5q-DO-368-1.jpg,,,,,,"app_trip_id=243 | bin_photos=mstvuqss-BININ-368-1.jpg
+mstvuqzr-BINOUT-368-1.jpg | bin_in_raw=L51 | job_no=368",2026-08-15 04:35:46.868+00,,,,,,,,,1,
+APP-T248,live,,2026-08-15,land,Exchange,,,,XE5457Y,SATHISH,Exchange,General Waste,,,,,,,,,,17180.0,14310.0,2870.0,LR209,,weighbridge,,,,,msucs6cw-DO-373-1.jpg,,,,,,app_trip_id=248 | dispose_to=Lirich Resources Pte Ltd | bin_in_raw=6005 | bin_out_raw=6005 | job_no=373,2026-08-15 12:29:53.056+00,,,Lirich Resources Pte Ltd,,,,,,1,
 APP-T141,live,,2026-08-11,land,Exchange,SHI_001,,,XE4491D,,Exchange,General Waste,7016,7016,,,,,,,,17340.0,15310.0,2030.0,LR120,,weighbridge,,,,,,,"mso6wteo-GROSS-256-1.jpg
 mso6wucz-TARE-256-1.jpg",,,,app_trip_id=141 | bin_photos=mso545ux-BINOUT-256-1.jpg | job_no=256,2026-08-11 04:58:34.528+00,,,,,,,,,,
 APP-T147,live,,2026-08-11,land,Exchange,RAD_002,,,XE4491D,,Exchange,General Waste,,,,,,,,,,17900.0,16000.0,1900.0,LR126,,weighbridge,,,,,,,,,,,"app_trip_id=147 | dispose_to=Lirich Resources Pte Ltd | bin_photos=msod78ui-BININ-244-1.jpg
@@ -1197,3 +1207,6 @@ mssv296p-BINOUT-345-1.jpg | bin_out_raw=L22 | job_no=345",2026-08-14 11:25:42.37
 APP-T228,live,,2026-08-14,land,Dump,BEE_001,,,,YAO_JUN,Dump,Wood Waste,,,,,,,,,,16770.0,14320.0,2450.0,LR191,,weighbridge,,,,,,,,,,,app_trip_id=228 | bin_photos=mssd1vm3-BIN-358-1.jpg | job_no=358,2026-08-14 03:01:43.899+00,,,,,,,,,1,
 25259,live,,2026-08-11,land,Exchange,PAX_001,,,XE5457Y,KARTHIK,Exchange,General Waste,5056,,,,,,,,,16680.0,14750.0,1930.0,LR121,,weighbridge,,,,,msoa9hrx-DO-239-1.jpg,,,,,,"app_trip_id=142 | dispose_to=Lirich Resources Pte Ltd | bin_photos=msoa9h81-BININ-239-1.jpg
 msoa9hml-BINOUT-239-1.jpg | bin_out_raw=L22 | job_no=239",2026-08-14 17:13:35.026+00,,,Lirich Resources Pte Ltd,,,,,,,
+24687,live,,2026-08-15,land,Exchange,RAD_002,,,XE7126P,YAO_JUN,Exchange,Wood Waste,,,,,,,,,,14830.0,14050.0,780.0,LR206,,weighbridge,,,,,msu84sb5-DO-370-1.jpg,,,,,,"app_trip_id=245 | bin_photos=msu84rv0-BININ-370-1.jpg
+msu84s5g-BINOUT-370-1.jpg | bin_in_raw=R08 | bin_out_raw=R16 | job_no=370",2026-08-15 10:19:31.242+00,,,,,,,,,1,
+APP-T247,live,,2026-08-15,land,Exchange,,,,XE5457Y,SATHISH,Exchange,General Waste,,,,,,,,,,17580.0,14270.0,3310.0,LR208,,weighbridge,,,,,msucr0yl-DO-374-1.jpg,,,,,,app_trip_id=247 | dispose_to=Lirich Resources Pte Ltd | bin_in_raw=6006 | bin_out_raw=6006 | job_no=374,2026-08-15 12:29:09.726+00,,,Lirich Resources Pte Ltd,,,,,,1,
