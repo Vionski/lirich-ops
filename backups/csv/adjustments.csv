@@ -74,3 +74,5 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 83,APP-T256,net_kg,1810,2910,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-18 08:42:58.110696+00
 84,APP-T254,net_kg,3050,4350,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-18 08:43:23.428736+00
 85,APP-T257,net_kg,3430,4730,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-18 08:43:52.337566+00
+86,24712,net_kg,1670,1570,Weight adjustment -100 kg (chit model: net = gross + adj - tare),admin,2026-08-20 04:52:21.315011+00
+87,24712,net_kg,1670,1670,Weight adjustment +100 kg (chit model: net = gross + adj - tare),admin,2026-08-20 04:53:10.015906+00
