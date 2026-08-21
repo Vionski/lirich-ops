@@ -528,6 +528,16 @@ Deno.serve(async (req) => {
       if (me) return json({ error: String((me as any).message || me) }, 500);
       return json({ auth: authMode, methodology: md || [] });
     }
+    /* Factor register extract (Evidence Pack R14 item B4): the engine-relevant
+       factor rows with provenance, for the verifier-facing factor register.
+       Domains limited to what the waste engine reads; values + provenance only. */
+    if (url.searchParams.get("factors") === "1") {
+      const { data: fx, error: fe } = await supa.from("factors")
+        .select("*").in("domain", ["waste", "avoided", "grid"])
+        .order("domain").order("key").order("valid_from", { ascending: true });
+      if (fe) return json({ error: String((fe as any).message || fe) }, 500);
+      return json({ auth: authMode, factors: fx || [] });
+    }
     if (isAdmin && (scoped === "ALL" || !scoped)) {
       const { data: custs } = await supa.from("customers").select("client_id").eq("active", true);
       const out: any[] = [];
