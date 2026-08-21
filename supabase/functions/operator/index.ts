@@ -181,6 +181,11 @@ async function read(what: string, f: any) {
     if (s(f?.do_no)) q = q.eq("do_no", s(f.do_no));
     return (await q).data;
   }
+  if (what === "onward") {
+    let q = supa.from("onward_disposal").select("*").order("id", { ascending: false }).limit(lim);
+    if (s(f?.do_no)) q = q.eq("do_no", s(f.do_no));
+    return (await q).data;
+  }
   if (what === "yard_inbound") return (await supa.from("yard_inbound").select("*").order("log_date", { ascending: false }).limit(lim)).data;
   if (what === "yard_stock") return (await supa.from("yard_stock").select("*").order("take_date", { ascending: false }).limit(lim)).data;
   if (what === "base_salary") {
@@ -282,7 +287,7 @@ const TAB_READ: Record<string, string> = {
   yard_inbound: "nea", yard_stock: "nea",
   stages: "marine", enquiries: "marine",
   base_salary: "jobcard", salary_approvals: "collections", notes: "master",
-  reviews: "collections",
+  reviews: "collections", onward: "collections",
   requirements: "reqs", methodology: "reqs",
 };
 const TAB_WRITE: Record<string, string> = {
@@ -290,7 +295,7 @@ const TAB_WRITE: Record<string, string> = {
   "yard.inbound.add": "nea", "yard.stock.add": "nea", "jobcard.set": "jobcard",
   "enquiry.add": "marine", "enquiry.update": "marine", "enquiry.move": "marine", "enquiry.archive": "marine",
   "stage.add": "marine", "stage.rename": "marine", "stage.reorder": "marine", "stage.deactivate": "marine",
-  "collection.set_dispose": "collections", "collection.review": "collections",
+  "collection.set_dispose": "collections", "collection.review": "collections", "onward.add": "collections",
   "collection.set_weight": "collections", "salary.base.set": "jobcard",
   "salary.approve": "salary_approve", "salary.unlock": "salary_approve",
   "note.add": "master", "note.done": "master",
@@ -382,6 +387,24 @@ Deno.serve(async (req) => {
       const { data: ins, error } = await supa.from(table).insert(row).select().single();
       if (error) return json({ result: { error: error.message } });
       await audit(actor, action, table, String(ins.id), null, ins);
+      return json({ ok: true, actor, result: { ok: true, row: ins } });
+    }
+    /* ---- Facility receipt capture: upgrades route-confirmed -> receipt-confirmed.
+       One row per hop in onward_disposal; the gate/weighbridge document reference is the
+       evidence a VVB samples. Never edits collections; every insert audited. ---- */
+    if (action === "onward.add") {
+      const do_no = s(body.do_no) || "";
+      const facility_id = s(body.facility_id) || "";
+      if (!do_no || !facility_id) return json({ result: { error: "do_no and facility_id are required" } });
+      const { data: coll } = await supa.from("collections").select("do_no").eq("do_no", do_no).maybeSingle();
+      if (!coll) return json({ result: { error: "unknown do_no: " + do_no } });
+      const { data: prev } = await supa.from("onward_disposal").select("hop_no").eq("do_no", do_no).order("hop_no", { ascending: false }).limit(1);
+      const hop = (((prev || [])[0] || {}).hop_no || 0) + 1;
+      const row: any = { do_no, hop_no: hop, facility_id, moved_date: s(body.moved_date), receipt_ref: s(body.receipt_ref), qty_t: num(body.qty_t), notes: s(body.notes), entered_by: actor };
+      if (row.qty_t != null && row.qty_t < 0) return json({ result: { error: "qty_t must be non-negative" } });
+      const { data: ins, error } = await supa.from("onward_disposal").insert(row).select().single();
+      if (error) return json({ result: { error: error.message } });
+      await audit(actor, "onward.add", "onward_disposal", String(ins.id), null, ins);
       return json({ ok: true, actor, result: { ok: true, row: ins } });
     }
     /* ---- #101 Marine enquiry Kanban (archive-only, every write audited) ---- */
