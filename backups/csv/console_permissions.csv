@@ -44,3 +44,7 @@ zion,samples,t,f
 zion,directory,t,f
 michelle,vision,t,t
 qris,vision,t,t
+michelle,reqs,t,f
+qris,reqs,t,f
+michelle,cards,t,f
+qris,cards,t,f

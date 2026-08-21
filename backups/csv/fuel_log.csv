@@ -119,3 +119,8 @@ id,vehicle_id,fill_date,litres,cost,odometer_km,entered_by,source,fuel_type,cart
 118,XE6221D,2026-08-20,94.00,,,cartrack-est,cartrack,diesel,,2026-08-20 19:00:05.986+00
 119,XE8496P,2026-08-20,71.90,,,cartrack-est,cartrack,diesel,,2026-08-20 19:00:10.201+00
 120,XE7126P,2026-08-20,109.65,,,cartrack-est,cartrack,diesel,,2026-08-20 19:00:10.95+00
+121,XE4491D,2026-08-21,84.50,,,cartrack-est,cartrack,diesel,,2026-08-21 19:00:08.424+00
+122,XE5457Y,2026-08-21,85.85,,,cartrack-est,cartrack,diesel,,2026-08-21 19:00:10.174+00
+123,XE6221D,2026-08-21,115.45,,,cartrack-est,cartrack,diesel,,2026-08-21 19:00:10.711+00
+124,XE8496P,2026-08-21,65.85,,,cartrack-est,cartrack,diesel,,2026-08-21 19:00:12.529+00
+125,XE7126P,2026-08-21,154.15,,,cartrack-est,cartrack,diesel,,2026-08-21 19:00:13.211+00
