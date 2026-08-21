@@ -95,16 +95,58 @@ async function customerDB() {
     else if (l.kind === "dump") out.dumpLocations.push(l.value);
     else if (l.kind === "bin_type") out.binTypes.push(l.value);
   });
+  out.clearedDOs = await clearedDOs();
   return out;
 }
 
-/* ---------------- photos → storage bucket ---------------- */
+/* ---------------- DOs that are finished with, for good ----------------
+   A DO is CLEARED when the office has reviewed it on Collections/DO *and* the driver has
+   been paid for it — i.e. its date falls inside a salary period that is approved and locked.
+   Cleared DOs live in the console archive: the app drops them off the driver's Done list
+   and refuses further edits, because changing a paid, reviewed record breaks the audit trail. */
+async function clearedDOs(): Promise<string[]> {
+  try {
+    const [{ data: reviews }, { data: locks }] = await Promise.all([
+      supa.from("collection_reviews").select("do_no").eq("reviewed", true),
+      supa.from("salary_approvals").select("driver_key,period_start,period_end,locked").eq("locked", true),
+    ]);
+    if (!reviews?.length || !locks?.length) return [];
+    const reviewed = reviews.map((r: any) => String(r.do_no));
+    const { data: rows } = await supa
+      .from("collections")
+      .select("do_no,do_date,driver_id")
+      .in("do_no", reviewed);
+    const out: string[] = [];
+    (rows || []).forEach((c: any) => {
+      const paid = (locks || []).some((L: any) =>
+        String(L.driver_key || "").toUpperCase() === String(c.driver_id || "").toUpperCase() &&
+        (!L.period_start || String(c.do_date) >= String(L.period_start)) &&
+        (!L.period_end || String(c.do_date) <= String(L.period_end))
+      );
+      if (paid) out.push(String(c.do_no));
+    });
+    return out;
+  } catch (_) {
+    return []; /* never let this block the reference payload */
+  }
+}
+
+/* ---------------- photos → storage bucket ----------------
+   #100 Phase B (6 Aug 2026): the bucket is being made PRIVATE.
+   - The SSOT mirror stores the object PATH (permanent, survives signing).
+   - The app gets a LONG-LIVED SIGNED URL (1 year) for immediate/offline display,
+     so cached thumbnails keep working; the console re-signs from the path. */
 async function addPhoto(q: any) {
   const name = `${Date.now().toString(36)}-${(q.name || "do-photo.jpg").replace(/[^\w.\-]/g, "_")}`;
   const bytes = Uint8Array.from(atob(q.b64), (c) => c.charCodeAt(0));
   const { error } = await supa.storage.from("do-photos").upload(name, bytes, { contentType: "image/jpeg" });
   if (error) throw error;
-  return { id: name, url: PUB + name, thumb: PUB + name };
+  let signed = PUB + name; // fallback while the bucket is still public
+  try {
+    const { data } = await supa.storage.from("do-photos").createSignedUrl(name, 31536000); // 1 year
+    if (data?.signedUrl) signed = data.signedUrl;
+  } catch (_) { /* keep fallback */ }
+  return { id: name, path: name, url: signed, thumb: signed };
 }
 
 /* ---------------- normalized SSOT mirror ---------------- */
@@ -131,7 +173,10 @@ async function driverIdFor(name: string) {
   return data ? data.driver_id : null;
 }
 function pick(urls: any[], kind: string[]) {
-  return (urls || []).filter((p: any) => p && p.url && kind.includes(p.kind)).map((p: any) => p.url).join("\n") || null;
+  /* SSOT stores the storage PATH when available (new photos); legacy cached
+     records only carry a full URL — keep it, the backfill converts those. */
+  return (urls || []).filter((p: any) => p && (p.path || p.url) && kind.includes(p.kind))
+    .map((p: any) => p.path || p.url).join("\n") || null;
 }
 async function mirrorTrip(st: any, t: any) {
   if (t._test) return; /* office test account never touches the SSOT */
@@ -149,13 +194,25 @@ async function mirrorTrip(st: any, t: any) {
       trip_type: t._type || null,
       site_id: await siteIdFor(st, t.clientId, t.jobSiteIdx || 0),
       vessel_name: v.name || null,
+      /* voyage captured on the vessel DO from 14 Aug 2026 (Michelle) — before this it
+         could only be reconstructed from PIL's monthly report or the PSA SSN register */
+      voyage_no: v.voyage || null,
       berth: v.location || null,
       vehicle_id: null, /* set below only if the plate exists in vehicles */
       driver_id: await driverIdFor(t._driver || ""),
       job_type: t.jobType || null,
+      /* 660L jobs can put out several bins at one location (11 Aug 2026) */
+      bin_qty: t.binQty || null,
       waste_type: t.waste || null,
       vol_cat_a: v.a || null, vol_cat_b: v.b || null, vol_cat_c: v.c || null,
       vol_cat_d: v.d || null, vol_cat_e: v.e || null, vol_cat_f: v.f || null,
+      /* extra vessel streams captured on the DO since 8 Aug 2026 — previously
+         these only ever appeared in the Remarks column and were invisible. */
+      vol_cat_i: v.i || null,
+      vol_oily_rags_m3: v.rags || null,
+      vol_expired_med_m3: v.med || null,
+      vol_other_m3: v.oth || null,
+      other_desc: v.othDesc || null,
       vol_total_m3: v.total || null,
       gross_kg: w.gross ?? null, tare_kg: w.tare ?? null, net_kg: net,
       weigh_ticket_no: w.ticket || null,
@@ -254,6 +311,27 @@ async function apply(st: any, q: any) {
     }
     case "addTrip": {
       const t = q.trip;
+      /* ONE TRIP PER JOB (Michelle, 14 Aug 2026). The app also guards this, but the server is
+         the only place that sees every device: a double-tap, a second phone or an offline
+         queue replaying must never create a second DO for the same job. If this job already
+         has a trip, fold the new content into it and return — no duplicate row is created.
+         (Trips with no jobId — ad-hoc DOs — are unaffected.) */
+      if (t.jobId) {
+        const existing = (st.trips || []).find((x: any) => x.jobId === t.jobId);
+        if (existing) {
+          const keep = new Set(["id", "tServer", "weight", "weightAdj", "tonnAdj", "invoiced", "photos", "doNo"]);
+          for (const k of Object.keys(t)) {
+            if (keep.has(k)) continue;
+            if (k === "photosB64" || k === "photoKinds" || k === "photoTs") continue;
+            if (t[k] !== undefined && t[k] !== null && t[k] !== "") existing[k] = t[k];
+          }
+          if (t.doNo && !existing.doNo) existing.doNo = t.doNo;
+          existing.dupBlocked = (existing.dupBlocked || 0) + 1; /* visible in state for audit */
+          if (q.final !== false) { const dj = find(st.jobs, t.jobId); if (dj) { dj.status = "done"; await mirrorJob(dj); } }
+          await mirrorTrip(st, existing);
+          break;
+        }
+      }
       t.id = st.seq.trip++;
       t.tServer = Date.now();
       if (t.needTicket && t.weight) t.weight.ticket = "LR" + (st.seq.ticket++);
