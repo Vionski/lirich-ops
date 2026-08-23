@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LXz1SRNUinPwAesbk1Pt4dwDEUr9hSsdpnDnQgQKfDazVeOBMcE1qMhjKt4xEwH
+\restrict yvbHo1SwHYZ02kSgJZXCRp6YopGxZc8hhiC40lIdh0h1UcFe8EFo29llqVocdMe
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Ubuntu 17.11-1.pgdg24.04+2)
@@ -5026,6 +5026,7 @@ COPY cron.job_run_details (jobid, runid, job_pid, database, username, command, s
 1	22	2685507	postgres	postgres	 select net.http_post( url:='https://zjtvrlbyfeirnrlqgefo.supabase.co/functions/v1/cartrack-sync?mode=sync', headers:=jsonb_build_object('x-sync-key','3c55a26e60493d32504ab0a5d1cf898922396f399e27e2e8') ); 	succeeded	1 row	2026-08-19 19:00:00.221175+00	2026-08-19 19:00:00.306349+00
 1	23	2785866	postgres	postgres	 select net.http_post( url:='https://zjtvrlbyfeirnrlqgefo.supabase.co/functions/v1/cartrack-sync?mode=sync', headers:=jsonb_build_object('x-sync-key','3c55a26e60493d32504ab0a5d1cf898922396f399e27e2e8') ); 	succeeded	1 row	2026-08-20 19:00:00.195685+00	2026-08-20 19:00:00.276488+00
 1	24	2891678	postgres	postgres	 select net.http_post( url:='https://zjtvrlbyfeirnrlqgefo.supabase.co/functions/v1/cartrack-sync?mode=sync', headers:=jsonb_build_object('x-sync-key','3c55a26e60493d32504ab0a5d1cf898922396f399e27e2e8') ); 	succeeded	1 row	2026-08-21 19:00:00.192606+00	2026-08-21 19:00:00.235153+00
+1	25	2990964	postgres	postgres	 select net.http_post( url:='https://zjtvrlbyfeirnrlqgefo.supabase.co/functions/v1/cartrack-sync?mode=sync', headers:=jsonb_build_object('x-sync-key','3c55a26e60493d32504ab0a5d1cf898922396f399e27e2e8') ); 	succeeded	1 row	2026-08-22 19:00:00.188073+00	2026-08-22 19:00:00.210571+00
 \.
 
 
@@ -7729,6 +7730,11 @@ COPY public.fuel_log (id, vehicle_id, fill_date, litres, cost, odometer_km, ente
 123	XE6221D	2026-08-21	115.45	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-21 19:00:10.711+00
 124	XE8496P	2026-08-21	65.85	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-21 19:00:12.529+00
 125	XE7126P	2026-08-21	154.15	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-21 19:00:13.211+00
+126	XE4491D	2026-08-22	26.20	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-22 19:00:10.163+00
+127	XE5457Y	2026-08-22	128.30	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-22 19:00:13.03+00
+128	XE6221D	2026-08-22	110.00	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-22 19:00:14.785+00
+129	XE8496P	2026-08-22	103.35	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-22 19:00:16.707+00
+130	XE7126P	2026-08-22	146.20	\N	\N	cartrack-est	cartrack	diesel	\N	2026-08-22 19:00:17.667+00
 \.
 
 
@@ -7930,6 +7936,11 @@ COPY public.odometer_log (id, vehicle_id, read_date, odometer_km, source, distan
 127	XE6221D	2026-08-21	85874	cartrack	230.9	\N	2026-08-21 19:00:10.661+00
 128	XE8496P	2026-08-21	56213	cartrack	131.7	\N	2026-08-21 19:00:12.477+00
 129	XE7126P	2026-08-21	56290	cartrack	308.3	\N	2026-08-21 19:00:13.17+00
+130	XE4491D	2026-08-22	83904	cartrack	52.4	\N	2026-08-22 19:00:10.027+00
+131	XE5457Y	2026-08-22	62116	cartrack	256.6	\N	2026-08-22 19:00:12.966+00
+132	XE6221D	2026-08-22	86076	cartrack	220	\N	2026-08-22 19:00:14.728+00
+133	XE8496P	2026-08-22	56420	cartrack	206.7	\N	2026-08-22 19:00:16.657+00
+134	XE7126P	2026-08-22	56583	cartrack	292.4	\N	2026-08-22 19:00:17.593+00
 \.
 
 
@@ -10176,7 +10187,7 @@ SELECT pg_catalog.setval('cron.jobid_seq', 1, true);
 -- Name: runid_seq; Type: SEQUENCE SET; Schema: cron; Owner: -
 --
 
-SELECT pg_catalog.setval('cron.runid_seq', 24, true);
+SELECT pg_catalog.setval('cron.runid_seq', 25, true);
 
 
 --
@@ -10218,7 +10229,7 @@ SELECT pg_catalog.setval('public.factors_id_seq', 324, true);
 -- Name: fuel_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.fuel_log_id_seq', 125, true);
+SELECT pg_catalog.setval('public.fuel_log_id_seq', 130, true);
 
 
 --
@@ -10260,7 +10271,7 @@ SELECT pg_catalog.setval('public.notes_id_seq', 1, false);
 -- Name: odometer_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.odometer_log_id_seq', 129, true);
+SELECT pg_catalog.setval('public.odometer_log_id_seq', 134, true);
 
 
 --
@@ -12498,5 +12509,5 @@ CREATE EVENT TRIGGER pgrst_drop_watch ON sql_drop
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LXz1SRNUinPwAesbk1Pt4dwDEUr9hSsdpnDnQgQKfDazVeOBMcE1qMhjKt4xEwH
+\unrestrict yvbHo1SwHYZ02kSgJZXCRp6YopGxZc8hhiC40lIdh0h1UcFe8EFo29llqVocdMe
 
