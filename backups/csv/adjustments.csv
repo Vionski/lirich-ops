@@ -89,3 +89,16 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 98,26470,net_kg,1830,2930,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-21 05:08:19.941191+00
 99,26472,net_kg,2160,3460,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-21 05:09:26.73691+00
 100,26468,net_kg,1680,2680,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-21 05:10:28.603128+00
+101,26476,net_kg,3580,5080,Weight adjustment +1500 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:25:38.307717+00
+102,26480,net_kg,1870,3170,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:27:49.779947+00
+103,24702,net_kg,2750,3850,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:30:06.655214+00
+104,24702,net_kg,2750,3850,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:30:18.908894+00
+105,24705,net_kg,3430,4730,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:31:12.888834+00
+106,APP-T307,net_kg,2180,3480,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:32:26.549621+00
+107,24707,net_kg,2030,2230,Weight adjustment +200 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:32:56.911092+00
+108,24707,net_kg,2030,4230,Weight adjustment +2000 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:33:03.558795+00
+109,24707,net_kg,2030,4030,Weight adjustment -200 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:33:08.9707+00
+110,24711,net_kg,1180,1980,Weight adjustment +800 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:42:06.393456+00
+111,24712,net_kg,1670,2470,Weight adjustment +800 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:45:58.873928+00
+112,24712,net_kg,1670,2470,Weight adjustment +800 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:46:01.586942+00
+113,24712,net_kg,1670,2470,Weight adjustment +800 kg (chit model: net = gross + adj - tare),admin,2026-08-24 06:46:02.634794+00
