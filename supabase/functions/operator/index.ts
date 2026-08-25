@@ -181,6 +181,11 @@ async function read(what: string, f: any) {
     if (s(f?.do_no)) q = q.eq("do_no", s(f.do_no));
     return (await q).data;
   }
+  if (what === "ref_lists") {
+    let q = supa.from("ref_lists").select("kind,value").order("kind").order("value").limit(lim);
+    if (s(f?.kind)) q = q.eq("kind", s(f.kind));
+    return (await q).data;
+  }
   if (what === "onward") {
     let q = supa.from("onward_disposal").select("*").order("id", { ascending: false }).limit(lim);
     if (s(f?.do_no)) q = q.eq("do_no", s(f.do_no));
@@ -287,7 +292,7 @@ const TAB_READ: Record<string, string> = {
   yard_inbound: "nea", yard_stock: "nea",
   stages: "marine", enquiries: "marine",
   base_salary: "jobcard", salary_approvals: "collections", notes: "master",
-  reviews: "collections", onward: "collections",
+  reviews: "collections", onward: "collections", ref_lists: "jobcard",
   requirements: "reqs", methodology: "reqs",
 };
 const TAB_WRITE: Record<string, string> = {
@@ -295,7 +300,7 @@ const TAB_WRITE: Record<string, string> = {
   "yard.inbound.add": "nea", "yard.stock.add": "nea", "jobcard.set": "jobcard",
   "enquiry.add": "marine", "enquiry.update": "marine", "enquiry.move": "marine", "enquiry.archive": "marine",
   "stage.add": "marine", "stage.rename": "marine", "stage.reorder": "marine", "stage.deactivate": "marine",
-  "collection.set_dispose": "collections", "collection.review": "collections", "onward.add": "collections",
+  "collection.set_dispose": "collections", "collection.review": "collections", "onward.add": "collections", "collection.set_site": "collections",
   "collection.set_weight": "collections", "salary.base.set": "jobcard",
   "salary.approve": "salary_approve", "salary.unlock": "salary_approve",
   "note.add": "master", "note.done": "master",
@@ -388,6 +393,61 @@ Deno.serve(async (req) => {
       if (error) return json({ result: { error: error.message } });
       await audit(actor, action, table, String(ins.id), null, ins);
       return json({ ok: true, actor, result: { ok: true, row: ins } });
+    }
+    /* ---- Correct the SITE (address) on a collection (Michelle, 25 Aug 2026).
+       A driver can pick the right customer and the wrong address; the address decides the rate,
+       so the trip charge and the driver's trip pay must move with it. Restricted to another site
+       of the SAME customer, refuses when the new site has no rate for that job type (a missing
+       rate must never silently become $0), patches the app_state trip AND job so the app and the
+       SSOT cannot diverge, and records before -> after for both address and price. ---- */
+    if (action === "collection.set_site") {
+      const do_no = s(body.do_no) || "", site_id = s(body.site_id) || "";
+      if (!do_no || !site_id) return json({ result: { error: "do_no and site_id are required" } });
+      const { data: col } = await supa.from("collections").select("do_no,site_id,job_type").eq("do_no", do_no).maybeSingle();
+      if (!col) return json({ result: { error: "unknown do_no: " + do_no } });
+      const { data: oldSite } = await supa.from("sites").select("site_id,client_id,address").eq("site_id", col.site_id).maybeSingle();
+      const { data: newSite } = await supa.from("sites").select("site_id,client_id,address,active").eq("site_id", site_id).maybeSingle();
+      if (!newSite) return json({ result: { error: "unknown site: " + site_id } });
+      if (oldSite && String(newSite.client_id) !== String(oldSite.client_id))
+        return json({ result: { error: "that site belongs to a different customer - only the address may be corrected, not the customer" } });
+      const jt = String(col.job_type || "");
+      let newPrice: number | null = null;
+      if (jt) {
+        const { data: rc } = await supa.from("rate_card").select("price").eq("site_id", site_id).eq("job_type", jt)
+          .order("valid_from", { ascending: false }).limit(1);
+        const p = (rc || [])[0];
+        if (!p) return json({ result: { error: "no " + jt + " rate is set for " + site_id + " - set the price on Master data first, so the pay is never guessed" } });
+        newPrice = Number(p.price);
+      }
+      const { error: ue } = await supa.from("collections").update({ site_id }).eq("do_no", do_no);
+      if (ue) return json({ result: { error: ue.message } });
+      /* mirror into the app blob: the console reads collections, the app reads app_state */
+      let app_patched = false, old_price: number | null = null;
+      const { data: stRow } = await supa.from("app_state").select("id,state,rev").eq("id", 1).maybeSingle();
+      if (stRow && stRow.state) {
+        const st: any = stRow.state;
+        const trips = st.trips || [], jobs = st.jobs || [];
+        const tr = trips.find((t: any) => String(t.doNo || ("APP-T" + t.id)) === do_no);
+        if (tr) {
+          old_price = tr.price == null ? null : Number(tr.price);
+          tr._addr = newSite.address || tr._addr;
+          if (newPrice != null) tr.price = Math.round(newPrice * (Number(tr.binQty) > 1 ? Number(tr.binQty) : 1) * 100) / 100;
+          const jb = jobs.find((j: any) => j.id === tr.jobId);
+          if (jb) {
+            jb._addr = newSite.address || jb._addr;
+            if (newPrice != null) {
+              jb.unitPrice = newPrice;
+              jb.price = Math.round(newPrice * (Number(jb.binQty) > 1 ? Number(jb.binQty) : 1) * 100) / 100;
+            }
+          }
+          await supa.from("app_state").update({ state: st, rev: (Number(stRow.rev) || 0) + 1 }).eq("id", 1);
+          app_patched = true;
+        }
+      }
+      await audit(actor, "collection.set_site", "collections", do_no,
+        { site_id: col.site_id, address: oldSite ? oldSite.address : null, price: old_price },
+        { site_id, address: newSite.address, price: newPrice, app_patched });
+      return json({ ok: true, actor, result: { ok: true, site_id, address: newSite.address, old_price, new_price: newPrice, app_patched } });
     }
     /* ---- Facility receipt capture: upgrades route-confirmed -> receipt-confirmed.
        One row per hop in onward_disposal; the gate/weighbridge document reference is the
@@ -576,6 +636,18 @@ Deno.serve(async (req) => {
       const reimb = num(body.reimbursement_sgd), deduct = num(body.deduction_sgd);
       if (reimb != null && reimb >= 0) row.reimbursement_sgd = reimb;
       if (deduct != null && deduct >= 0) row.deduction_sgd = deduct;
+      /* Deduction reason (Michelle, 25 Aug 2026): recorded against the month AND saved into
+         ref_lists so the operator can pick it from a dropdown next time. A deduction without a
+         reason is refused - an unexplained pay cut is exactly what a payroll query asks about. */
+      const reason = s(body.deduction_reason);
+      if (deduct != null && deduct > 0 && !reason)
+        return json({ result: { error: "a reason is required for a deduction" } });
+      if (reason) {
+        row.deduction_reason = reason;
+        await supa.from("ref_lists").upsert({ kind: "deduction_reason", value: reason }, { onConflict: "kind,value", ignoreDuplicates: true });
+      } else if (deduct != null && deduct === 0) {
+        row.deduction_reason = null;
+      }
       const { data: after, error } = await supa.from("driver_base_salary")
         .upsert(row, { onConflict: "driver_id,month" }).select().single();
       if (error) return json({ result: { error: error.message } });
