@@ -96,6 +96,10 @@ id,site_id,job_type,price,valid_from,created_by
 2837,ACR_004,Collect,23.00,2026-08-06,portal
 2838,ACR_004,Delivery,8.00,2026-08-06,portal
 2839,ACR_004,Load,31.00,2026-08-06,portal
+2875,PEN_001,Exchange,13.00,2026-08-26,portal
+2876,PEN_001,Collect,13.00,2026-08-26,portal
+2877,PEN_001,Delivery,8.00,2026-08-26,portal
+2878,PEN_001,Load,21.00,2026-08-26,portal
 2630,STX_003,Collect,19.50,2026-07-23,portal
 2631,STX_003,Delivery,8.00,2026-07-23,portal
 2632,STX_003,Exchange,19.50,2026-07-23,portal
@@ -128,6 +132,7 @@ id,site_id,job_type,price,valid_from,created_by
 2833,ACR_003,Collect,23.00,2026-08-06,portal
 2834,ACR_003,Delivery,8.00,2026-08-06,portal
 2835,ACR_003,Load,31.00,2026-08-06,portal
+2879,KIM_001,Dump,18.00,2026-08-26,portal
 2634,STX_004,Collect,13.00,2026-07-23,portal
 2635,STX_004,Delivery,8.00,2026-07-23,portal
 2636,STX_004,Exchange,13.00,2026-07-23,portal
