@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v42';
+const APP_VERSION = 'v43';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -648,6 +648,58 @@ function segPick(el, wrap){
   el.classList.add('on');
 }
 
+/* ---------------- fleet job orders (Phase B) ----------------
+   Planned orders come from the console's Fleet tab (job_orders table), NOT the
+   shared state blob — read-only here apart from Accept. Pay still flows only
+   from trips; these cards are the driver's forward schedule. */
+const FLEET_CODE = {1:'SATHISH', 2:'KARTHIK', 3:'KUMAR', 4:'LIU', 5:'YAO_JUN'};
+let FLEET_ORDERS = {list:[], at:0, loading:false, err:null};
+async function fetchFleetOrders(force){
+  const code = FLEET_CODE[S.role && S.role.driverId];
+  if(!code || !navigator.onLine || !(S.settings && S.settings.sheetUrl)) return;
+  if(!force && Date.now()-FLEET_ORDERS.at < 60000) return;
+  if(FLEET_ORDERS.loading) return;
+  FLEET_ORDERS.loading = true;
+  try{
+    const d = await (await fetch(dbGet('?orders=1&driver='+code))).json();
+    FLEET_ORDERS = {list:(d && d.orders)||[], at:Date.now(), loading:false, err:(d && d.error)||null};
+  }catch(e){ FLEET_ORDERS.loading = false; return; }
+  if(S.role && S.role.kind==='driver' && curTab()==='myjobs') render();
+}
+async function acceptFleetOrder(order_no){
+  const code = FLEET_CODE[S.role && S.role.driverId];
+  if(!code) return;
+  try{
+    const d = await api('acceptOrder', {order_no:order_no, driver:code});
+    if(d && d.error){ toast('⚠️ '+d.error); }
+    else toast('✅ Accepted — the office can see you have it');
+  }catch(e){ return; }
+  FLEET_ORDERS.at = 0;
+  fetchFleetOrders(true);
+}
+function fleetOrderCard(o){
+  const urgent = o.priority==='urgent';
+  const site = o.site || {};
+  const when = o.window_from ? (o.window_from + (o.window_to ? '\u2013'+o.window_to : '')) : '';
+  return `<div class="card" style="${urgent?'border:2px solid var(--red);':''}margin-bottom:8px">
+    <div class="item"><div class="grow">
+      <div class="title">${urgent?'<span style="background:var(--red);color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-right:6px">URGENT</span>':''}${esc(site.name || o.site_text || o.site_id || '?')}</div>
+      <div class="sub">${esc(fmtDate(o.service_date))}${when?' \u00b7 \ud83d\udd50 '+esc(when):''} \u00b7 ${esc(o.job_type)}${o.bin_type?' \u00b7 '+esc(o.bin_type):''}${Number(o.bin_qty)>1?' \u00d7'+Number(o.bin_qty):''}</div>
+      ${site.addr?`<div class="sub">\ud83d\udccd ${esc(site.addr)}</div>`:''}
+      ${o.notes?`<div class="sub">\ud83d\udcdd ${esc(o.notes)}</div>`:''}
+    </div>
+    ${o.status==='assigned'
+      ? `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">\u2705 Accept</button>`
+      : '<span class="sub" style="white-space:nowrap">\u2705 accepted</span>'}
+    </div></div>`;
+}
+function fleetOrdersHTML(){
+  const L = (FLEET_ORDERS.list||[]).slice()
+    .sort((a,b)=>((b.priority==='urgent')?1:0)-((a.priority==='urgent')?1:0));
+  if(!L.length) return '';
+  return `<h2 style="margin:8px 2px 8px; font-size:15px">\ud83d\udccb Planned orders from office (${L.length})</h2>${L.map(fleetOrderCard).join('')}<div style="height:6px"></div>`;
+}
+
 /* ---------------- role & nav ---------------- */
 const NAVS = {
   operator: [
@@ -1058,6 +1110,7 @@ function vMyJobs(){
      from earlier days drop off My Jobs entirely (they live in the Job Card).
      VOIDED jobs show only on the day they were voided, then drop off the next day. Future-dated
      jobs stay hidden until their date arrives. */
+  fetchFleetOrders();
   const mine = driverJobs(S.role.driverId).filter(j=>j.date<=TODAY);
   const isOpen = j => j.status!=='done' && j.status!=='void';
   /* TODAY's work + anything needing a weigh (newest first) */
@@ -1069,6 +1122,7 @@ function vMyJobs(){
   const voided    = mine.filter(j=> j.status==='void' && j.voidedOn===TODAY).slice().reverse();
   $('#main').innerHTML = `
     <h2 style="margin:8px 2px 12px; font-size:17px">🗂️ My jobs — ${fmtDate(TODAY)}</h2>
+    ${fleetOrdersHTML()}
     ${todayActive.map(driverJobCard).join('') || (late.length?'':'<div class="card empty">No jobs right now. 👍</div>')}
     ${late.length?`<h2 style="margin:18px 2px 8px; font-size:15px; color:var(--red)">⏰ Late jobs (${late.length}) — from earlier days</h2>${late.map(driverJobCard).join('')}`:''}
     ${doneToday.length?`<div class="card"><h2>✅ Done today (${doneToday.length})</h2>${doneToday.map(j=>{
@@ -3372,4 +3426,5 @@ render();
 bootRemote();                       /* connect to the central database */
 fetchSheetDB();                     /* dropdown options from "Customer DB" tab */
 setInterval(pollRemote, 25000);     /* pick up other devices' changes */
+setInterval(()=>{ if(S.role && S.role.kind==='driver') fetchFleetOrders(); }, 60000); /* fleet planned orders */
 window.addEventListener('online', ()=>{ toast('Back online — syncing'); bootRemote(); });
