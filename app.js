@@ -152,7 +152,11 @@ const SALES = ['Marcus', 'Patrick'];
    other job type; picking one also pre-fills the matching bin type, and 660L alone
    asks how many bins, because one location can put out several 660L at once. */
 const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load','Compactor','660L'];
-const QTY_JOB_TYPES = ['660L'];                    /* job types priced per bin */
+/* Job types whose price is multiplied by a quantity. 660L counts BINS (one location can put
+   out several at once); Dump counts TRIPS (Michelle, 28 Aug 2026 - a dump run is often several
+   loads to the same place, and every trip must be paid, so one job line carries N trips at Z
+   each rather than N duplicate job lines). Same proven mechanism, no new pay path. */
+const QTY_JOB_TYPES = ['660L','Dump'];             /* job types priced per unit (bins / trips) */
 const JOBTYPE_BIN = {Compactor:'Compactor', '660L':'660L'};  /* auto-filled bin type */
 
 /* Photo sections + which photo stamps which time, per job type.
@@ -435,7 +439,7 @@ function jobTypeOptions(clientId, siteIdx, selected){
   }
   const avail = JOB_TYPES.filter(jt => prices[jt] != null);
   if(!avail.length) return '<option value="">— no price set for this site —</option>';
-  return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jt} — ${money(prices[jt])}${QTY_JOB_TYPES.includes(jt)?' each':''}</option>`).join('');
+  return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jt} — ${money(prices[jt])}${QTY_JOB_TYPES.includes(jt)?(jt==='Dump'?' per trip':' each'):''}</option>`).join('');
 }
 /* ---- Lirich-own jobs are priced by where the load goes, not where it came from ---- */
 function isLirichClient(clientId){
@@ -1324,7 +1328,7 @@ function openJobForm(presetClientId, editJobId){
     <label class="f">JOB TYPE &amp; PRICE <span style="font-weight:600">(${isDriver?'your pay for this job':'the driver sees this price'} — set per site)</span></label>
     <select id="jf-jobtype" onchange="jfJobTypeChanged()">${jobTypeOptions(presetClientId||S.clients[0].id, 0)}</select>
     <div id="jf-qtywrap" style="display:none;margin-top:6px">
-      <label class="f">HOW MANY 660L BINS AT THIS LOCATION? <span style="font-weight:600">(the price above is per bin)</span></label>
+      <label class="f" id="jf-qtylabel">HOW MANY 660L BINS AT THIS LOCATION? <span style="font-weight:600">(the price above is per bin)</span></label>
       <input type="number" id="jf-qty" min="1" step="1" value="${editJob&&editJob.binQty?editJob.binQty:1}" onchange="jfPriceHint()" oninput="jfPriceHint()">
     </div>
     <div class="muted" id="jf-pricehint" style="margin-top:4px"></div>
@@ -1423,6 +1427,11 @@ function jfJobTypeChanged(keepBin){
   if(wrap){
     const on = QTY_JOB_TYPES.includes(jt);
     wrap.style.display = on ? 'block' : 'none';
+    /* the box counts bins for 660L and trips for Dump - say which, so nobody guesses */
+    const qlab = $('#jf-qtylabel');
+    if(qlab && on) qlab.innerHTML = (jt==='Dump')
+      ? 'HOW MANY TRIPS? <span style="font-weight:600">(the price above is per trip)</span>'
+      : 'HOW MANY 660L BINS AT THIS LOCATION? <span style="font-weight:600">(the price above is per bin)</span>';
     if(!on && $('#jf-qty')) $('#jf-qty').value = 1;
   }
   jfPriceHint();
@@ -1445,7 +1454,7 @@ function jfPriceHint(){
   let msg;
   if(lir && !dump) msg = 'Lirich job — pick a dumping location to set the price.';
   else if(lir && !unit) msg = `No Dump rate set yet for ${dump} — add it in the operator console.`;
-  else if(qty > 1) msg = `${money(unit)} x ${qty} bins = ${money(unit*qty)}`;
+  else if(qty > 1) msg = `${money(unit)} x ${qty} ${$('#jf-jobtype')&&$('#jf-jobtype').value==='Dump'?'trips':'bins'} = ${money(unit*qty)}`;
   else msg = lir ? `Priced by dumping location (${dump}): ${money(unit)}` : '';
   el.textContent = msg;
 }
