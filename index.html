@@ -113,6 +113,7 @@ nav button.active{color:var(--orange-ink); background:var(--orange-soft)}
 .item:last-child{border-bottom:none}
 .item .title{font-weight:700; font-size:13.5px}
 .item .sub{font-size:11.5px; color:var(--muted); margin-top:2px}
+.item > .btn{width:auto; flex:0 0 auto} /* never full-width inside a flex row - it starves the text column to 0px (31 Aug 2026) */
 .icon-btn{background:none; border:none; cursor:pointer; font-size:16px; color:var(--muted); padding:6px; border-radius:8px; flex:none}
 .pay{font-weight:800; color:var(--green); font-size:13.5px; white-space:nowrap}
 .empty{padding:24px 10px; text-align:center; color:var(--muted); font-size:13.5px}
