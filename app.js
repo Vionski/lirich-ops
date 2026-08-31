@@ -683,8 +683,7 @@ async function acceptFleetOrder(order_no){
   if(already){ toast('\u2139\ufe0f Already added as job #'+already.id); openJobDetail(already.id); return; }
   try{
     const d = await api('acceptOrder', {order_no:order_no, driver:code});
-    if(d && d.error){ toast('⚠️ '+d.error); }
-    else toast('✅ Accepted — now add the job so you can upload');
+    if(d && d.error && !/already|accepted/i.test(String(d.error))){ toast('⚠️ '+d.error); }
   }catch(e){ return; }
   FLEET_ORDERS.at = 0;
   fetchFleetOrders(true);
@@ -729,10 +728,16 @@ function fleetOrderCard(o){
       ${site.addr?`<div class="sub">\ud83d\udccd ${esc(site.addr)}</div>`:''}
       ${o.notes?`<div class="sub">\ud83d\udcdd ${esc(o.notes)}</div>`:''}
     </div>
-    ${o.status==='assigned'
-      ? `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">\u2705 Accept</button>`
-      : '<span class="sub" style="white-space:nowrap">\u2705 accepted</span>'}
+    ${fleetOrderAction(o)}
     </div></div>`;
+}
+/* An order already accepted still needs a way into the job form - otherwise a driver who
+   tapped Accept before this shipped is stuck with no job to upload against (31 Aug 2026). */
+function fleetOrderAction(o){
+  const done = (S.jobs||[]).find(j=>j._order===o.order_no && j.status!=='void');
+  if(done) return `<button class="btn slim ghost" style="min-width:92px" onclick="openJobDetail(${done.id})">\u2705 job #${done.id}</button>`;
+  const label = o.status==='assigned' ? '\u2705 Accept' : '\u2795 Add job';
+  return `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">${label}</button>`;
 }
 function fleetOrdersHTML(){
   const L = (FLEET_ORDERS.list||[]).slice()
