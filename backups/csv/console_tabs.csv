@@ -10,3 +10,4 @@ salary_approve,Salary approval,90,t,May approve/unlock monthly driver salaries
 vision,Facility Vision,80,t,23 Gul Drive concept model - restricted to Michelle and Qris (12 Aug 2026)
 reqs,Compliance,9,t,Requirements register + methodology decisions (Reference Library). Added 21 Aug 2026.
 cards,Name cards,10,f,Digital name cards with on-page QR. Deployed 21 Aug 2026.
+collfix,Correct DO date / number,99,t,Not a tab. Gates collection.set_date and collection.set_dono inside Collections/DO. Michelle + Zion only. Every use is audited with a mandatory typed reason.
