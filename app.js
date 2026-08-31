@@ -673,18 +673,55 @@ async function fetchFleetOrders(force){
 async function acceptFleetOrder(order_no){
   const code = FLEET_CODE[S.role && S.role.driverId];
   if(!code) return;
+  const o = (FLEET_ORDERS.list||[]).find(x=>x.order_no===order_no) || null;
+  /* Michelle, 31 Aug 2026: Accept used to only flag the order, so the driver had NO job to
+     upload a DO or photos against. Accept now also opens the ordinary Add-job form, prefilled
+     from the order, and the job runs the identical accept -> e-DO -> weigh -> pay path. The
+     form is deliberately NOT auto-saved: the price comes from the site rate (or, on a Lirich
+     job, from the dumping location) and the driver must see it before tapping Add. */
+  const already = (S.jobs||[]).find(j=>j._order===order_no && j.status!=='void');
+  if(already){ toast('\u2139\ufe0f Already added as job #'+already.id); openJobDetail(already.id); return; }
   try{
     const d = await api('acceptOrder', {order_no:order_no, driver:code});
     if(d && d.error){ toast('⚠️ '+d.error); }
-    else toast('✅ Accepted — the office can see you have it');
+    else toast('✅ Accepted — now add the job so you can upload');
   }catch(e){ return; }
   FLEET_ORDERS.at = 0;
   fetchFleetOrders(true);
+  if(o) openJobFromOrder(o);
+}
+/* Resolve a planned order onto the app's own client + yard. The app groups clients by NAME and
+   yards by ADDRESS, and the PRICE hangs off the yard - so the address match is what keeps the
+   pay right. Match on a NON-EMPTY address only: an empty string matches everything (the
+   ECO_001 lesson, 30 Aug 2026). No match = the driver picks, exactly as on a manual job. */
+function orderMatch(o){
+  const addr = String((o.site && o.site.addr) || '').trim().toLowerCase();
+  if(addr){
+    for(const c of (S.clients||[])){
+      const i = (c.sites||[]).findIndex(s => String(s.addr||'').trim().toLowerCase() === addr);
+      if(i > -1) return {cid:c.id, siteIdx:i};
+    }
+  }
+  const nm = String((o.site && o.site.name) || '').trim().toLowerCase();
+  if(nm){
+    const c = (S.clients||[]).find(x => String(x.name||'').trim().toLowerCase() === nm);
+    if(c) return {cid:c.id, siteIdx:0};
+  }
+  return null;
+}
+function openJobFromOrder(o){
+  const m = orderMatch(o);
+  JF_PENDING = {order_no:o.order_no, siteIdx:m?m.siteIdx:0, jobType:o.job_type||'',
+                binType:o.bin_type||'', binQty:Number(o.bin_qty)||1,
+                waste:o.waste_type||'', notes:o.notes||'', date:o.service_date||TODAY};
+  openJobForm(m ? m.cid : undefined);
+  if(!m) toast('⚠️ Pick the customer — this address is not in the app list yet');
 }
 function fleetOrderCard(o){
   const urgent = o.priority==='urgent';
   const site = o.site || {};
-  const when = o.window_from ? (o.window_from + (o.window_to ? '\u2013'+o.window_to : '')) : '';
+  const hm = t => String(t||'').slice(0,5);   /* 05:00:00 -> 05:00 */
+  const when = o.window_from ? (hm(o.window_from) + (o.window_to ? '\u2013'+hm(o.window_to) : '')) : '';
   return `<div class="card" style="${urgent?'border:2px solid var(--red);':''}margin-bottom:8px">
     <div class="item"><div class="grow">
       <div class="title">${urgent?'<span style="background:var(--red);color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-right:6px">URGENT</span>':''}${esc(site.name || o.site_text || o.site_id || '?')}</div>
@@ -1299,6 +1336,8 @@ async function confirmDriverJob(id){
 
 /* #24: when set, the job form is EDITING an existing un-accepted job instead of adding one */
 let JF_EDIT = null;
+let JF_PREFILL = null;   /* the planned order this Add-job form was opened from (31 Aug 2026) */
+let JF_PENDING = null;   /* handed to the next openJobForm() call, then consumed */
 function openJobForm(presetClientId, editJobId){
   /* the same form serves both roles. A DRIVER adding their own job doesn't pick a driver
      (it's them) and doesn't set surcharges (those are office fees) — everything else is
@@ -1306,6 +1345,7 @@ function openJobForm(presetClientId, editJobId){
   const isDriver = S.role.kind==='driver';
   const editJob = editJobId!=null ? S.jobs.find(x=>x.id===editJobId) : null;
   JF_EDIT = editJob || null;
+  JF_PREFILL = JF_PENDING; JF_PENDING = null;   /* consume a prefill queued by openJobFromOrder */
   if(editJob) presetClientId = editJob.clientId; /* prefill the client type-ahead */
   openSheet(sheetTitle(isDriver ? 'Add a job' : (editJob ? `Edit job #${editJob.id}` : 'Assign a job')) + `
     <p class="muted">${isDriver
@@ -1403,10 +1443,27 @@ function jfClientChanged(){
     $('#jf-site').value = String(JF_EDIT.siteIdx||0);
     $('#jf-contact').value = String(JF_EDIT.contactIdx||0);
   }
-  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0, JF_EDIT && JF_EDIT.clientId===c.id ? JF_EDIT.jobType : undefined); /* prices are per-site */
+  /* a job opened from a planned order restores here too: refreshJobFormOptions() re-runs this
+     function once the Sheet answers, and would otherwise wipe the prefill */
+  if(JF_PREFILL && $('#jf-site') && $('#jf-site').options.length > (JF_PREFILL.siteIdx||0))
+    $('#jf-site').value = String(JF_PREFILL.siteIdx||0);
+  const wantType = (JF_EDIT && JF_EDIT.clientId===c.id) ? JF_EDIT.jobType
+                 : (JF_PREFILL ? JF_PREFILL.jobType : undefined);
+  if($('#jf-jobtype')) $('#jf-jobtype').innerHTML = jobTypeOptions(c.id, Number($('#jf-site').value)||0, wantType); /* prices are per-site */
   autoDistance();
   jfRefreshDump();   /* switching to/from Lirich re-labels the dumping list with prices */
-  jfJobTypeChanged();
+  jfJobTypeChanged(!!JF_PREFILL);   /* keepBin: the order's bin type wins over the default */
+  if(JF_PREFILL){
+    const P = JF_PREFILL, set = (sel,v) => {
+      const el = $(sel);
+      if(el && v && [...el.options].some(x=>x.value===v || x.text===v)) el.value = v;
+    };
+    set('#jf-size', P.binType); set('#jf-waste', P.waste);
+    if($('#jf-date') && P.date) $('#jf-date').value = P.date;
+    if($('#jf-qty') && P.binQty>1) $('#jf-qty').value = String(P.binQty);
+    if($('#jf-notes') && P.notes && !$('#jf-notes').value.trim()) $('#jf-notes').value = P.notes;
+    jfPriceHint();
+  }
 }
 /* re-price when the yard/address changes — the same client can charge differently per site */
 function jfSiteChanged(){
@@ -1487,6 +1544,7 @@ async function saveJob(){
     status:'assigned', date: $('#jf-date').value || TODAY, createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
   };
   if(isDriver) j._bydriver = true; /* so the office can see this one was added by the driver, not assigned */
+  if(JF_PREFILL && !JF_EDIT) j._order = JF_PREFILL.order_no; /* links the job back to its planned order */
   /* denormalised display fields for the Google Sheet "Jobs" tab */
   j._client = c ? c.name : ''; j._addr = cSite(c, j.siteIdx).addr;
   j._contact = (jobContact(j)||{}).name || ''; j._contactPhone = (jobContact(j)||{}).phone || '';
@@ -1526,6 +1584,7 @@ async function saveJob(){
     return;
   }
   closeSheet(); toast('Saving job to database…');
+  JF_PREFILL = null;
   await api('addJob', {job:j});
   render();
   toast(isDriver ? 'Job added to your list ✅ — the office can see it too' : `Job assigned to ${driver(driverId).name} ✅ — it's on their phone now`);
