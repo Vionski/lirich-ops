@@ -740,7 +740,12 @@ function fleetOrderAction(o){
   return `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">${label}</button>`;
 }
 function fleetOrdersHTML(){
-  const L = (FLEET_ORDERS.list||[]).slice()
+  /* Michelle, 1 Sep 2026: once an order has been accepted and turned into a job it LEAVES this
+     list. The heading promises what is still PLANNED, so an accepted order sitting here is just
+     clutter - and the job itself is already in My Jobs below, which is the route the driver uses
+     from then on. (The "job #N" shortcut in fleetOrderAction stays as a mid-render safety net.) */
+  const L = (FLEET_ORDERS.list||[])
+    .filter(o => !(S.jobs||[]).some(j => j._order===o.order_no && j.status!=='void'))
     .sort((a,b)=>((b.priority==='urgent')?1:0)-((a.priority==='urgent')?1:0));
   if(!L.length) return '';
   return `<h2 style="margin:8px 2px 8px; font-size:15px">\ud83d\udccb Planned orders from office (${L.length})</h2>${L.map(fleetOrderCard).join('')}<div style="height:6px"></div>`;
