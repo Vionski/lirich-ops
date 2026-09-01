@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v69';
+const APP_BUILD = 'v71';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -767,6 +767,11 @@ const NAVS = {
   ],
   driver: [
     {id:'myjobs', ico:'🗂️', label:'My Jobs'},
+    /* "To fix" — Michelle's framing, 1 Sep 2026, and it is the better front door than making the
+       driver page back through the Job Card day by day hunting for what he missed. One screen:
+       everything from the last 7 days that still needs something and that the office has not
+       closed yet. */
+    {id:'fix',    ico:'🔧', label:'To fix'},
     {id:'card',   ico:'📋', label:'Job Card'},
     {id:'pay',    ico:'💵', label:'My Pay'},
   ],
@@ -913,6 +918,7 @@ function render(){
     else vCRM();
   }else{
     if(t==='myjobs') vMyJobs();
+    else if(t==='fix') vFix();
     else if(t==='card') vJobCard();
     else vMyPay();
   }
@@ -943,9 +949,13 @@ function renderHeader(){
     <button class="role-pill" onclick="openRoleSheet()">${pill}</button>`;
 }
 function renderNav(){
-  $('#nav').innerHTML = NAVS[S.role.kind].map(n=>`
-    <button class="${curTab()===n.id?'active':''}" onclick="setTab('${n.id}')">
-      <span class="ico">${n.ico}</span>${n.label}</button>`).join('');
+  $('#nav').innerHTML = NAVS[S.role.kind].map(n=>{
+    /* the To-fix tab carries a live count, so a missed DO number is visible from every screen
+       instead of only when the driver happens to open that tab */
+    const c = (n.id==='fix' && S.role.kind==='driver') ? fixList().length : 0;
+    return `<button class="${curTab()===n.id?'active':''}" onclick="setTab('${n.id}')">
+      <span class="ico">${n.ico}</span>${n.label}${c?` <span class="tag" style="background:var(--amber);color:#fff">${c}</span>`:''}</button>`;
+  }).join('');
 }
 function renderFab(){
   const fab = $('#fab');
@@ -1054,6 +1064,119 @@ async function blockIfCleared(t){
   if(!tripIsCleared(t)) return false;
   await lrInfo('This DO has been checked by the office and the driver has already been paid for it.\n\nIt is archived under Cleared DOs in the console and can no longer be changed here.\n\nIf something is genuinely wrong, the office must unlock the salary period first.');
   return true;
+}
+
+/* ============================================================
+   DRIVER SELF-CORRECTION WINDOW  (Michelle, 1 Sep 2026)
+   ============================================================
+   Yao Jun, in the management group: "请给我们改正的权限，有的输入错误，只能眼巴巴的看着"
+   — give us permission to correct; some entries are wrong and we can only watch helplessly.
+   He was right, and it was two separate walls: the Job Card only ever rendered TODAY, and the
+   correction form inside a trip was gated `S.role.kind==='operator'`. So a driver could OPEN
+   his own job, SEE "DO pending", and had no field to type into.
+
+   The rule, decided with Michelle:
+     - a driver may fix their OWN job for DRIVER_FIX_DAYS days,
+     - and only until the office ticks it Reviewed on Collections/DO.
+   That tick is the handoff. Before it, the driver is the one holding the paper and is the
+   right person to correct at source. After it, the office has signed off and the record is
+   theirs — editing past that point would silently invalidate a review already given.
+
+   ⚠ This does NOT weaken the dMRV story, it strengthens it: a correction made by the person
+   with the evidence, inside a named window, beats the office reconstructing it weeks later.
+   Every change still goes through updateTrip → mirrorTrip → collections, attributed. */
+const DRIVER_FIX_DAYS = 7;
+function reviewedSet(){
+  return new Set(((S.sheetDB && S.sheetDB.reviewedDOs) || []).map(x=>String(x).toUpperCase()));
+}
+function tripIsReviewed(t){
+  if(!t) return false;
+  const s = reviewedSet();
+  if(!s.size) return false;
+  return s.has(String(t.doNo || ('APP-T'+t.id)).toUpperCase());
+}
+/* date maths on the YYYY-MM-DD strings the app stores.
+   ⚠ Do NOT use toISOString() here — it converts to UTC, and at SGT (+8) a local midnight
+   comes back as the PREVIOUS day. Local getters only. */
+function shiftDay(ds, n){
+  const d = new Date(ds + 'T12:00:00'); /* noon keeps it clear of any DST/rounding edge */
+  d.setDate(d.getDate() + n);
+  const p = x => String(x).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+function daysAgo(ds){
+  if(!ds) return 1e9;
+  return Math.round((new Date(TODAY + 'T12:00:00') - new Date(ds + 'T12:00:00')) / 86400000);
+}
+/* null = the driver may edit it; otherwise the reason it is locked */
+function driverFixLock(t){
+  if(!t) return 'missing';
+  if(t.driverId !== S.role.driverId) return 'notyours';
+  if(tripIsCleared(t)) return 'cleared';   /* test cleared BEFORE reviewed — more specific */
+  if(tripIsReviewed(t)) return 'reviewed';
+  /* ⚠⚠ FAIL CLOSED while the server has not sent reviewedDOs yet. Without that list we cannot
+     tell whether the office has already signed a job off, so we allow the driver to FILL IN what
+     is missing but never to OVERWRITE a value that is already there. That removes the deploy-order
+     hazard completely: this app is safe to ship before or after the sync function. */
+  if(!(S.sheetDB && S.sheetDB.reviewedDOs) && !fixNeeds(t).length) return 'pending';
+  const n = daysAgo(t.date);
+  if(n < 0 || n >= DRIVER_FIX_DAYS) return 'window';
+  return null;
+}
+async function blockDriverFix(t){
+  const why = driverFixLock(t);
+  if(!why) return false;
+  if(why === 'cleared') return await blockIfCleared(t);
+  if(why === 'reviewed'){
+    await lrInfo('The office has already checked this DO on Collections/DO, so it is now their record.\n\nIf something is still wrong, tell the office and they will correct it for you.');
+  }else if(why === 'pending'){
+    await lrInfo('This job is already complete, and the app cannot yet tell whether the office has checked it.\n\nYou can still fill in anything that is MISSING — look under the 🔧 To fix tab. To change something that is already filled in, ask the office.');
+  }else if(why === 'notyours'){
+    await lrInfo('This job belongs to another driver.');
+  }else{
+    await lrInfo('You can fix your own jobs for ' + DRIVER_FIX_DAYS + ' days.\n\nThis one is older than that, so please ask the office to correct it.');
+  }
+  return true;
+}
+
+/* ---- the "To fix" list ----
+   Michelle, 1 Sep 2026: rather than making the driver page back through the Job Card day by day
+   hunting for what he missed, give him one screen of jobs the office has not closed yet.
+   Selection = his own trips, inside the fix window, not cleared, not reviewed, AND still missing
+   something. Oldest first, because those are the ones about to fall out of the window.
+   ⭐ That last condition is also what makes this safe to ship ahead of the sync-function change:
+   until the server sends reviewedDOs, tripIsReviewed() is false — but the list still only ever
+   contains INCOMPLETE jobs, which are by definition the ones the office has not signed off. */
+function fixNeeds(t){
+  const miss = [];
+  if(!t.doNo) miss.push('DO number');
+  if(t.weight == null && t.doType !== 'vessel') miss.push('weight');
+  return miss;
+}
+function fixList(){
+  if(!S.role || S.role.kind !== 'driver') return [];
+  return S.trips
+    .filter(t => t.driverId === S.role.driverId && !driverFixLock(t) && fixNeeds(t).length)
+    .sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id);
+}
+function vFix(){
+  const L = fixList();
+  $('#main').innerHTML = `
+    <div class="card">
+      <h2>🔧 To fix</h2>
+      <div class="muted" style="margin:2px 0 12px">Jobs from the last ${DRIVER_FIX_DAYS} days that still need something and that the office has not closed yet. Oldest first — those drop off soonest.</div>
+      ${L.length ? L.map(t=>{
+        const c = client(t.clientId), n = daysAgo(t.date), left = DRIVER_FIX_DAYS - n;
+        return `<div class="item tap" onclick="openTripDetail(${t.id})">
+          <div class="grow">
+            <div class="title">${esc(c?c.name:'?')}</div>
+            <div class="sub">📅 ${fmtDate(t.date)} · ${n===0?'today':n===1?'yesterday':n+' days ago'}</div>
+            <div class="sub" style="color:var(--amber);font-weight:700">⚠️ missing ${fixNeeds(t).join(' + ')}</div>
+          </div>
+          <div class="pay" style="font-size:12px">${left} day${left===1?'':'s'} left</div>
+        </div>`;
+      }).join('') : '<div class="empty">✅ Nothing to fix — every job in the last ' + DRIVER_FIX_DAYS + ' days is complete.</div>'}
+    </div>`;
 }
 function jobRow(j){
   const c = client(j.clientId), d = driver(j.driverId), ty = ttype(j.task);
@@ -1688,18 +1811,41 @@ function jobCardHTML(driverId, date){
     <div class="jc-note">Generated from the Lirich driver app — completed jobs for the day. Please submit the job card when finishing work.</div>
   </body></html>`;
 }
+/* Job Card day being viewed; null = today. The card stays a PER-DAY document because that is
+   what the official printed job card is — the driver just gets to page back over the fix
+   window instead of being pinned to today (Michelle, 1 Sep 2026). */
+let jcDay = null;
+function jcDays(){ const out=[]; for(let i=0;i<DRIVER_FIX_DAYS;i++) out.push(shiftDay(TODAY,-i)); return out; }
+function jcChip(ds){
+  const W = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const d = new Date(ds + 'T12:00:00');
+  return W[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1);
+}
+function jcPick(ds){ jcDay = ds; render(); }
 function printJobCard(){
   const w = window.open('', '_blank');
   if(!w){ toast('⚠️ Pop-up blocked — allow pop-ups to print the job card'); return; }
-  w.document.write(jobCardHTML(S.role.driverId, TODAY));
+  w.document.write(jobCardHTML(S.role.driverId, jcDay || TODAY));
   w.document.close();
 }
 function vJobCard(){
   const d = driver(S.role.driverId);
-  const trips = driverTrips(d.id, TODAY);
+  const day = jcDay || TODAY;
+  const trips = driverTrips(d.id, day);
+  const isDriver = S.role.kind === 'driver';
+  /* count what is still fixable on each day, so a DO missed last Tuesday is visible from the
+     chip row without the driver tapping through all seven days looking for it */
+  const gaps = ds => driverTrips(d.id, ds).filter(t => !t.doNo && !driverFixLock(t)).length;
   $('#main').innerHTML = `
     <div class="card">
-      <h2>📋 Daily Job Card — ${esc(d.name)} · ${fmtDate(TODAY)}</h2>
+      <h2>📋 Daily Job Card — ${esc(d.name)} · ${fmtDate(day)}</h2>
+      ${isDriver ? `<div class="muted" style="margin:2px 0 8px">Look back ${DRIVER_FIX_DAYS} days and fix anything you missed — until the office checks it.</div>` : ''}
+      <div style="display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px">
+        ${jcDays().map(x=>{
+          const g = isDriver ? gaps(x) : 0;
+          return `<button class="btn ${x===day?'':'ghost'} slim" style="white-space:nowrap" onclick="jcPick('${x}')">${x===TODAY?'Today':jcChip(x)}${g?` <span class="tag" style="background:#fdf3dd;color:var(--amber)">${g}</span>`:''}</button>`;
+        }).join('')}
+      </div>
       <div style="margin:4px 0 10px"><button class="btn slim" onclick="printJobCard()">🖨️ Print job card (official format)</button></div>
       <table class="jt">
         <thead><tr><th>#</th><th>CUSTOMER / BIN</th><th>TIME</th><th class="right" style="text-align:right">CHARGE</th></tr></thead>
@@ -1709,13 +1855,14 @@ function vJobCard(){
           /* weighbridge phase 2: finished trips live here now, so the driver adds the
              back-at-yard weight from the Job Card. Only weighable jobs (not Sell/Dump/vessel). */
           const needsWeight = (t.weight == null) && t.doType!=='vessel';
+          const lock = isDriver ? driverFixLock(t) : 'notyours';
           return `<tr onclick="openTripDetail(${t.id})" style="cursor:pointer">
             <td>${i+1}</td>
-            <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span>${S.role.kind==='driver' && needsWeight ? `<br><button class="btn slim" style="margin-top:6px" onclick="event.stopPropagation(); openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}</td>
+            <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span>${isDriver && needsWeight ? `<br><button class="btn slim" style="margin-top:6px" onclick="event.stopPropagation(); openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}${isDriver && !lock ? `<br><button class="btn ghost slim" style="margin-top:6px" onclick="event.stopPropagation(); openTripDetail(${t.id})">✏️ Fix${t.doNo?'':' — add DO no.'}</button>` : ''}${isDriver && lock==='reviewed' ? '<br><span class="muted">🔒 checked by the office</span>' : ''}</td>
             <td>${esc(t.timeStart||'—')}<br>${esc(t.timeEnd||'')}</td>
             <td style="text-align:right"><b>${money(tripPay(t))}</b></td>
           </tr>`;
-        }).join('') || '<tr><td colspan="4"><div class="empty">No trips logged today. Open a job from My Jobs to start.</div></td></tr>'}
+        }).join('') || `<tr><td colspan="4"><div class="empty">No trips logged on ${fmtDate(day)}.${day===TODAY?' Open a job from My Jobs to start.':''}</div></td></tr>`}
         </tbody>
         ${trips.length?`<tfoot><tr><td colspan="3">Total trip charge</td><td style="text-align:right; color:var(--brand)">${money(payOf(trips))}</td></tr></tfoot>`:''}
       </table>
@@ -2479,6 +2626,7 @@ function tripTimesHTML(t){
 }
 function openTripDetail(id){
   const t = S.trips.find(x=>x.id===id); if(!t) return;
+  dfPhotos = []; /* fresh sheet — never carry a photo over from the last trip opened */
   const c = client(t.clientId), d = driver(t.driverId), ty = ttype(t.typeId);
   openSheet(sheetTitle(`Trip · ${doLabel(t)} <span class="tag ${t.doType==='vessel'?'vessel':''}">${t.doType.toUpperCase()}</span>`) + `
     <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0">
@@ -2503,6 +2651,32 @@ function openTripDetail(id){
       <button class="btn ghost slim" onclick="openDOPrint(${t.id})">🖨️ View / Print Digital DO</button>
       ${S.role.kind==='operator' ? `<button class="btn ghost slim" onclick="emailDOPrompt(${t.id})">✉️ Email DO to client</button>` : ''}
     </div>` : ''}
+    ${S.role.kind==='driver' && t.driverId===S.role.driverId && !driverFixLock(t) ? `
+    <label class="f">✏️ FIX THIS JOB ${t.doNo?'':'<span class="tag" style="background:#fdf3dd;color:var(--amber)">DO NUMBER MISSING</span>'}</label>
+    <div class="muted" style="margin-bottom:8px">Correct anything that went in wrongly. You have ${DRIVER_FIX_DAYS} days from the job date, until the office checks it. Every change is saved against your name.</div>
+    <label class="f">DO / V NUMBER <span style="font-weight:600">— exactly as printed on the paper</span></label>
+    <input type="text" id="df-dono" value="${esc(String(t.doNo||''))}" style="text-transform:uppercase" placeholder="e.g. 24942, or STE-DS-43317 on an ST form">
+    <div class="grid2">
+      <div><label class="f">BIN OUT <span style="font-weight:600">(full — leaving client)</span></label><input type="text" id="df-binout" value="${esc(t.binOut||'')}" style="text-transform:uppercase"></div>
+      <div><label class="f">BIN IN <span style="font-weight:600">(empty — at client)</span></label><input type="text" id="df-binin" value="${esc(t.binIn||'')}" style="text-transform:uppercase"></div>
+    </div>
+    <div class="grid2">
+      <div><label class="f">GROSS (kg) <span style="font-weight:600">full truck</span></label><input type="number" id="df-gross" value="${t.weight?t.weight.gross:''}" oninput="dfNet()"></div>
+      <div><label class="f">TARE (kg) <span style="font-weight:600">empty truck</span></label><input type="number" id="df-tare" value="${t.weight?t.weight.tare:''}" oninput="dfNet()"></div>
+    </div>
+    <div id="df-net" class="muted" style="margin-top:4px"></div>
+    <label class="f">📷 ADD A PHOTO <span style="font-weight:600">— e.g. the DO you did not manage to shoot</span></label>
+    <input type="file" accept="image/*" multiple id="df-photo" onchange="dfPhotoAdd(this)">
+    <div class="thumbs" id="df-thumbs"></div>
+    <div style="margin-top:12px"><button class="btn" onclick="saveDriverFix(${t.id})">💾 Save my corrections</button></div>` : ''}
+    ${S.role.kind==='driver' && t.driverId===S.role.driverId && driverFixLock(t) ? `
+    <div class="muted" style="margin-top:10px">🔒 ${driverFixLock(t)==='reviewed'
+      ? 'The office has checked this DO, so it is now their record. Tell them if something is still wrong.'
+      : driverFixLock(t)==='cleared'
+        ? 'This DO is checked and already paid, so it is closed.'
+        : driverFixLock(t)==='pending'
+          ? 'This job is already complete. Anything still MISSING can be filled in from the 🔧 To fix tab; to change something already filled in, ask the office.'
+          : 'You can fix your own jobs for ' + DRIVER_FIX_DAYS + ' days. This one is older, so please ask the office.'}</div>` : ''}
     ${S.role.kind==='operator' ? `
     <label class="f">✏️ OPERATOR — COMPLETE / CORRECT THIS TRIP ${t.doNo?'':'<span class="tag" style="background:#fdf3dd;color:var(--amber)">DO NUMBER PENDING</span>'}</label>
     <div class="grid3">
@@ -2551,6 +2725,7 @@ function openTripDetail(id){
     <label class="checkline" style="margin-top:8px"><input type="checkbox" id="te-inv" ${t.invoiced?'checked':''}> Marked as invoiced</label>
     <div style="margin-top:12px"><button class="btn" onclick="saveTripEdit(${t.id})">💾 Save corrections</button></div>` : ''}`);
   if(S.role.kind==='operator'){ setTimeSel('#te-ts', t.timeStart); setTimeSel('#te-te', t.timeEnd); }
+  if(S.role.kind==='driver') dfNet(); /* show the NET line straight away, before any typing */
 }
 async function saveTripEdit(id){
   if(await blockIfCleared(S.trips.find(x=>x.id===id))) return;
@@ -2590,6 +2765,81 @@ async function saveTripEdit(id){
   patch._pay = tripPay({price, typeId, distance, surcharges}); /* price wins if set */
   await api('updateTrip', {id, patch});
   render(); toast('Trip updated — Trips sheet refreshed ✅');
+  openTripDetail(id);
+}
+
+/* ---- driver self-correction, deliberately narrower than the operator form above ----
+   The driver gets DO number, bins, weight and photos: the fields they hold the evidence for.
+   They do NOT get tonnage/weight ADJUSTMENTS, price, client or trip type. An adjustment is the
+   audit record of a MEASURED difference against what was recorded — handing that to the person
+   being paid on the result would hollow out the control. Corrections here change the record to
+   match the paper; adjustments stay with the office. */
+let dfPhotos = [];
+function dfNet(){
+  const el = $('#df-net'); if(!el) return;
+  const g = Number((($('#df-gross')||{}).value))||0, tr = Number((($('#df-tare')||{}).value))||0;
+  if(!g && !tr){ el.innerHTML = ''; return; }
+  const net = g - tr;
+  el.innerHTML = net < 0
+    ? `<b style="color:var(--red)">NET ${net} kg — that cannot be right.</b> GROSS is the FULL truck, so it must be the bigger number.<br><button class="btn ghost slim" style="margin-top:6px" onclick="dfSwap()">🔁 Swap GROSS and TARE</button>`
+    : `NET <b>${net} kg</b>`;
+}
+function dfSwap(){
+  const g = $('#df-gross'), tr = $('#df-tare'); if(!g || !tr) return;
+  const a = g.value; g.value = tr.value; tr.value = a; dfNet();
+}
+async function dfPhotoAdd(input){
+  const files = input.files ? Array.from(input.files) : [];
+  if(!files.length) return;
+  const box = $('#df-thumbs'); if(box) box.innerHTML = '<span class="muted">Adding photo…</span>';
+  try{
+    for(const f of files){
+      const raw = await new Promise((res,rej)=>{ const fr = new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(f); });
+      dfPhotos.push({ full: await shrinkImage(raw,1600,.85), thumb: await shrinkImage(raw,240,.7) });
+    }
+    input.value = '';
+    if(box) box.innerHTML = dfPhotos.map(p=>`<img src="${p.thumb}">`).join('');
+  }catch(e){ if(box) box.innerHTML = '<span class="muted">⚠️ Could not read that photo.</span>'; }
+}
+async function saveDriverFix(id){
+  const t = S.trips.find(x=>x.id===id); if(!t) return;
+  /* re-check the gate at SAVE time, not only at render — the reference data can refresh while
+     this sheet is open, so the office may have ticked Reviewed since it was drawn */
+  if(await blockDriverFix(t)) return;
+  const gross = Number((($('#df-gross')||{}).value))||0;
+  const tare  = Number((($('#df-tare')||{}).value))||0;
+  if(gross && tare && gross - tare < 0){
+    await lrInfo('NET weight cannot be negative.\n\nGROSS is the FULL truck and TARE is the empty one, so GROSS must be the bigger number. Tap "Swap GROSS and TARE" if they went in the wrong way round.');
+    return;
+  }
+  const doNo = ((($('#df-dono')||{}).value)||'').trim().toUpperCase();
+  const patch = {
+    binOut: ((($('#df-binout')||{}).value)||'').trim().toUpperCase(),
+    binIn:  ((($('#df-binin')||{}).value)||'').trim().toUpperCase(),
+  };
+  /* ⚠ doNo is TEXT here on purpose. The operator form uses Number(), which cannot express a
+     third-party serial — and many of these jobs never had a Lirich DO at all: the evidence is
+     ST Marine's own D/S form (STE-DS-43317), a TuasOne receipt, a T3 slip. That is precisely
+     why Liu's jobs looked like they were "missing" a DO when nothing was missing. */
+  if(doNo) patch.doNo = /^[0-9]+$/.test(doNo) ? Number(doNo) : doNo;
+  if(gross && tare) patch.weight = {gross, tare, net: gross-tare, ticket:(t.weight && t.weight.ticket)||''};
+  if(dfPhotos.length){
+    const kept = (t.photos||[]).slice();
+    for(let i=0;i<dfPhotos.length;i++){
+      try{
+        const rec = await api('addPhoto', {b64: dfPhotos[i].full.split(',')[1], name:'FIX-'+id+'-'+Date.now()+'-'+i+'.jpg'});
+        if(rec && rec.id){
+          rec.kind = 'do'; rec.ts = Date.now(); kept.push(rec);
+          PhotoDB.put({id:rec.id, full:dfPhotos[i].full, thumb:dfPhotos[i].thumb, clientId:t.clientId, driverId:t.driverId, date:t.date, createdAt:Date.now()}).catch(()=>{});
+        }
+      }catch(e){ /* a failed upload must never lose the field corrections below it */ }
+    }
+    patch.photos = kept;
+  }
+  await api('updateTrip', {id, patch});
+  dfPhotos = [];
+  render();
+  toast('Saved — that goes straight to the office ✅');
   openTripDetail(id);
 }
 
