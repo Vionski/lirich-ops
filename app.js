@@ -128,6 +128,9 @@ function readExifDateMs(buf){
 
 /* ---------------- fixed reference data ---------------- */
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
+/* Shown in the driver header so the running build is visible without dev tools.
+   ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
+const APP_BUILD = 'v68';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -930,7 +933,9 @@ function renderHeader(){
     pill = `<span class="avatar" style="background:var(--brand-dark)">OP</span> Operator ▾`;
   }else{
     const d = driver(S.role.driverId);
-    sub = `Driver ${d.id} · ${fmtDate(TODAY)}`;
+    /* build marker: makes "am I on the new version?" answerable at a glance instead of a guess
+       (1 Sep 2026 — a stale build cost an afternoon of chasing a bug that was already fixed) */
+    sub = `Driver ${d.id} · ${fmtDate(TODAY)} · ${APP_BUILD}`;
     pill = `${avatarHTML(d)} ${esc(d.name)} ▾`;
   }
   $('#header').innerHTML = `
