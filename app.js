@@ -1155,21 +1155,25 @@ function driverJobCard(j){
   </div>`;
 }
 function vMyJobs(){
-  /* TOP list = active work: jobs not yet done, PLUS finished jobs whose weighbridge weight is
-     still pending (not truly finished → stay up top with an Add-weight button).
-     BOTTOM "Done today" = jobs actually finished TODAY with nothing pending. Truly-finished jobs
-     from earlier days drop off My Jobs entirely (they live in the Job Card).
+  /* TOP list = OPEN work only. Michelle, 1 Sep 2026: a finished job ALWAYS leaves the open list
+     and drops to "Done today" — previously a done-but-unweighed job was held up top with a
+     WEIGH PENDING badge, which made the open list look longer than the driver's actual work.
+     ⚠ The weight still matters (pay and tonnage both come from it), so the prompt was not
+     removed — it MOVED: an unweighed job shows an orange "⚖️ WEIGHT NEEDED" row in Done today
+     that taps straight through to the job. Nothing is silently lost, it is just not in the way.
+     BOTTOM "Done today" = every job finished TODAY. Finished jobs from earlier days drop off My
+     Jobs entirely (they live in the Job Card).
      VOIDED jobs show only on the day they were voided, then drop off the next day. Future-dated
      jobs stay hidden until their date arrives. */
   fetchFleetOrders();
   const mine = driverJobs(S.role.driverId).filter(j=>j.date<=TODAY);
   const isOpen = j => j.status!=='done' && j.status!=='void';
-  /* TODAY's work + anything needing a weigh (newest first) */
-  const todayActive = mine.filter(j=> (isOpen(j) && j.date===TODAY) || weightPending(j)).slice().reverse();
+  /* TODAY's open work, newest first */
+  const todayActive = mine.filter(j=> isOpen(j) && j.date===TODAY).slice().reverse();
   /* LATE = still-open jobs carried over from earlier days, oldest → newest */
   const late      = mine.filter(j=> isOpen(j) && j.date<TODAY).sort((a,b)=> a.date<b.date?-1:(a.date>b.date?1:0));
   /* cleared = office-reviewed AND paid: it lives in the console archive, so it drops off here */
-  const doneToday = mine.filter(j=> j.status==='done' && !weightPending(j) && j.date===TODAY && !jobIsCleared(j)).slice().reverse();
+  const doneToday = mine.filter(j=> j.status==='done' && j.date===TODAY && !jobIsCleared(j)).slice().reverse();
   const voided    = mine.filter(j=> j.status==='void' && j.voidedOn===TODAY).slice().reverse();
   $('#main').innerHTML = `
     <h2 style="margin:8px 2px 12px; font-size:17px">🗂️ My jobs — ${fmtDate(TODAY)}</h2>
@@ -1180,6 +1184,10 @@ function vMyJobs(){
       const c=client(j.clientId);
       const t=S.trips.find(x=>x.jobId===j.id);
       const w = t && t.weight && t.weight.gross;
+      /* the weigh prompt moved here from the open list — still one tap from the job */
+      if(weightPending(j)) return `<div class="item" style="cursor:pointer" onclick="openJobDetail(${j.id})">
+        <div class="grow"><div class="title">${esc(c?c.name:'?')}</div>
+        <div class="sub" style="color:var(--org,#e07c2e); font-weight:700">⚖️ WEIGHT NEEDED — tap to add</div></div></div>`;
       return `<div class="item"><div class="grow"><div class="title">${esc(c?c.name:'?')}</div>
         <div class="sub">✅ finished${w?' · ⚖️ '+t.weight.net+' kg':''}</div></div></div>`;
     }).join('')}</div>`:''}
