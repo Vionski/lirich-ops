@@ -40,7 +40,6 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 49,24671,net_kg,4450,5750,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:15:42.887764+00
 50,24668,net_kg,2260,3560,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:17:25.805655+00
 51,24666,net_kg,1600,2600,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:18:33.113679+00
-52,2609,net_kg,1840,3140,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:40:54.590859+00
 53,APP-T165,net_kg,1970,3070,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:50:51.86796+00
 54,APP-T166,net_kg,2440,3640,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:51:17.060443+00
 55,APP-T214,net_kg,2450,3450,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-17 08:00:42.437841+00
@@ -81,7 +80,6 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 90,24695,net_kg,1730,3730,Weight adjustment +2000 kg (chit model: net = gross + adj - tare),admin,2026-08-21 04:06:50.07625+00
 91,24696,net_kg,1830,3030,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-21 04:07:21.333921+00
 92,24697,net_kg,7700,9700,Weight adjustment +2000 kg (chit model: net = gross + adj - tare),admin,2026-08-21 04:09:27.89343+00
-93,2470,net_kg,3330,4630,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-21 04:11:37.400942+00
 94,APP-T292,net_kg,3580,7580,Weight adjustment +4000 kg (chit model: net = gross + adj - tare),admin,2026-08-21 04:12:21.138574+00
 95,26469,net_kg,2670,3770,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-21 05:05:56.076819+00
 96,26471,net_kg,2370,3570,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-21 05:06:54.387077+00
@@ -105,14 +103,14 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 114,24724,net_kg,3550,4750,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:05:54.030777+00
 117,26491,net_kg,3840,5140,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:11:27.004514+00
 118,26487,net_kg,1470,1970,Weight adjustment +500 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:15:09.194721+00
-119,APP-T340,net_kg,5520,7020,Weight adjustment +1500 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:20:11.6471+00
 120,26495,net_kg,2390,3690,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:39:20.045526+00
 121,26496,net_kg,2090,3390,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:40:22.3625+00
 122,26498,net_kg,2450,3650,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:40:59.798992+00
 123,26497,net_kg,3280,4080,Weight adjustment +800 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:42:48.504436+00
 124,26492,net_kg,1890,2890,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:43:45.658895+00
 116,24718,net_kg,3720,6820,Weight adjustment +3100 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:08:02.575796+00
-125,APP-T349,net_kg,3610,4910,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:45:03.252037+00
+119,STE-DS-43310,net_kg,5520,7020,Weight adjustment +1500 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:20:11.6471+00
+93,24701,net_kg,3330,4630,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-21 04:11:37.400942+00
 126,25301,net_kg,1790,2590,Weight adjustment +800 kg (chit model: net = gross + adj - tare),admin,2026-08-27 07:40:25.909554+00
 127,25302,net_kg,2460,3760,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-27 07:42:08.252882+00
 128,25303,net_kg,2040,3340,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-27 07:42:47.661521+00
@@ -129,9 +127,7 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 142,APP-T407,net_kg,4340,5740,Weight adjustment +1400 kg (chit model: net = gross + adj - tare),admin,2026-08-31 07:04:49.687778+00
 143,APP-T409,net_kg,2480,3680,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-31 07:05:01.765365+00
 145,25333,net_kg,2890,4190,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:22:46.604313+00
-148,2491,net_kg,2250,3350,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:28:25.65188+00
 149,24909,net_kg,3770,6870,Weight adjustment +3100 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:29:06.822583+00
-151,2431,net_kg,2600,3600,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:30:34.709313+00
 152,APP-T423,net_kg,4680,6080,Weight adjustment +1400 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:31:06.501076+00
 153,APP-T424,net_kg,4340,5740,Weight adjustment +1400 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:31:23.030878+00
 154,24915,net_kg,1430,2430,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:31:50.391752+00
@@ -150,3 +146,7 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 150,24911,net_kg,1750,2750,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:30:12.400538+00
 115,24725,net_kg,4250,7450,Weight adjustment +3200 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:06:40.388704+00
 131,24734,net_kg,3580,4780,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),admin,2026-08-27 07:46:29.836947+00
+125,STE-DS-43317,net_kg,3610,4910,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-26 06:45:03.252037+00
+148,24916,net_kg,2250,3350,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:28:25.65188+00
+151,24910,net_kg,2600,3600,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-31 08:30:34.709313+00
+52,26099,net_kg,1840,3140,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),admin,2026-08-17 07:40:54.590859+00
