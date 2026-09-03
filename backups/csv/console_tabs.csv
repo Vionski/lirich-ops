@@ -11,3 +11,5 @@ vision,Facility Vision,80,t,23 Gul Drive concept model - restricted to Michelle 
 reqs,Compliance,9,t,Requirements register + methodology decisions (Reference Library). Added 21 Aug 2026.
 cards,Name cards,10,f,Digital name cards with on-page QR. Deployed 21 Aug 2026.
 collfix,Correct DO date / number,99,t,Not a tab. Gates collection.set_date and collection.set_dono inside Collections/DO. Michelle + Zion only. Every use is audited with a mandatory typed reason.
+cov,Coverage,12,t,Scheduled (job_orders) vs recorded (collections) per client per month - the outstanding backfill worklist. Michelle only (2 Sep 2026).
+bins,Bins,13,t,Bin movements by size from the job register. Michelle only (2 Sep 2026).

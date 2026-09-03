@@ -1362,3 +1362,4 @@ id,site_id,job_type,price,valid_from,created_by
 4186,DISP_011,Delivery,8.00,2026-08-30,portal
 4187,DISP_011,Compactor,19.50,2026-08-30,portal
 4188,DISP_011,Dump,13.00,2026-08-30,portal
+4239,REL_001,Collect,80.00,2026-09-03,portal
