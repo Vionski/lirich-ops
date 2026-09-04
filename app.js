@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v72';
+const APP_BUILD = 'v73';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -733,7 +733,7 @@ function fleetOrderCard(o){
       <div class="sub">${esc(fmtDate(o.service_date))}${when?' \u00b7 \ud83d\udd50 '+esc(when):''} \u00b7 ${esc(o.job_type)}${o.bin_type?' \u00b7 '+esc(o.bin_type):''}${Number(o.bin_qty)>1?' \u00d7'+Number(o.bin_qty):''}</div>
       ${site.addr?`<div class="sub">\ud83d\udccd ${esc(site.addr)}</div>`:''}
       ${o.notes?`<div class="sub">\ud83d\udcdd ${esc(o.notes)}</div>`:''}
-      ${isRelOrder(o)?`<div class="sub" style="color:var(--brand);font-weight:600">\ud83d\udcb5 Day rate \u2014 the whole route is one day's pay. Nothing to add here.</div>`:''}
+      ${isRelOrder(o)?`<div class="sub" style="color:var(--brand);font-weight:600">\ud83d\udcb5 Day rate \u2014 one weighing for the whole route closes it. No DO needed.</div>`:''}
     </div>
     ${fleetOrderAction(o)}
     </div></div>`;
@@ -746,12 +746,93 @@ function fleetOrderCard(o){
 function isRelOrder(o){
   return String((o && o.bin_type) || '').trim().toUpperCase() === 'REL';
 }
+/* A REL trip is identified by its own key, not by guesswork - relWeigh stamps both. */
+function isRelTrip(t){
+  if(!t) return false;
+  if(/^REL-/.test(String(t.doNo||''))) return true;
+  return String(t.jobBinSize||'').trim().toUpperCase() === 'REL';
+}
+/* ⭐ REL: ONE day rate, ONE weight, NO DO. Michelle, 4 Sep 2026 - "for REL jobs, dont have DO
+   but they need to do the weighing to complete the job." So the card's action IS the weighing:
+   one tap, gross + tare, route closed. Deliberately NOT the ordinary Add-job form - the route
+   has no single client to pick, no per-trip price (the office sets the day rate) and no client
+   DO to enter. The record is keyed REL-YYYYMMDD so it is identifiable and can never sit in the
+   office's queue as an unresolved APP-T placeholder. */
+async function relWeigh(order_no){
+  const o = (FLEET_ORDERS.list||[]).find(x=>x.order_no===order_no);
+  if(!o || !isRelOrder(o)) return;
+  /* already weighed today - go straight to the record rather than making a second one */
+  const done = (S.jobs||[]).find(j=>j._order===order_no && j.status!=='void');
+  if(done){
+    const tr = (S.trips||[]).find(x=>x.jobId===done.id);
+    if(tr) return openWeighForm(tr.id);
+    return openJobDetail(done.id);
+  }
+  let cid = null, siteIdx = 0;
+  const m = orderMatch(o);
+  if(m){ cid = m.cid; siteIdx = m.siteIdx; }
+  if(!cid){ const rc = (S.clients||[]).find(x=>/\bREL\b/i.test(String(x.name||''))); if(rc) cid = rc.id; }
+  if(!cid){ await lrInfo('The REL route is not in your client list yet — tell the office.'); return; }
+
+  const gs = await lrPrompt('REL day rate — weigh the load to finish the route.\n\nGROSS weight (kg) — the FULL truck', '');
+  if(gs===null) return;
+  const ts = await lrPrompt('TARE weight (kg) — the EMPTY truck', '');
+  if(ts===null) return;
+  const gt = String(gs).trim(), tt = String(ts).trim();
+  const gross = Number(gt), tare = Number(tt);
+  if(gt==='' || tt==='' || !isFinite(gross) || !isFinite(tare)){
+    await lrInfo('Enter both weights in kilograms.'); return;
+  }
+  /* same rule as every other weighing: a full truck cannot weigh less than an empty one */
+  if(!netIsValid(gross, tare)){
+    await lrInfo('NET weight is negative (' + (gross-tare) + ' kg).\n\nGROSS is the FULL truck and must be the bigger number.\n\nPlease tap Weigh again and re-enter.');
+    return;
+  }
+  closeSheet(); toast('Saving REL route…');
+  const c = client(cid), dv = driver(S.role.driverId);
+  const jdate = o.service_date || TODAY;
+  const j = {
+    clientId: cid, siteIdx, contactIdx:0, contactName:'', contactPhone:'',
+    jobType:'Collect', price:0, unitPrice:0, binQty: Number(o.bin_qty)||1,
+    surcharges:[], binSize:'REL', waste:'General', dumpTo:'', distance:0,
+    instructions: String(o.notes||''),
+    driverId: S.role.driverId, status:'done', date: jdate,
+    createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
+    _order: order_no, _rel: true, _bydriver: true,
+  };
+  j._client = c ? c.name : ''; j._addr = cSite(c, siteIdx).addr;
+  j._contact = ''; j._contactPhone = ''; j._driver = dv.name; j._task = 'Collect';
+  if(isTestDriver(j.driverId)) j._test = true;
+  const js = await api('addJob', {job:j});
+  const nj = (js && js.jobs && js.jobs.length) ? js.jobs[js.jobs.length-1] : null;
+  const t = {
+    driverId: j.driverId, date: jdate, clientId: cid, typeId:'col_m',
+    jobType:'Collect', price:0, binQty: j.binQty,
+    binOut:'', binIn:'', vehicleNo: driverVehicle(dv.name) || '',
+    timeStart:'', timeEnd:'',
+    tAccept:0, tDO:0, tBinOut:0, tBinIn:0, tEnd:0, tWeight: Date.now(),
+    disposeTo:'', tonnage:null, tonnAdj:0, distance:0, surcharges:[],
+    remarks:'REL day rate — whole route, one weighing, no client DO',
+    doType:'land', doNo: 'REL-' + String(jdate).replace(/-/g,''),
+    waste:'General', wasteTypes:[], wasteOther:'', vessel:'', sigName:'', sigPosition:'',
+    photos:[], weight:{gross, tare, net: gross-tare, ticket:''}, weightAdj:0, needTicket:true,
+    jobBinSize:'REL', jobSiteIdx: siteIdx, invoiced:false, jobId: nj ? nj.id : null, _rel:true,
+  };
+  if(isTestDriver(t.driverId)) t._test = true;
+  t._client = c ? c.name : ''; t._sales = c ? (c.salesRep||'') : '';
+  t._addr = cSite(c, siteIdx).addr; t._driver = dv.name; t._type = 'Collect';
+  t._charge = 0; t._surch = ''; t._pay = tripPay(t);
+  await api('addTrip', {trip:t, final:true});
+  FLEET_ORDERS.at = 0; fetchFleetOrders(true);
+  render();
+  toast('✅ REL route weighed — NET ' + (gross-tare) + ' kg. Day rate, no DO needed.');
+}
 /* An order already accepted still needs a way into the job form - otherwise a driver who
    tapped Accept before this shipped is stuck with no job to upload against (31 Aug 2026). */
 function fleetOrderAction(o){
   const done = (S.jobs||[]).find(j=>j._order===o.order_no && j.status!=='void');
   if(done) return `<button class="btn slim ghost" style="min-width:92px" onclick="openJobDetail(${done.id})">\u2705 job #${done.id}</button>`;
-  if(isRelOrder(o)) return `<span style="min-width:92px;text-align:center;display:inline-block;padding:7px 10px;border-radius:8px;background:#eef1f6;color:#5b6472;font-size:12px;font-weight:700">DAY RATE</span>`;
+  if(isRelOrder(o)) return `<button class="btn" style="min-width:92px" onclick="relWeigh('${esc(o.order_no)}')">⚖️ Weigh</button>`;
   const label = o.status==='assigned' ? '\u2705 Accept' : '\u2795 Add job';
   return `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">${label}</button>`;
 }
@@ -1162,7 +1243,9 @@ async function blockDriverFix(t){
    contains INCOMPLETE jobs, which are by definition the ones the office has not signed off. */
 function fixNeeds(t){
   const miss = [];
-  if(!t.doNo) miss.push('DO number');
+  /* REL is a day rate with no client DO — never chase the driver for one (Michelle, 4 Sep 2026).
+     The weighing is still required, and it is what closes the route. */
+  if(!t.doNo && !isRelTrip(t)) miss.push('DO number');
   if(t.weight == null && t.doType !== 'vessel') miss.push('weight');
   return miss;
 }
