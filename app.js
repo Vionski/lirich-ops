@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v71';
+const APP_BUILD = 'v72';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -682,6 +682,9 @@ async function acceptFleetOrder(order_no){
      from the order, and the job runs the identical accept -> e-DO -> weigh -> pay path. The
      form is deliberately NOT auto-saved: the price comes from the site rate (or, on a Lirich
      job, from the dumping location) and the driver must see it before tapping Add. */
+  /* Belt and braces: the REL card no longer shows a button, but hiding a button is not a rule.
+     A REL day rate must never become a priced trip, however this function is reached. */
+  if(isRelOrder(o)){ toast('\ud83d\udcb5 REL is a day rate \u2014 the whole route is one day\'s pay, no job to add'); return; }
   const already = (S.jobs||[]).find(j=>j._order===order_no && j.status!=='void');
   if(already){ toast('\u2139\ufe0f Already added as job #'+already.id); openJobDetail(already.id); return; }
   try{
@@ -730,15 +733,25 @@ function fleetOrderCard(o){
       <div class="sub">${esc(fmtDate(o.service_date))}${when?' \u00b7 \ud83d\udd50 '+esc(when):''} \u00b7 ${esc(o.job_type)}${o.bin_type?' \u00b7 '+esc(o.bin_type):''}${Number(o.bin_qty)>1?' \u00d7'+Number(o.bin_qty):''}</div>
       ${site.addr?`<div class="sub">\ud83d\udccd ${esc(site.addr)}</div>`:''}
       ${o.notes?`<div class="sub">\ud83d\udcdd ${esc(o.notes)}</div>`:''}
+      ${isRelOrder(o)?`<div class="sub" style="color:var(--brand);font-weight:600">\ud83d\udcb5 Day rate \u2014 the whole route is one day's pay. Nothing to add here.</div>`:''}
     </div>
     ${fleetOrderAction(o)}
     </div></div>`;
+}
+/* REL is a DAY RATE, not a per-trip job - the whole route is one paid day. So there is nothing
+   for the driver to "add", and offering an Add-job button off a REL card invites exactly the
+   wrong thing: one day rate turned into a pile of separately priced trips.
+   Michelle, 4 Sep 2026, after Liu was confused by it. The card STAYS - it is how he knows the
+   route is his today - it simply carries no action. */
+function isRelOrder(o){
+  return String((o && o.bin_type) || '').trim().toUpperCase() === 'REL';
 }
 /* An order already accepted still needs a way into the job form - otherwise a driver who
    tapped Accept before this shipped is stuck with no job to upload against (31 Aug 2026). */
 function fleetOrderAction(o){
   const done = (S.jobs||[]).find(j=>j._order===o.order_no && j.status!=='void');
   if(done) return `<button class="btn slim ghost" style="min-width:92px" onclick="openJobDetail(${done.id})">\u2705 job #${done.id}</button>`;
+  if(isRelOrder(o)) return `<span style="min-width:92px;text-align:center;display:inline-block;padding:7px 10px;border-radius:8px;background:#eef1f6;color:#5b6472;font-size:12px;font-weight:700">DAY RATE</span>`;
   const label = o.status==='assigned' ? '\u2705 Accept' : '\u2795 Add job';
   return `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">${label}</button>`;
 }
