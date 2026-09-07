@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v74';
+const APP_BUILD = 'v75';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -753,6 +753,21 @@ function isRelOrder(o){
   return String((o && o.bin_type) || '').trim().toUpperCase() === 'REL';
 }
 /* A REL trip is identified by its own key, not by guesswork - relWeigh stamps both. */
+/* ⭐ DISPOSAL TRIPS — one trip, one receipt (Michelle, 7 Sep 2026)
+   "if there are x2 trips to NEA it is two different jobs, as they are given a DO receipt
+   from NEA." So a deployment that says "x3 trips" is three jobs on the board, and each one
+   comes back with its own receipt. The facility issues that document, not Lirich, so what
+   we chase is the PHOTO — never a Lirich DO number, which does not exist for a dump. */
+function isDisposalTrip(t){
+  if(!t) return false;
+  if(String(t.jobType||'').trim().toLowerCase() === 'dump') return true;
+  return !!String(t.disposeTo||'').trim();
+}
+function tripHasReceiptPhoto(t){
+  if(t && Array.isArray(t.photos) && t.photos.length) return true;
+  try{ return Array.isArray(tripPhotos) && tripPhotos.some(p=>p.kind!=='gross' && p.kind!=='tare'); }
+  catch(e){ return false; }
+}
 function isRelTrip(t){
   if(!t) return false;
   if(/^REL-/.test(String(t.doNo||''))) return true;
@@ -1251,7 +1266,14 @@ function fixNeeds(t){
   const miss = [];
   /* REL is a day rate with no client DO — never chase the driver for one (Michelle, 4 Sep 2026).
      The weighing is still required, and it is what closes the route. */
-  if(!t.doNo && !isRelTrip(t)) miss.push('DO number');
+  if(isRelTrip(t)){
+    /* nothing to chase but the weight */
+  } else if(isDisposalTrip(t)){
+    /* the facility's receipt is the document for this trip — chase the photo, not a DO number */
+    if(!tripHasReceiptPhoto(t)) miss.push('receipt photo');
+  } else if(!t.doNo){
+    miss.push('DO number');
+  }
   if(t.weight == null && t.doType !== 'vessel') miss.push('weight');
   return miss;
 }
@@ -1466,6 +1488,12 @@ async function saveWeigh(id){
     if(!swap) return;
     tfSwapWeights();
     return saveWeigh(id);
+  }
+  /* a disposal trip cannot close without the facility's receipt — that receipt IS the
+     evidence for this trip, and each trip has its own */
+  if(isDisposalTrip(t) && !tripHasReceiptPhoto(t)){
+    await lrInfo('Photograph the receipt from ' + (t.disposeTo || 'the disposal site') + ' before saving this trip.\n\nEach trip gets its own receipt — three trips means three receipts, one on each job.\n\nTap "Add photo" on this job, then weigh again.');
+    return;
   }
   closeSheet(); toast('Saving weighbridge…');
   /* upload the scale photos to Drive, then attach weight + photos to the existing trip */
