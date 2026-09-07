@@ -13,3 +13,4 @@ cards,Name cards,10,f,Digital name cards with on-page QR. Deployed 21 Aug 2026.
 collfix,Correct DO date / number,99,t,Not a tab. Gates collection.set_date and collection.set_dono inside Collections/DO. Michelle + Zion only. Every use is audited with a mandatory typed reason.
 cov,Coverage,12,t,Scheduled (job_orders) vs recorded (collections) per client per month - the outstanding backfill worklist. Michelle only (2 Sep 2026).
 bins,Bins,13,t,Bin movements by size from the job register. Michelle only (2 Sep 2026).
+recon,Reconciliation,14,t,"Invoiced vs recorded per client/month/site/stream. Michelle only - only ST Engineering invoices parse, so other clients read as not invoiced and would mislead an operator."
