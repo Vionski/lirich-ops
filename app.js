@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v73';
+const APP_BUILD = 'v74';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -449,6 +449,12 @@ function isLirichClient(clientId){
   const c = client(clientId);
   return !!c && /^lirich\b/i.test(String(c.name||'').trim());
 }
+/* A disposal facility is a DESTINATION, never a customer (Michelle, 7 Sep 2026).
+   They have to stay in S.clients because that is where their Dump rates live - see
+   disposalSites()/dumpRate() below, which price a Lirich yard run off the place it goes
+   to. So they are filtered out of the CUSTOMER picker rather than removed. */
+function isFacilityClient(c){ return /^disposal facilities$/i.test(String((c&&c.name)||'').trim()); }
+function pickableClients(){ return (S.clients||[]).filter(c=>!isFacilityClient(c)); }
 /* the disposal facilities are ordinary priced sites; their "Dump" price is the rate
    for a run to that place. Kept as data so Sheryl can change a rate without a release. */
 function disposalSites(){
@@ -1593,7 +1599,7 @@ function openJobForm(presetClientId, editJobId){
     <input type="date" id="jf-date" value="${editJob ? esc(editJob.date||TODAY) : TODAY}">
     <label class="f">CLIENT <span style="font-weight:600">(type to search)</span></label>
     <input id="jf-client" list="jf-clientlist" autocomplete="off" placeholder="Type customer name…" oninput="jfClientChanged()" value="${presetClientId?esc((client(presetClientId)||{}).name||''):''}">
-    <datalist id="jf-clientlist">${S.clients.map(c=>`<option value="${esc(c.name)}"></option>`).join('')}</datalist>
+    <datalist id="jf-clientlist">${pickableClients().map(c=>`<option value="${esc(c.name)}"></option>`).join('')}</datalist>
     <label class="f">YARD / ADDRESS</label>
     <select id="jf-site" onchange="jfSiteChanged()"></select>
     <label class="f">CONTACT PERSON <span style="font-weight:600">(from the CRM)</span></label>
@@ -1657,14 +1663,14 @@ function refreshJobFormOptions(){
     keep('#jf-waste', selOpts(wasteOptions()));
     keep('#jf-dump', '<option value="">— select at trip time —</option>'+dumpSelectHTML('', isLirichClient(jfClientId())));
     const dl = $('#jf-clientlist');
-    if(dl){ dl.innerHTML = S.clients.map(c=>`<option value="${esc(c.name)}"></option>`).join(''); jfClientChanged(); }
+    if(dl){ dl.innerHTML = pickableClients().map(c=>`<option value="${esc(c.name)}"></option>`).join(''); jfClientChanged(); }
     if(note) note.textContent = '✅ Options synced live from the Google Sheet ("Customer DB" tab).';
   });
 }
 /* resolve the typed customer name in the type-ahead back to a client id */
 function jfClientId(){
   const v=($('#jf-client').value||'').trim().toLowerCase();
-  const c=(S.clients||[]).find(x=>(x.name||'').toLowerCase()===v);
+  const c=pickableClients().find(x=>(x.name||'').toLowerCase()===v);
   return c?c.id:'';
 }
 function jfClientChanged(){
