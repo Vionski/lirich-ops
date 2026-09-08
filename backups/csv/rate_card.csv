@@ -1007,6 +1007,10 @@ id,site_id,job_type,price,valid_from,created_by
 4192,DISP_012,Delivery,8.00,2026-08-30,portal
 4193,DISP_012,Compactor,19.50,2026-08-30,portal
 4194,DISP_012,Dump,13.00,2026-08-30,portal
+4240,GLS_001,Exchange,13.00,2026-09-08,portal
+4241,GLS_001,Collect,13.00,2026-09-08,portal
+4242,GLS_001,Delivery,8.00,2026-09-08,portal
+4243,GLS_001,Load,21.00,2026-09-08,portal
 3835,SPO_001,Exchange,13.00,2026-08-27,portal
 3836,SPO_001,Collect,13.00,2026-08-27,portal
 3837,SPO_001,Load,21.00,2026-08-27,portal
@@ -1306,6 +1310,11 @@ id,site_id,job_type,price,valid_from,created_by
 4229,SAV_105,Load,21.00,2026-08-27,portal
 4230,SAV_105,Delivery,8.00,2026-08-27,portal
 4231,SAV_105,Compactor,19.50,2026-08-27,portal
+4244,DSB_001,Exchange,18.00,2026-09-08,portal
+4245,DSB_001,Collect,18.00,2026-09-08,portal
+4246,DSB_001,Delivery,8.00,2026-09-08,portal
+4247,DSB_001,Load,26.00,2026-09-08,portal
+4248,DSB_001,Compactor,27.00,2026-09-08,portal
 4141,DISP_002,Exchange,13.00,2026-08-30,portal
 4142,DISP_002,Collect,13.00,2026-08-30,portal
 4143,DISP_002,Load,21.00,2026-08-30,portal
@@ -1330,6 +1339,11 @@ id,site_id,job_type,price,valid_from,created_by
 4235,KIM_001,Dump,13.00,2026-08-30,portal
 4236,KIM_001,Exchange,13.00,2026-08-30,portal
 4237,KIM_001,Load,21.00,2026-08-30,portal
+4249,BOO_002,Exchange,23.00,2026-09-08,portal
+4250,BOO_002,Collect,23.00,2026-09-08,portal
+4251,BOO_002,Delivery,8.00,2026-09-08,portal
+4252,BOO_002,Load,31.00,2026-09-08,portal
+4253,BOO_002,Compactor,34.50,2026-09-08,portal
 4147,DISP_003,Exchange,18.00,2026-08-30,portal
 4148,DISP_003,Collect,18.00,2026-08-30,portal
 4149,DISP_003,Load,26.00,2026-08-30,portal
