@@ -1,1 +1,10 @@
-id,email,display_name,client_id,status,requested_at,provisioned_at,notes
+id,email,display_name,client_id,status,requested_at,provisioned_at,notes,wp_user_id,role,last_login_at,revoked_at,updated_at,updated_by,wp_login
+1,qrisloke@lirichresources.sg,Qris Loke,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,admin,,,2026-09-09 17:10:51.214422+00,,qris
+2,sheryl@lirichresources.sg,Sheryl Villareal,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,operator,,,2026-09-09 17:10:51.214422+00,,sheryl
+3,marcustang@lirichresources.sg,Marcus Tang,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,operator,,,2026-09-09 17:10:51.214422+00,,marcus
+4,patrick@lirichresources.sg,Patrick,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,operator,,,2026-09-09 17:10:51.214422+00,,patrick
+5,finance@lirichresources.sg,Zion,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,operator,,,2026-09-09 17:10:51.214422+00,,zion
+6,accounts@lirichresources.sg,Yan,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,operator,,,2026-09-09 17:10:51.214422+00,,yan
+7,michelle.chen@lirichresources.sg,Michelle Chen,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Provisioned from active console_users for portal launch,,admin,,,2026-09-09 17:10:51.214422+00,,michelle
+8,mondayblossomdesigns@staff.invalid,Michelle (alternate WordPress login),,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Authorised alternate WordPress login for Michelle,,admin,,,2026-09-09 17:10:51.214422+00,,mondayblossomdesigns
+9,lirichgroup@staff.invalid,Lirich Group Administrator,,active,2026-09-09 17:10:51.214422+00,2026-09-09 17:10:51.214422+00,Current WordPress administrator used for production deployment,,admin,,,2026-09-09 17:10:51.214422+00,,lirichgroup
