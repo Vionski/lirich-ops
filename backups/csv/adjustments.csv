@@ -929,3 +929,12 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at
 938,25075,net_kg,2420,3520,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-11 08:51:55.625548+00
 939,25078,net_kg,2060,3160,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-11 08:56:56.540643+00
 940,25079,net_kg,2560,4060,Weight adjustment +1500 kg (chit model: net = gross + adj - tare),zion,2026-09-11 08:58:43.775258+00
+941,24982,net_kg,5410,5910,Weight adjustment +500 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:28:08.384132+00
+942,24981,net_kg,2390,3690,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:33:46.831993+00
+943,25359,net_kg,2310,3610,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:37:47.265214+00
+944,25357,net_kg,2380,3380,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:40:37.204566+00
+945,25356,net_kg,3630,5630,Weight adjustment +2000 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:42:09.406158+00
+946,25358,net_kg,3190,4490,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:44:39.708646+00
+947,25153,net_kg,3680,6780,Weight adjustment +3100 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:53:19.303959+00
+948,25155,net_kg,1720,2520,Weight adjustment +800 kg (chit model: net = gross + adj - tare),zion,2026-09-12 01:58:58.949731+00
+949,25156,net_kg,3350,4650,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-12 02:02:11.837353+00
