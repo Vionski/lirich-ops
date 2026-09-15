@@ -1390,3 +1390,13 @@ id,site_id,job_type,price,valid_from,created_by
 4325,SAV_104,Delivery,8.00,2026-09-09,portal
 4326,SAV_104,Load,21.00,2026-09-09,portal
 4327,SAV_104,Compactor,19.50,2026-09-09,portal
+4346,GWC_002,Collect,13.00,2026-09-16,portal
+4347,GWC_002,Compactor,19.50,2026-09-16,portal
+4348,GWC_002,Delivery,8.00,2026-09-16,portal
+4349,GWC_002,Exchange,13.00,2026-09-16,portal
+4350,GWC_002,Load,21.00,2026-09-16,portal
+4351,KPT_001,Collect,23.00,2026-09-16,portal
+4352,KPT_001,Compactor,34.50,2026-09-16,portal
+4353,KPT_001,Delivery,8.00,2026-09-16,portal
+4354,KPT_001,Exchange,23.00,2026-09-16,portal
+4355,KPT_001,Load,31.00,2026-09-16,portal

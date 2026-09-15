@@ -242,7 +242,8 @@ PAX_002,PAX,PaxOcean Singapore Pte Ltd,6 Jalan Samulun,t,2026-08-27 02:51:35.439
 DISP_010,DISP,Asia Recycling,Asia Recycling,t,2026-08-30 02:29:36.408415+00,,,
 REL_001,REL,REL Route - 20 locations,REL Route (multiple locations - no single address),t,2026-09-03 02:54:00.835177+00,,,
 BOO_002,BOO,"16 Raffles Quay, Hong Leong Building","16 Raffles Quay, Hong Leong Building",t,2026-09-08 13:22:09.570471+00,,9823 7615,
-GWC_001,GWC,GWC,"449 Clementi Ave 3, #01-259",t,2026-07-24 15:15:51.944859+00,,,
+GWC_001,GWC,Gain Wealth Construction,"449 Clementi Ave 3, #01-259",t,2026-07-24 15:15:51.944859+00,,,
+GWC_002,GWC,Gain Wealth Construction,Blk 221 Boon Lay Place,t,2026-09-15 16:25:48.381095+00,,,
 TONG_003,TONG,Tong Hock Pte Ltd,14 Tractor Road,t,2026-07-24 15:15:51.944859+00,,88206384,
 YFEP_001,YFEP,Yocom Food Enterprise Pte Ltd,"6 Chin Bee Ave, #07-01",t,2026-08-01 02:45:03.203821+00,,,
 PIL_002,PIL,Pacific International Lines,PSA - KOTA LAWA,t,2026-08-11 07:26:01.245799+00,SHERYL,98611388,sheryl@lirichresources.sg
@@ -280,3 +281,4 @@ ACEM_001,ACEM,Allied Container( Engineers & Manufacturers) Pte Ltd,8 Sunview Roa
 DISP_011,DISP,Lanco Construction,Lanco Construction,t,2026-08-30 02:29:36.468942+00,,,
 BEE_001,BEE,Beejoo,5 Sungei Kadut Street 6,f,2026-07-24 15:15:51.944859+00,,,
 UFPL_001,UFPL,Unico Foods Pte Ltd,10 Fishery Port Road,t,2026-09-09 01:52:06.308573+00,,,
+KPT_001,KPT,Koon Poh Trading,"60 Admiralty Road West, Gate 3",t,2026-09-15 16:25:48.484456+00,,,
