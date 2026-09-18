@@ -4,6 +4,36 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at,source
 973,25375,net_kg,1210,1710,Weight adjustment +500 kg (chit model: net = gross + adj - tare),zion,2026-09-17 08:11:10.280992+00,operator
 68,APP-T209,net_kg,8920,9920,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),admin,2026-08-17 08:22:19.174746+00,operator
 974,25099,net_kg,2110,2710,Weight adjustment +600 kg (chit model: net = gross + adj - tare),zion,2026-09-17 08:12:22.276512+00,operator
+975,25094,net_kg,1530,2830,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:07:09.571487+00,operator
+976,25095,net_kg,1640,2940,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:08:12.425773+00,operator
+977,25096,net_kg,3040,4340,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:29:11.556328+00,operator
+978,24995,net_kg,1720,2920,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:31:30.287588+00,operator
+979,24998,net_kg,3510,4810,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:34:40.729654+00,operator
+980,25374,net_kg,1730,3030,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:36:51.508882+00,operator
+981,25376,net_kg,1410,2710,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:38:29.374363+00,operator
+982,25378,net_kg,1820,3120,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:39:57.446897+00,operator
+983,25377,net_kg,3070,4370,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:41:03.998264+00,operator
+984,25179,net_kg,3140,5140,Weight adjustment +2000 kg (chit model: net = gross + adj - tare),zion,2026-09-18 04:51:29.218405+00,operator
+985,25098,net_kg,2580,3780,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:21:25.033617+00,operator
+986,25100,net_kg,2870,3970,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:24:44.53213+00,operator
+987,25201,net_kg,2020,3320,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:26:04.618857+00,operator
+988,25202,net_kg,1210,2510,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:27:15.562099+00,operator
+989,25203,net_kg,4250,5550,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:28:30.38736+00,operator
+990,25652,net_kg,1880,3180,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:31:44.299562+00,operator
+991,25379,net_kg,1130,2430,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:42:47.562263+00,operator
+992,25380,net_kg,930,1930,Weight adjustment +1000 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:44:18.779723+00,operator
+993,25383,net_kg,2580,3880,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:50:21.905073+00,operator
+994,25384,net_kg,2160,5160,Weight adjustment +3000 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:51:47.72414+00,operator
+995,25385,net_kg,1550,2650,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-18 05:54:52.82511+00,operator
+996,25655,net_kg,1220,2320,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-18 06:47:19.337163+00,operator
+997,25658,net_kg,2370,3470,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-18 06:49:57.932225+00,operator
+998,25387,net_kg,2580,3880,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 06:55:07.1826+00,operator
+999,25390,net_kg,2350,4350,Weight adjustment +2000 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:09:12.904108+00,operator
+1000,25392,net_kg,1210,2410,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:12:15.661571+00,operator
+1001,25391,net_kg,1350,2550,Weight adjustment +1200 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:14:19.613883+00,operator
+1002,25389,net_kg,3530,4630,Weight adjustment +1100 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:15:50.179114+00,operator
+1003,25388,net_kg,2830,5830,Weight adjustment +3000 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:17:52.387807+00,operator
+1004,25190,net_kg,2230,3530,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:24:35.965124+00,operator
 14,26065,net_kg,7710,7700,Weight correction (operator console),admin,2026-07-31 04:39:04.888932+00,operator
 15,26065,net_kg,7710,7710,Weight correction (operator console),admin,2026-07-31 04:40:11.173156+00,operator
 16,26095,net_kg,2040,2140,Weight adjustment +100 kg (chit model: net = gross + adj - tare),admin,2026-08-06 08:23:55.837113+00,operator
@@ -327,6 +357,7 @@ id,do_no,field,old_value,new_value,reason,adjusted_by,adjusted_at,source
 196,22161,net_kg,2430.0,3430.0,"Weight adjustment from the OTC schedule Adjustment (T) column, 1.0 t. Actual Tonnage on that sheet is already pure waste (Gross - Tare); this is the weight adjustment as recorded in the console. Loaded 2 Sep 2026 on Michelle instruction.",claude-otc-adjustment,2026-09-02 08:10:44.066188+00,backfill
 197,22583,net_kg,1960.0,2760.0,"Weight adjustment from the OTC schedule Adjustment (T) column, 0.8 t. Actual Tonnage on that sheet is already pure waste (Gross - Tare); this is the weight adjustment as recorded in the console. Loaded 2 Sep 2026 on Michelle instruction.",claude-otc-adjustment,2026-09-02 08:10:44.066188+00,backfill
 198,22640,net_kg,1820.0,2620.0,"Weight adjustment from the OTC schedule Adjustment (T) column, 0.8 t. Actual Tonnage on that sheet is already pure waste (Gross - Tare); this is the weight adjustment as recorded in the console. Loaded 2 Sep 2026 on Michelle instruction.",claude-otc-adjustment,2026-09-02 08:10:44.066188+00,backfill
+1005,25189,net_kg,1890,3190,Weight adjustment +1300 kg (chit model: net = gross + adj - tare),zion,2026-09-18 07:26:41.487166+00,operator
 199,22488,net_kg,1510.0,2310.0,"Weight adjustment from the OTC schedule Adjustment (T) column, 0.8 t. Actual Tonnage on that sheet is already pure waste (Gross - Tare); this is the weight adjustment as recorded in the console. Loaded 2 Sep 2026 on Michelle instruction.",claude-otc-adjustment,2026-09-02 08:10:44.066188+00,backfill
 200,22593,net_kg,2200.0,3200.0,"Weight adjustment from the OTC schedule Adjustment (T) column, 1.0 t. Actual Tonnage on that sheet is already pure waste (Gross - Tare); this is the weight adjustment as recorded in the console. Loaded 2 Sep 2026 on Michelle instruction.",claude-otc-adjustment,2026-09-02 08:10:44.066188+00,backfill
 201,22647,net_kg,1700.0,2500.0,"Weight adjustment from the OTC schedule Adjustment (T) column, 0.8 t. Actual Tonnage on that sheet is already pure waste (Gross - Tare); this is the weight adjustment as recorded in the console. Loaded 2 Sep 2026 on Michelle instruction.",claude-otc-adjustment,2026-09-02 08:10:44.066188+00,backfill
