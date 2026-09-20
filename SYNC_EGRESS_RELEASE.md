@@ -13,6 +13,7 @@ This release returns only the changed job, trip, bin or client to protocol-v2 cl
 - `supabase/functions/sync/index.ts`: compact responses, delta endpoint, error-checked state writes and 30-day delta retention
 - `supabase/migrations/20260920000100_app_state_delta_sync.sql`: private delta table
 - `supabase/migrations/20260920000200_security_and_policy_hardening.sql`: security-invoker views and non-overlapping staff write policies
+- `supabase/migrations/20260920000300_app_state_changes_service_role.sql`: explicit server-only access to maintain the delta table
 - `supabase/tests/compact_sync_client.mjs`: compatibility checks for compact and legacy responses
 
 ## Expected effect
@@ -29,13 +30,14 @@ The exact saving depends on record size and the number of open devices, but rout
 1. Back up the staging database.
 2. Apply `20260920000100_app_state_delta_sync.sql`.
 3. Apply `20260920000200_security_and_policy_hardening.sql`.
-4. Deploy the updated `sync` Edge Function.
-5. Publish `app.js` and `sw.js` together.
-6. Open one operator and two driver sessions.
-7. Add a test job, accept it, save a draft trip, complete it and update its weight.
-8. Confirm each session receives the same job/trip/bin status without a full-state response.
-9. Confirm the `collections` and `jobs` normalized rows remain correct.
-10. Run the portal tenant-isolation and booking regression suites.
+4. Apply `20260920000300_app_state_changes_service_role.sql`.
+5. Deploy the updated `sync` Edge Function.
+6. Publish `app.js` and `sw.js` together.
+7. Open one operator and two driver sessions.
+8. Add a test job, accept it, save a draft trip, complete it and update its weight.
+9. Confirm each session receives the same job/trip/bin status without a full-state response.
+10. Confirm the `collections` and `jobs` normalized rows remain correct.
+11. Run the portal tenant-isolation and booking regression suites.
 
 ## Production gate
 
