@@ -666,11 +666,13 @@ function segPick(el, wrap){
    shared state blob — read-only here apart from Accept. Pay still flows only
    from trips; these cards are the driver's forward schedule. */
 const FLEET_CODE = {1:'SATHISH', 2:'KARTHIK', 3:'KUMAR', 4:'LIU', 5:'YAO_JUN'};
+const DRIVER_BACKGROUND_POLL_MS = 3 * 60 * 60 * 1000;
+const OPERATOR_POLL_MS = 60 * 1000;
 let FLEET_ORDERS = {list:[], at:0, loading:false, err:null};
 async function fetchFleetOrders(force){
   const code = FLEET_CODE[S.role && S.role.driverId];
   if(!code || !navigator.onLine || !(S.settings && S.settings.sheetUrl)) return;
-  if(!force && Date.now()-FLEET_ORDERS.at < 60000) return;
+  if(!force && Date.now()-FLEET_ORDERS.at < DRIVER_BACKGROUND_POLL_MS) return;
   if(FLEET_ORDERS.loading) return;
   FLEET_ORDERS.loading = true;
   try{
@@ -3169,10 +3171,20 @@ async function api(action, payload){
   return d;
 }
 let remoteReady = false;
+let lastRemotePollAt = 0;
 async function bootRemote(){
   const url = S.settings && S.settings.sheetUrl;
   if(!url || !navigator.onLine) return;
   try{
+    /* A returning device already has a revisioned local cache. Ask for only the
+       missing changes; pollRemote falls back to the full state when the server's
+       retained delta window cannot cover that revision. */
+    if(S.rev && S.auth){
+      await pollRemote(true);
+      remoteReady = true;
+      render();
+      return;
+    }
     const st = await (await fetch(dbGet('?state=1'))).json();
     if(st.empty){
       /* first device online initialises the central database with its local data */
@@ -3184,10 +3196,14 @@ async function bootRemote(){
     render();
   }catch(e){ /* stay on cached data */ }
 }
-async function pollRemote(){
+async function pollRemote(force){
   try{
     const url = S.settings && S.settings.sheetUrl;
     if(!url || !S.auth || !navigator.onLine) return;
+    if(document.hidden && !force) return;
+    const minAge = S.role && S.role.kind==='driver' ? DRIVER_BACKGROUND_POLL_MS : OPERATOR_POLL_MS;
+    if(!force && Date.now()-lastRemotePollAt < minAge) return;
+    lastRemotePollAt = Date.now();
     const r = await (await fetch(dbGet('?rev=1'))).json();
     if(r.rev && r.rev !== S.rev){
       const delta = await (await fetch(dbGet('?changes=1&since='+encodeURIComponent(S.rev||0)))).json();
@@ -3584,7 +3600,7 @@ function vEarnings(){
       DO photos are in the Drive folder "Lirich Ops DO Photos".</p>
       <div class="muted" style="margin-top:6px">Status: ${remoteReady ? '🟢 connected · revision '+(S.rev||0) : (navigator.onLine ? '🟡 connecting…' : '🔴 offline — showing this device\'s cached copy')}</div>
       <div class="row" style="margin-top:10px">
-        <button class="btn ghost" onclick="pollRemote().then(()=>{render(); toast('Refreshed from database')})">↻ Refresh now</button>
+        <button class="btn ghost" onclick="pollRemote(true).then(()=>{render(); toast('Refreshed from database')})">↻ Refresh now</button>
       </div>
       <label class="f">DATABASE URL (APPS SCRIPT WEB APP)</label>
       <input type="text" id="es-sheet" value="${esc(S.settings.sheetUrl||'')}">
@@ -3922,6 +3938,12 @@ if(S.viewAs){ delete S.viewAs; if(S.auth && S.auth.userId==='op') S.role={kind:'
 render();
 bootRemote();                       /* connect to the central database */
 fetchSheetDB();                     /* dropdown options from "Customer DB" tab */
-setInterval(pollRemote, 25000);     /* pick up other devices' changes */
-setInterval(()=>{ if(S.role && S.role.kind==='driver') fetchFleetOrders(); }, 60000); /* fleet planned orders */
+setInterval(()=>pollRemote(false), 60000); /* operators: 1 min; drivers: 3 h while visible */
+setInterval(()=>{ if(S.role && S.role.kind==='driver' && !document.hidden) fetchFleetOrders(); }, 60000); /* driver helper enforces its 3 h cache */
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && S.auth){
+    pollRemote(true);
+    if(S.role && S.role.kind==='driver') fetchFleetOrders(true);
+  }
+});
 window.addEventListener('online', ()=>{ toast('Back online — syncing'); bootRemote(); });
