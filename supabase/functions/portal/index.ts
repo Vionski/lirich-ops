@@ -690,18 +690,20 @@ function dashboardSummary(data: any) {
   };
 }
 
-function dashboardRouteData(action: string, data: any) {
+function dashboardRouteData(action: string, data: any, owner = false) {
+  const quality = owner ? data.quality : { ...data.quality, gaps: 0 };
   if (action === "overview") return {
     lock: data.lock, client: data.client, period: data.period, generated_at: data.generated_at,
-    totals: data.totals, quality: data.quality, monthly: data.monthly, materials: data.materials,
-    exceptions: data.quality.gaps, exception_summary: data.exception_summary, cache: data.cache,
+    totals: data.totals, quality, monthly: data.monthly, materials: data.materials,
+    exceptions: owner ? data.quality.gaps : 0,
+    exception_summary: owner ? data.exception_summary : {}, cache: data.cache,
   };
   if (action === "materials") return {
-    client: data.client, period: data.period, totals: data.totals, quality: data.quality,
+    client: data.client, period: data.period, totals: data.totals, quality,
     monthly: data.monthly, materials: data.materials, sites: data.sites, cache: data.cache,
   };
   return {
-    client: data.client, period: data.period, totals: data.totals, quality: data.quality,
+    client: data.client, period: data.period, totals: data.totals, quality,
     carbon: data.carbon, monthly: data.monthly.map((m: any) => ({ month: m.month, net_t: m.net_t })),
     cache: data.cache,
   };
@@ -725,7 +727,7 @@ async function fastCachedDashboard(req: Request, url: URL, action: string) {
   });
   if (error) throw new Error(error.message);
   if (!data?.cache_hit || !data?.payload) return null;
-  return { requestId, data: dashboardRouteData(action, data.payload) };
+  return { requestId, data: dashboardRouteData(action, data.payload, claims.role === "admin") };
 }
 
 async function cachedDashboardSummary(
@@ -860,7 +862,7 @@ async function route(req: Request, ctx: PortalContext) {
   const data = await cachedDashboardSummary(ctx, clientId, p, async () =>
     await snapshot(ctx, clientId, p, await engine())
   );
-    return dashboardRouteData(action, data);
+    return dashboardRouteData(action, data, ctx.account.role === "admin");
   }
   if (action === "bookings") {
     const from = singaporeDate(), to = addDays(from, 6);
@@ -909,7 +911,7 @@ async function route(req: Request, ctx: PortalContext) {
     const data = evAll.slice(0, 1000);
     const periods=await ctx.db.from("reporting_periods").select("id").eq("client_id",clientId).lte("period_start",p.to).gte("period_end",p.from);
     if(periods.error)throw new Error(periods.error.message);const periodIds=(periods.data||[]).map((x:any)=>x.id);
-    let exceptions:any[]=[];if(periodIds.length){const result=await ctx.db.from("report_exceptions").select("id,exception_type,severity,status,resolution,created_at,do_no").eq("client_id",clientId).in("reporting_period_id",periodIds).order("created_at",{ascending:false});if(result.error)throw new Error(result.error.message);exceptions=result.data||[];}
+    let exceptions:any[]=[];if(ctx.account.role === "admin" && periodIds.length){const result=await ctx.db.from("report_exceptions").select("id,exception_type,severity,status,resolution,created_at,do_no").eq("client_id",clientId).in("reporting_period_id",periodIds).order("created_at",{ascending:false});if(result.error)throw new Error(result.error.message);exceptions=result.data||[];}
     return { client_id: clientId, period: p, evidence: data || [], exceptions, corrections:tenant.adjustments };
   }
   if (action === "query.create") {
@@ -953,7 +955,7 @@ async function route(req: Request, ctx: PortalContext) {
         return { client_id: clientId, period: p, site: siteKey, count: loads.length, loads, ladder: { recorded: loads.length, weighed: loads.filter((x: any) => x.weighed).length, accepted: loads.filter((x: any) => x.accepted).length, reviewed: loads.filter((x: any) => x.reviewed).length } };
       }
       if (action === "templates") {
-    const { data, error } = await ctx.db.from("report_template_versions").select("id,template_id,version,status,effective_from,effective_to,release_notes,report_templates(name,framework,kind)").in("status", ctx.staff ? ["draft","active","superseded","retired"] : ["active"]).order("template_id");
+    const { data, error } = await ctx.db.from("report_template_versions").select("id,template_id,version,status,effective_from,effective_to,release_notes,report_templates(name,framework,kind)").in("status", ctx.account.role === "admin" ? ["draft","active","superseded","retired"] : ["active"]).order("template_id");
     if (error) throw new Error(error.message); return { templates: data || [] };
   }
   if (action === "reports") {
@@ -965,7 +967,10 @@ async function route(req: Request, ctx: PortalContext) {
       ctx.db.from("report_issues").select("*").eq("client_id",clientId).in("reporting_period_id",ids).order("issued_at",{ascending:false}),
     ]);
     for(const result of [artifacts,issues])if(result.error)throw new Error(result.error.message);
-    return {client_id:clientId,periods:periods.data||[],artifacts:artifacts.data||[],issues:issues.data||[]};
+    const owner = ctx.account.role === "admin";
+    const visiblePeriods = owner ? (periods.data || []) : (periods.data || []).map(({ status: _status, data_quality_status: _quality, data_quality_summary: _summary, assessed_at: _at, assessed_by: _by, ...row }: any) => row);
+    const visibleArtifacts = owner ? (artifacts.data || []) : (artifacts.data || []).map(({ data_quality_status: _quality, ...row }: any) => row);
+    return {client_id:clientId,periods:visiblePeriods,artifacts:visibleArtifacts,issues:issues.data||[]};
   }
   if (action === "layout") {
     const key = String(body.layout_key || url.searchParams.get("layout_key") || "default");
@@ -1003,21 +1008,21 @@ async function route(req: Request, ctx: PortalContext) {
     return { signed_url: signed.data.signedUrl, expires_in: 300 };
   }
   if (action === "evidence.review" && req.method === "POST") {
-    if (!ctx.staff) throw new Error("forbidden");
+    if (ctx.account.role !== "admin") throw new Error("forbidden");
     const status = String(body.review_status || "");
     if (!["verified","review","corrected"].includes(status)) throw new Error("invalid_review_status");
     const { data, error } = await ctx.db.from("evidence_assets").update({ review_status: status }).eq("id", body.id).eq("client_id", clientId).select().single();
     if (error) throw new Error(error.message); return { evidence: data };
   }
   if (action === "exception.resolve" && req.method === "POST") {
-    if (!ctx.staff) throw new Error("forbidden");
+    if (ctx.account.role !== "admin") throw new Error("forbidden");
     const status = String(body.status || "resolved");
     if (!["resolved","waived"].includes(status)) throw new Error("invalid_exception_status");
     const { data, error } = await ctx.db.from("report_exceptions").update({ status, resolution: String(body.resolution || ""), resolved_at: new Date().toISOString(), resolved_by: ctx.account.id }).eq("id", body.id).eq("client_id", clientId).select().single();
     if (error) throw new Error(error.message); return { exception: data };
   }
   if (action === "period.assess" && req.method === "POST") {
-    if (!ctx.staff) throw new Error("forbidden");
+    if (ctx.account.role !== "admin") throw new Error("forbidden");
     const next = String(body.status || "");
     if (!["ready","in_review","data_gaps","superseded"].includes(next)) throw new Error("invalid_period_status");
     const existing = await ctx.db.from("reporting_periods").select("id,status").eq("client_id",clientId).eq("period_start",p.from).eq("period_end",p.to).maybeSingle();
@@ -1031,7 +1036,7 @@ async function route(req: Request, ctx: PortalContext) {
     return { period:saved.data };
   }
   if (action === "report.issue" && req.method === "POST") {
-    if (!ctx.staff) throw new Error("forbidden");
+    if (ctx.account.role !== "admin") throw new Error("forbidden");
     const periodId=String(body.reporting_period_id||""), artifactIds=Array.isArray(body.artifact_ids)?body.artifact_ids.map(String):[];
     if (!periodId||!artifactIds.length) throw new Error("issue_period_and_artifacts_required");
     const checked=await ctx.db.from("report_artifacts").select("id").eq("client_id",clientId).eq("reporting_period_id",periodId).in("id",artifactIds);
