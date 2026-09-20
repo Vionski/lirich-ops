@@ -20,6 +20,12 @@ export type PortalContext = {
   requestId: string;
 };
 
+export type WordPressClaims = {
+  clientId: string;
+  role: PortalRole;
+  wpLogin: string;
+};
+
 const encoder = new TextEncoder();
 
 function required(name: string): string {
@@ -53,11 +59,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-async function verifyWordPressToken(token: string): Promise<{
-  clientId: string;
-  role: PortalRole;
-  wpLogin: string;
-}> {
+async function verifyWordPressToken(token: string): Promise<WordPressClaims> {
   const dot = token.lastIndexOf(".");
   if (dot <= 0) throw new Error("invalid_token");
   const payload = token.slice(0, dot);
@@ -86,6 +88,18 @@ async function verifyWordPressToken(token: string): Promise<{
   }
   if (Math.floor(Date.now() / 1000) >= expires) throw new Error("expired_token");
   return { clientId, role, wpLogin };
+}
+
+export async function verifyWordPressRequest(req: Request): Promise<WordPressClaims> {
+  const token = bearer(req);
+  if (!token) throw new Error("missing_bearer_token");
+  return await verifyWordPressToken(token);
+}
+
+export function serviceClient(): SupabaseClient {
+  return createClient(required("SUPABASE_URL"), required("SUPABASE_SERVICE_ROLE_KEY"), {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 async function stableUuid(input: string): Promise<string> {
@@ -133,13 +147,9 @@ async function internalJwt(account: PortalAccount): Promise<string> {
 }
 
 export async function authenticate(req: Request): Promise<PortalContext> {
-  const token = bearer(req);
-  if (!token) throw new Error("missing_bearer_token");
-  const claims = await verifyWordPressToken(token);
+  const claims = await verifyWordPressRequest(req);
   const url = required("SUPABASE_URL");
-  const admin = createClient(url, required("SUPABASE_SERVICE_ROLE_KEY"), {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  const admin = serviceClient();
 
   const { data, error } = await admin.from("portal_accounts")
     .select("id,wp_user_id,wp_login,display_name,client_id,role,status,revoked_at")

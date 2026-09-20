@@ -6,6 +6,8 @@ import {
   authenticate,
   PortalContext,
   resolveClient,
+  serviceClient,
+  verifyWordPressRequest,
   writeAccessEvent,
 } from "../_shared/portal_auth.ts";
 
@@ -45,7 +47,7 @@ function response(req: Request, data: unknown, status = 200, requestId?: string)
 }
 
 function failStatus(message: string): number {
-  if (/missing_bearer|invalid_token|expired_token|account_inactive|mismatch|unsupported_token/.test(message)) return 401;
+  if (/missing_bearer|invalid_token|expired_token|account_inactive|mismatch|unsupported_token|invalid_staff_scope|account_has_no_client/.test(message)) return 401;
   if (/staff_client_required|client_required|invalid_period|invalid_format|invalid_widget|not_found/.test(message)) return 400;
   if (/forbidden|denied/.test(message)) return 403;
   return 500;
@@ -688,6 +690,44 @@ function dashboardSummary(data: any) {
   };
 }
 
+function dashboardRouteData(action: string, data: any) {
+  if (action === "overview") return {
+    lock: data.lock, client: data.client, period: data.period, generated_at: data.generated_at,
+    totals: data.totals, quality: data.quality, monthly: data.monthly, materials: data.materials,
+    exceptions: data.quality.gaps, exception_summary: data.exception_summary, cache: data.cache,
+  };
+  if (action === "materials") return {
+    client: data.client, period: data.period, totals: data.totals, quality: data.quality,
+    monthly: data.monthly, materials: data.materials, sites: data.sites, cache: data.cache,
+  };
+  return {
+    client: data.client, period: data.period, totals: data.totals, quality: data.quality,
+    carbon: data.carbon, monthly: data.monthly.map((m: any) => ({ month: m.month, net_t: m.net_t })),
+    cache: data.cache,
+  };
+}
+
+async function fastCachedDashboard(req: Request, url: URL, action: string) {
+  const claims = await verifyWordPressRequest(req);
+  const p = period(url);
+  const requestId = crypto.randomUUID();
+  const requested = String(url.searchParams.get("client") || "") || null;
+  const { data, error } = await serviceClient().rpc("portal_cached_dashboard_fast", {
+    p_wp_login: claims.wpLogin,
+    p_claim_role: claims.role,
+    p_claim_client_id: claims.clientId,
+    p_requested_client_id: requested,
+    p_period_from: p.from,
+    p_period_to: p.to,
+    p_cache_version: DASHBOARD_CACHE_VERSION,
+    p_endpoint: action,
+    p_request_id: requestId,
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.cache_hit || !data?.payload) return null;
+  return { requestId, data: dashboardRouteData(action, data.payload) };
+}
+
 async function cachedDashboardSummary(
   ctx: PortalContext,
   clientId: string,
@@ -820,9 +860,7 @@ async function route(req: Request, ctx: PortalContext) {
   const data = await cachedDashboardSummary(ctx, clientId, p, async () =>
     await snapshot(ctx, clientId, p, await engine())
   );
-    if (action === "overview") return { lock: data.lock, client: data.client, period: data.period, generated_at: data.generated_at, totals: data.totals, quality: data.quality, monthly: data.monthly, materials: data.materials, exceptions: data.quality.gaps, exception_summary: data.exception_summary, cache: data.cache };
-    if (action === "materials") return { client: data.client, period: data.period, totals: data.totals, quality: data.quality, monthly: data.monthly, materials: data.materials, sites: data.sites, cache: data.cache };
-    return { client: data.client, period: data.period, totals: data.totals, quality: data.quality, carbon: data.carbon, monthly: data.monthly.map((m: any) => ({ month: m.month, net_t: m.net_t })), cache: data.cache };
+    return dashboardRouteData(action, data);
   }
   if (action === "bookings") {
     const from = singaporeDate(), to = addDays(from, 6);
@@ -1013,6 +1051,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors(req) });
   let ctx: PortalContext | null = null;
   try {
+    const url = new URL(req.url);
+    const action = (url.searchParams.get("route") || "session").replace(/^\/+/, "");
+    if (req.method === "GET" && ["overview", "materials", "carbon"].includes(action)) {
+      const fast = await fastCachedDashboard(req, url, action);
+      if (fast) return response(req, fast.data, 200, fast.requestId);
+    }
     ctx = await authenticate(req);
     const data = await route(req, ctx);
     await writeAccessEvent(ctx, "portal.request", "success", { endpoint: new URL(req.url).searchParams.get("route") || "session" }, ctx.staff);
