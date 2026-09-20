@@ -825,7 +825,7 @@ async function relWeigh(order_no){
   j._contact = ''; j._contactPhone = ''; j._driver = dv.name; j._task = 'Collect';
   if(isTestDriver(j.driverId)) j._test = true;
   const js = await api('addJob', {job:j});
-  const nj = (js && js.jobs && js.jobs.length) ? js.jobs[js.jobs.length-1] : null;
+  const nj = mutationEntity(js, 'job');
   const t = {
     driverId: j.driverId, date: jdate, clientId: cid, typeId:'col_m',
     jobType:'Collect', price:0, binQty: j.binQty,
@@ -2672,7 +2672,7 @@ async function saveTripInner(final){
     render();
     toast(final ? '✅ Sent to office — thanks!' : "💾 Progress saved — resume anytime from My Jobs");
     const doPhoto = photosToUpload.find(p=>p.kind==='do');
-    if(doPhoto && st && st.trips){ const saved = st.trips.find(x=>x.id===draft.id); if(saved) backgroundEnrich(saved.id, doPhoto); }
+    if(doPhoto){ const saved = mutationEntity(st, 'trip'); if(saved) backgroundEnrich(saved.id, doPhoto); }
     return;
   }
 
@@ -2714,7 +2714,8 @@ async function saveTripInner(final){
   t.photoTs = photosToUpload.map(p=>p.ts || 0); /* keep each photo's own capture time on the record */
   toast(photosToUpload.length ? `Saving trip + ${photosToUpload.length} photo(s)…` : 'Saving trip to database…');
   const st = await api('addTrip', {trip:t, final});
-  const saved = st.trips[st.trips.length-1];
+  const saved = mutationEntity(st, 'trip');
+  if(!saved) throw new Error('Trip saved but the server did not return its record');
   /* cache full-res locally under the Drive ids so this device can view offline */
   (saved.photos||[]).forEach((ph,i)=>{
     const local = photosToUpload[i];
@@ -3130,18 +3131,41 @@ function adoptShared(st){
   S.trips = st.trips; S.seq = st.seq; S.rev = st.rev;
   migrate(S); persist();
 }
+function upsertCompact(list, item, key){
+  if(!item) return;
+  const i = list.findIndex(x=>x && x[key]===item[key]);
+  if(i < 0) list.push(item); else list[i] = item;
+}
+function applyCompact(d, save){
+  const r = (d && d.result) || (d && d.payload) || {};
+  if(r.job) upsertCompact(S.jobs, r.job, 'id');
+  if(r.trip) upsertCompact(S.trips, r.trip, 'id');
+  if(r.bin) upsertCompact(S.bins, r.bin, 'no');
+  if(Array.isArray(r.bins)) r.bins.forEach(b=>upsertCompact(S.bins, b, 'no'));
+  if(r.client) upsertCompact(S.clients, r.client, 'id');
+  if(d && d.seq) S.seq = d.seq;
+  else if(r.seq) S.seq = r.seq;
+  if(d && d.rev) S.rev = Number(d.rev);
+  if(save !== false){ migrate(S); persist(); }
+}
+function mutationEntity(d, name){
+  if(d && d.result && d.result[name]) return d.result[name];
+  const list = d && d[name+'s'];
+  return Array.isArray(list) && list.length ? list[list.length-1] : null;
+}
 async function api(action, payload){
   const url = S.settings && S.settings.sheetUrl;
   if(!url){ toast('⚠️ No database URL configured'); throw new Error('no url'); }
   if(!navigator.onLine){ toast('⚠️ You are offline — change NOT saved. Reconnect and try again.'); throw new Error('offline'); }
   /* plain body (no headers) keeps this a "simple" request — no CORS preflight */
-  const res = await fetch(url, {method:'POST', body: JSON.stringify(Object.assign({action, key: DEVICE_KEY}, payload||{}))});
+  const res = await fetch(url, {method:'POST', body: JSON.stringify(Object.assign({action, key: DEVICE_KEY, protocol:2}, payload||{}))});
   const raw = await res.text();
   let d;
   try{ d = JSON.parse(raw); }
   catch(e){ toast('⚠️ Database script is outdated — paste the new google-sheet-sync.gs and redeploy'); throw new Error('outdated script'); }
   if(d.error){ toast('⚠️ Database: ' + d.error); throw new Error(d.error); }
-  if(d.rev) adoptShared(d);
+  if(d.rev && Array.isArray(d.jobs) && Array.isArray(d.trips)) adoptShared(d); /* old server */
+  else if(d.rev) applyCompact(d); /* compact mutation response */
   return d;
 }
 let remoteReady = false;
@@ -3166,8 +3190,14 @@ async function pollRemote(){
     if(!url || !S.auth || !navigator.onLine) return;
     const r = await (await fetch(dbGet('?rev=1'))).json();
     if(r.rev && r.rev !== S.rev){
-      const st = await (await fetch(dbGet('?state=1'))).json();
-      if(st.rev){ adoptShared(st); render(); }
+      const delta = await (await fetch(dbGet('?changes=1&since='+encodeURIComponent(S.rev||0)))).json();
+      if(delta && !delta.full_required && Array.isArray(delta.changes)){
+        delta.changes.forEach(ch=>applyCompact({rev:ch.rev, payload:ch.payload}, false));
+        S.rev = Number(delta.rev || S.rev); migrate(S); persist(); render();
+      }else{
+        const st = await (await fetch(dbGet('?state=1'))).json();
+        if(st.rev){ adoptShared(st); render(); }
+      }
     }
   }catch(e){}
 }

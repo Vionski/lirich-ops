@@ -11,7 +11,7 @@
    port of the Apps Script ScriptProperties blob, so the driver app is
    unchanged apart from the URL. On every addTrip/updateTrip the trip is
    ALSO upserted into the normalized `collections` table (the SSOT), and
-   jobs into `jobs`. Photos go to the public `do-photos` storage bucket.
+   jobs into `jobs`. Photos go to the private `do-photos` storage bucket.
 
    emailDO is forwarded to the legacy Apps Script (Gmail lives there).
 
@@ -26,7 +26,6 @@ const supa = createClient(
 );
 const DEVICE_KEY = Deno.env.get("DEVICE_KEY") || "";
 const LEGACY_SCRIPT_URL = Deno.env.get("LEGACY_SCRIPT_URL") || "";
-const PUB = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/do-photos/`;
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -58,17 +57,71 @@ async function getState(): Promise<any | null> {
 }
 async function putState(st: any) {
   const rev = st.rev;
-  await supa.from("app_state").upsert({ id: 1, state: st, rev, updated_at: new Date().toISOString() });
+  const { error } = await supa.from("app_state").upsert({ id: 1, state: st, rev, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
+/* Small per-revision payloads let other open devices apply only the changed
+   record. Before this table existed, every revision made every device download
+   the full multi-megabyte state blob. */
+async function putChange(rev: number, action: string, payload: any) {
+  const { error } = await supa.from("app_state_changes").upsert({ rev, action, payload });
+  /* The state write is authoritative. If the delta log is temporarily
+     unavailable, old and new clients can still fall back to a full refresh. */
+  if (error) console.error("app_state_changes upsert failed", error);
+  if (!error && rev % 100 === 0) {
+    const cutoff = new Date(Date.now() - 30 * 86400e3).toISOString();
+    const { error: pruneError } = await supa.from("app_state_changes").delete().lt("created_at", cutoff);
+    if (pruneError) console.error("app_state_changes prune failed", pruneError);
+  }
+}
+
+async function changesSince(since: number) {
+  const { data: stateRow, error: stateError } = await supa.from("app_state").select("rev").eq("id", 1).maybeSingle();
+  if (stateError) throw stateError;
+  const current = Number(stateRow?.rev || 0);
+  if (since >= current) return { rev: current, changes: [], full_required: false };
+
+  const { data, error } = await supa.from("app_state_changes")
+    .select("rev,action,payload")
+    .gt("rev", since).order("rev").limit(101);
+  if (error) throw error;
+  const rows = data || [];
+  const contiguous = rows.length > 0 &&
+    Number(rows[0].rev) === since + 1 &&
+    rows.length <= 100 &&
+    Number(rows[rows.length - 1].rev) === current &&
+    !rows.some((r: any) => r.payload?.full_reload === true);
+  return contiguous
+    ? { rev: current, changes: rows, full_required: false }
+    : { rev: current, changes: [], full_required: true };
 }
 
 /* ---------------- ?db=1 — reference payload from SSOT tables ---------------- */
+/* rate_card in PAGES (27 Aug 2026). PostgREST caps a single response at the project max-rows
+   (1000). rate_card passed that when every site gained a Compactor rate, which would have
+   silently dropped the last sites' prices out of the driver payload - and a missing price pays
+   the driver $0, because pay comes from trip.price. */
+async function rateCardAll() {
+  const PAGE = 1000, rows: any[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supa.from("rate_card").select("site_id,job_type,price")
+      .order("site_id").order("job_type").range(from, from + PAGE - 1);
+    if (error || !data) break;
+    rows.push(...data);
+    if (data.length < PAGE) break;
+    if (from > 50000) break;
+  }
+  return { data: rows };
+}
+
 async function customerDB() {
   const out: any = { clients: [], drivers: [], wasteTypes: [], dumpLocations: [], binTypes: [], bins: [] };
   const [{ data: sites }, { data: customers }, { data: rates }, { data: bins }, { data: drivers }, { data: lists }] =
     await Promise.all([
       supa.from("sites").select("site_id,client_id,address,contact_name,contact_phone,active").eq("active", true),
       supa.from("customers").select("client_id,name,active").eq("active", true),
-      supa.from("rate_card").select("site_id,job_type,price"),
+      rateCardAll(),
       supa.from("bins").select("bin_id,bin_type,active").eq("active", true),
       supa.from("drivers").select("driver_id,name,active").eq("active", true),
       supa.from("ref_lists").select("kind,value"),
@@ -96,7 +149,28 @@ async function customerDB() {
     else if (l.kind === "bin_type") out.binTypes.push(l.value);
   });
   out.clearedDOs = await clearedDOs();
+  out.reviewedDOs = await reviewedDOs();
   return out;
+}
+
+/* ---------------- DOs the office has already checked ----------------
+   Michelle, 1 Sep 2026. A driver may correct their OWN job for 7 days, but only until the
+   office ticks it Reviewed on Collections/DO. That tick is the handoff: before it, the driver
+   is the person holding the paper and is the right one to fix a typo; after it, the office has
+   signed off and the record is theirs. Letting a driver edit past that point would silently
+   invalidate a review that has already been given.
+   NOTE this is a SUPERSET of clearedDOs (cleared = reviewed AND paid), so the app must test
+   cleared first — its message is the more specific one. */
+async function reviewedDOs(): Promise<string[]> {
+  try {
+    const { data } = await supa
+      .from("collection_reviews")
+      .select("do_no")
+      .eq("reviewed", true);
+    return (data || []).map((r: any) => String(r.do_no).toUpperCase());
+  } catch (_) {
+    return []; /* never let this block the reference payload */
+  }
 }
 
 /* ---------------- DOs that are finished with, for good ----------------
@@ -141,11 +215,9 @@ async function addPhoto(q: any) {
   const bytes = Uint8Array.from(atob(q.b64), (c) => c.charCodeAt(0));
   const { error } = await supa.storage.from("do-photos").upload(name, bytes, { contentType: "image/jpeg" });
   if (error) throw error;
-  let signed = PUB + name; // fallback while the bucket is still public
-  try {
-    const { data } = await supa.storage.from("do-photos").createSignedUrl(name, 31536000); // 1 year
-    if (data?.signedUrl) signed = data.signedUrl;
-  } catch (_) { /* keep fallback */ }
+  const { data, error: signError } = await supa.storage.from("do-photos").createSignedUrl(name, 31536000); // driver offline cache compatibility
+  if (signError || !data?.signedUrl) throw signError || new Error("photo signing failed");
+  const signed = data.signedUrl;
   return { id: name, path: name, url: signed, thumb: signed };
 }
 
@@ -284,15 +356,17 @@ async function mirrorJob(j: any) {
 /* ---------------- mutations (straight port of Apps Script apply_) ---------------- */
 function find(arr: any[], id: any) { return (arr || []).find((x) => x.id === id) || null; }
 async function apply(st: any, q: any) {
+  const result: any = {};
   switch (q.action) {
     case "addJob":
       q.job.id = st.seq.job++;
       st.jobs.push(q.job);
       await mirrorJob(q.job);
+      result.job = q.job;
       break;
     case "updateJob": {
       const j = find(st.jobs, q.id);
-      if (j) { Object.assign(j, q.patch); await mirrorJob(j); }
+      if (j) { Object.assign(j, q.patch); await mirrorJob(j); result.job = j; }
       break;
     }
     case "voidJob": {
@@ -306,6 +380,7 @@ async function apply(st: any, q: any) {
         if (q.reason) vj._voidReason = q.reason;
         if (q.by) vj._voidedBy = q.by;
         await mirrorJob(vj);
+        result.job = vj;
       }
       break;
     }
@@ -327,8 +402,9 @@ async function apply(st: any, q: any) {
           }
           if (t.doNo && !existing.doNo) existing.doNo = t.doNo;
           existing.dupBlocked = (existing.dupBlocked || 0) + 1; /* visible in state for audit */
-          if (q.final !== false) { const dj = find(st.jobs, t.jobId); if (dj) { dj.status = "done"; await mirrorJob(dj); } }
+          if (q.final !== false) { const dj = find(st.jobs, t.jobId); if (dj) { dj.status = "done"; await mirrorJob(dj); result.job = dj; } }
           await mirrorTrip(st, existing);
+          result.trip = existing;
           break;
         }
       }
@@ -362,19 +438,22 @@ async function apply(st: any, q: any) {
         return b;
       };
       if (!t._test) {
-        if (t.binIn) { const bi = ensureBin(t.binIn); bi.status = "client"; bi.clientId = t.clientId; bi.siteIdx = t.jobSiteIdx || 0; }
-        if (t.binOut) { const bo = ensureBin(t.binOut); bo.status = "yard"; bo.clientId = null; bo.siteIdx = 0; }
+        const changedBins: any[] = [];
+        if (t.binIn) { const bi = ensureBin(t.binIn); bi.status = "client"; bi.clientId = t.clientId; bi.siteIdx = t.jobSiteIdx || 0; changedBins.push(bi); }
+        if (t.binOut) { const bo = ensureBin(t.binOut); bo.status = "yard"; bo.clientId = null; bo.siteIdx = 0; changedBins.push(bo); }
+        if (changedBins.length) result.bins = changedBins;
       }
       const mirrorSiteIdx = t.jobSiteIdx || 0;
       delete t.jobBinSize;
-      if (t.jobId && q.final !== false) { const tj = find(st.jobs, t.jobId); if (tj) { tj.status = "done"; await mirrorJob(tj); } }
+      if (t.jobId && q.final !== false) { const tj = find(st.jobs, t.jobId); if (tj) { tj.status = "done"; await mirrorJob(tj); result.job = tj; } }
       st.trips.push(t);
       t.jobSiteIdx = mirrorSiteIdx; await mirrorTrip(st, t); delete t.jobSiteIdx;
+      result.trip = t;
       break;
     }
     case "setTonnAdj": {
       const tr = find(st.trips, q.id);
-      if (tr) { tr.tonnAdj = q.adj; await mirrorTrip(st, tr); }
+      if (tr) { tr.tonnAdj = q.adj; await mirrorTrip(st, tr); result.trip = tr; }
       break;
     }
     case "updateTrip": {
@@ -384,21 +463,24 @@ async function apply(st: any, q: any) {
         if (q.patch) delete q.patch.final;
         Object.assign(tu, q.patch);
         if (tu.weight && tu.weight.gross && !tu.weight.ticket) tu.weight.ticket = "LR" + (st.seq.ticket++);
-        if (wasFinal === true && tu.jobId) { const tj2 = find(st.jobs, tu.jobId); if (tj2) { tj2.status = "done"; await mirrorJob(tj2); } }
+        if (wasFinal === true && tu.jobId) { const tj2 = find(st.jobs, tu.jobId); if (tj2) { tj2.status = "done"; await mirrorJob(tj2); result.job = tj2; } }
         await mirrorTrip(st, tu);
+        result.trip = tu;
       }
       break;
     }
     case "updateBin": {
       const b2 = (st.bins || []).find((b: any) => b.no === q.no);
-      if (b2) Object.assign(b2, q.patch);
+      if (b2) { Object.assign(b2, q.patch); result.bin = b2; }
       break;
     }
     case "addClient":
       st.clients.push(q.client);
+      result.client = q.client;
       break;
     case "replaceClients":
       st.clients = q.clients;
+      result.full_reload = true;
       break;
     case "replaceBins":
       (q.bins || []).forEach((nb: any) => {
@@ -406,10 +488,53 @@ async function apply(st: any, q: any) {
         if (!eb) st.bins.push(nb);
         else if (!eb.size && nb.size) eb.size = nb.size;
       });
+      result.full_reload = true;
       break;
     default:
       throw "Unknown action: " + q.action;
   }
+  return result;
+}
+
+/* ---------------- fleet job orders (driver app, Phase B) ---------------- */
+const FLEET_DRIVERS = new Set(["SATHISH", "KARTHIK", "KUMAR", "LIU", "YAO_JUN"]);
+function todaySGT(): string {
+  return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+}
+async function driverOrders(code: string) {
+  if (!FLEET_DRIVERS.has(code)) return { orders: [], error: "unknown driver: " + code };
+  const from = todaySGT();
+  /* Drivers see the SERVICE DATE ONLY (Michelle, 28 Aug 2026). Operators may enter jobs days
+     ahead or on the day; the driver list stays today. Was today..+14d. */
+  const to = from;
+  const { data, error } = await supa.from("job_orders")
+    .select("order_no,service_date,window_from,window_to,job_type,bin_type,bin_qty,waste_type,client_id,site_id,site_text,priority,status,notes,seq")
+    .eq("driver_id", code).in("status", ["assigned", "accepted"])
+    .gte("service_date", from).lte("service_date", to)
+    .order("service_date").order("seq").limit(500);
+  if (error) return { orders: [], error: error.message };
+  const ids = [...new Set((data || []).map((o: any) => o.site_id).filter(Boolean))];
+  const sites: Record<string, any> = {};
+  if (ids.length) {
+    const { data: sd } = await supa.from("sites").select("site_id,site_name,address").in("site_id", ids);
+    (sd || []).forEach((s: any) => { sites[s.site_id] = { name: s.site_name, addr: s.address }; });
+  }
+  return { orders: (data || []).map((o: any) => ({ ...o, site: sites[o.site_id] || null })) };
+}
+async function acceptOrder(q: any) {
+  const order_no = String(q.order_no || ""), code = String(q.driver || "");
+  if (!order_no || !FLEET_DRIVERS.has(code)) return { error: "order_no and driver required" };
+  const { data: before } = await supa.from("job_orders").select("*").eq("order_no", order_no).maybeSingle();
+  if (!before) return { error: "unknown order_no: " + order_no };
+  const bo: any = before;
+  if (bo.driver_id !== code) return { error: "order is not assigned to " + code };
+  if (bo.status === "accepted") return { ok: true, order: bo }; /* idempotent re-tap */
+  if (bo.status !== "assigned") return { error: "order is " + bo.status + " - only an assigned order can be accepted" };
+  const { data: after, error } = await supa.from("job_orders")
+    .update({ status: "accepted", updated_by: "driver:" + code, updated_at: new Date().toISOString() })
+    .eq("order_no", order_no).eq("status", "assigned").select().single();
+  if (error) return { error: error.message };
+  return { ok: true, order: after };
 }
 
 /* ---------------- HTTP entry ---------------- */
@@ -420,6 +545,8 @@ Deno.serve(async (req) => {
     if (req.method === "GET") {
       if ((url.searchParams.get("key") || "") !== DEVICE_KEY) return json({ error: "bad key" }, 403);
       if (url.searchParams.get("db")) return json(await customerDB());
+      if (url.searchParams.get("orders")) return json(await driverOrders(url.searchParams.get("driver") || ""));
+      if (url.searchParams.get("changes")) return json(await changesSince(Number(url.searchParams.get("since") || 0)));
       const st = await getState();
       if (url.searchParams.get("rev")) return json({ rev: st ? st.rev : 0 });
       return json(st || { empty: true, rev: 0 });
@@ -428,28 +555,38 @@ Deno.serve(async (req) => {
     const q = JSON.parse(await req.text());
     if ((q.key || "") !== DEVICE_KEY) return json({ error: "bad key" }, 403);
     delete q.key;
+    const protocol = Number(q.protocol || 1);
+    delete q.protocol;
     if (q.action === "addPhoto") return json(await addPhoto(q));
     if (q.action === "emailDO") {
       if (!LEGACY_SCRIPT_URL) return json({ sent: false, error: "email bridge not configured" });
       const r = await fetch(LEGACY_SCRIPT_URL, { method: "POST", body: JSON.stringify(q) });
       return json(await r.json());
     }
+    if (q.action === "acceptOrder") return json(await acceptOrder(q));
     let st = await getState();
     if (q.action === "initState") {
-      if (!st) { st = q.state; st.rev = 1; await putState(st); }
-      return json(st);
+      if (!st) {
+        st = q.state; st.rev = 1; await putState(st);
+        await putChange(st.rev, q.action, { full_reload: true, seq: st.seq });
+      }
+      return protocol >= 2 ? json({ ok: true, rev: st.rev, seq: st.seq }) : json(st);
     }
     if (q.action === "resetState") {
       const prev = st ? st.rev : 0;
       st = q.state; st.rev = prev + 1;
       await putState(st);
-      return json(st);
+      await putChange(st.rev, q.action, { full_reload: true, seq: st.seq });
+      return protocol >= 2 ? json({ ok: true, rev: st.rev, seq: st.seq }) : json(st);
     }
     if (!st) return json({ error: "Database not initialised — open the app once while online." });
-    await apply(st, q);
+    const result = await apply(st, q);
     st.rev++;
     await putState(st);
-    return json(st);
+    await putChange(st.rev, q.action, { ...result, seq: st.seq });
+    return protocol >= 2
+      ? json({ ok: true, action: q.action, rev: st.rev, seq: st.seq, result })
+      : json(st);
   } catch (err) {
     return json({ error: String(err) });
   }
