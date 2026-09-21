@@ -843,6 +843,25 @@ async function route(req: Request, ctx: PortalContext) {
   let body: any = {};
   if (req.method === "POST" || req.method === "PUT") body = await req.json().catch(() => ({}));
   if (action === "session") return { account: { id: ctx.account.id, wp_login: ctx.account.wp_login, display_name: ctx.account.display_name, role: ctx.account.role, client_id: ctx.account.client_id }, staff: ctx.staff };
+  if (action === "bootstrap") {
+    let clients: any[] = [];
+    if (ctx.staff) {
+      const result = await ctx.db.from("customers").select("client_id,name").eq("active", true).order("name");
+      if (result.error) throw new Error(result.error.message);
+      clients = result.data || [];
+    }
+    return {
+      account: {
+        id: ctx.account.id,
+        wp_login: ctx.account.wp_login,
+        display_name: ctx.account.display_name,
+        role: ctx.account.role,
+        client_id: ctx.account.client_id,
+      },
+      staff: ctx.staff,
+      clients,
+    };
+  }
   if (action === "clients") {
     if (!ctx.staff) throw new Error("forbidden");
     const { data, error } = await ctx.db.from("customers").select("client_id,name").eq("active", true).order("name");
