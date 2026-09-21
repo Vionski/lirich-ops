@@ -1,1 +1,4 @@
 supabase/.temp/
+backups/
+*.dump
+*.sql.gz
