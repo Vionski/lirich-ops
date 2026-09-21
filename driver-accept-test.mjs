@@ -13,6 +13,7 @@ const context = vm.createContext({
     sites:[{addr:job._addr}]}], role:{kind:'driver', driverId:5}},
   tripPhotos:[], existingTripPhotos:[],
   client:id=>context.S.clients.find(c=>c.id===id),
+  jobById:id=>context.S.jobs.find(j=>j.id===id),
   jobFlow:()=>({photos:[{k:'do',label:'DO photo',hint:'required',req:true}], bins:[], noDO:false}),
   esc:s=>String(s??''), cSite:(c,i)=>c?.sites?.[i] || c?.sites?.[0] || {addr:''},
   fmtDate:s=>s, lastVehicleForDriver:()=>'', wasteChecksHTML:()=>'', signaturePadHTML:()=>'',

@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v43';
+const APP_VERSION = 'v79';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v78';
+const APP_BUILD = 'v79';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -559,6 +559,22 @@ let S = DB.load();
 if(!S){ S = seed(); DB.save(S); }
 function persist(){ DB.save(S); }
 
+/* Test Driver is a browser-session rehearsal, never a shared job or trip.
+   It copies Yao Jun's newest real job only in memory; closing/reloading resets it. */
+let TEST_JOB = null, TEST_TRIP = null;
+function isTestMode(){ return S.role && S.role.kind==='driver' && Number(S.role.driverId)===6; }
+function testJob(){
+  if(!isTestMode()) return null;
+  const source = S.jobs.filter(j=>j.driverId===5 && !j._test && j.status!=='void')
+    .sort((a,b)=>Number(b.id)-Number(a.id))[0];
+  if(TEST_JOB && (TEST_JOB.status!=='assigned' || !source || TEST_JOB._sourceJobId===source.id)) return TEST_JOB;
+  if(!source) return null;
+  TEST_JOB = {...source, id:-1, driverId:6, date:TODAY, status:'assigned',
+    startedAt:'', acceptedAtMs:0, _test:true, _ephemeral:true, _sourceJobId:source.id};
+  return TEST_JOB;
+}
+function jobById(id){ return Number(id)===-1 && isTestMode() ? testJob() : S.jobs.find(j=>j.id===id); }
+
 /* ---------------- helpers ---------------- */
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -613,14 +629,17 @@ function binVerified(b){ return b.status !== 'unknown'; }
 
 /* trips + jobs helpers */
 function tripsOn(date){ return S.trips.filter(t=>t.date===date); }
-function driverTrips(id, date){ return S.trips.filter(t=>t.driverId===id && (!date || t.date===date)); }
-/* Test-account records are tagged `_test` when they're created and are stripped out of
-   everything that represents the real business: the Google Sheet (Trips/Jobs tabs), bin
-   inventory, earnings totals, dashboard KPIs and client history. They stay visible to the
-   operator inside the app so a test can actually be checked. */
+function driverTrips(id, date){ return isTestDriver(id) ? [] : S.trips.filter(t=>t.driverId===id && (!date || t.date===date)); }
+/* Historical test-account records are tagged `_test` and excluded from real reporting.
+   New Test Driver rehearsals stay only in this browser session. */
 function isTestDriver(id){ const d = driver(id); return !!(d && d.test); }
 function realOnly(list){ return (list||[]).filter(x=>!x._test); }
-function driverJobs(id, date){ return S.jobs.filter(j=>j.driverId===id && (!date || j.date===date)); }
+function driverJobs(id, date){
+  if(isTestDriver(id)){
+    const j = testJob(); return j && (!date || j.date===date) ? [j] : [];
+  }
+  return S.jobs.filter(j=>j.driverId===id && (!date || j.date===date));
+}
 function payOf(trips){ return trips.reduce((a,t)=>a+tripPay(t),0); }
 
 /* ---------------- ui primitives ---------------- */
@@ -1088,7 +1107,7 @@ function renderFab(){
   const t = curTab();
   if(S.role.kind==='operator' && (t==='jobs' || t==='dash')){ fab.style.display='block'; fab.textContent='＋ Assign job'; fab.onclick=()=>openJobForm(); }
   else if(S.role.kind==='operator' && t==='crm'){ fab.style.display='block'; fab.textContent='＋ Add'; fab.onclick=()=>openClientForm(); }
-  else if(S.role.kind==='driver' && t==='myjobs'){ fab.style.display='block'; fab.textContent='＋ Add job'; fab.onclick=()=>openJobForm(); }
+  else if(S.role.kind==='driver' && t==='myjobs' && !isTestMode()){ fab.style.display='block'; fab.textContent='＋ Add job'; fab.onclick=()=>openJobForm(); }
   else fab.style.display='none';
 }
 
@@ -1290,6 +1309,7 @@ function fixNeeds(t){
 }
 function fixList(){
   if(!S.role || S.role.kind !== 'driver') return [];
+  if(isTestMode()) return [];
   return S.trips
     .filter(t => t.driverId === S.role.driverId && !driverFixLock(t) && fixNeeds(t).length)
     .sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id - b.id);
@@ -1326,12 +1346,13 @@ function jobRow(j){
   </div>`;
 }
 function vJobs(){
-  const byDriverCount = S.jobs.filter(j=>j._bydriver).length;
+  const officeJobs = S.jobs.filter(j=>!j._test);
+  const byDriverCount = officeJobs.filter(j=>j._bydriver).length;
   const F = [['all','All'],['assigned','Assigned'],['in_progress','In progress'],['done','Done'],['void','Void']];
   if(byDriverCount) F.push(['bydriver','By driver']); /* only show the tab once a driver has added one */
   /* office needs to find a finished job fast when the console shows a problem, so the
      status chips are joined by a driver picker and a date picker (Michelle, 14 Aug 2026) */
-  const list = S.jobs.filter(j=> (jobFilter==='all' ? true
+  const list = officeJobs.filter(j=> (jobFilter==='all' ? true
       : jobFilter==='bydriver' ? !!j._bydriver
       : j.status===jobFilter))
     .filter(j=> jobDrvFilter ? String(j.driverId)===String(jobDrvFilter) : true)
@@ -1358,9 +1379,9 @@ function vJobs(){
     ? `<button class="btn ghost slim" style="flex:0 0 auto" onclick="jobDrvFilter='';jobDateFilter='';jobSearch='';render()">✕ Clear</button>` : '';
   $('#main').innerHTML = `
     <div class="ftabs">${F.map(([id,l])=>{
-      const n = id==='all' ? S.jobs.length
+      const n = id==='all' ? officeJobs.length
         : id==='bydriver' ? byDriverCount
-        : S.jobs.filter(j=>j.status===id).length;
+        : officeJobs.filter(j=>j.status===id).length;
       return `<button class="${jobFilter===id?'on':''}" onclick="jobFilter='${id}'; render()">${l} (${n})</button>`;
     }).join('')}</div>
     <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">${searchBox}${drvSel}${dateSel}${clearBtn}</div>
@@ -1388,7 +1409,7 @@ function driverJobCard(j){
   const person = jobContact(j);
   const started = j.status==='in_progress';
   const wp = weightPending(j);        /* finished but weighbridge weight still missing */
-  const trip = S.trips.find(t=>t.jobId===j.id);
+  const trip = j._ephemeral ? TEST_TRIP : S.trips.find(t=>t.jobId===j.id);
   const hasWeight = trip && trip.weight != null;
   /* weighing (phase 2) only unlocks once every required BIN photo for this job type is
      actually on the trip — a Save-for-later with bin photos still missing must not let the
@@ -1407,7 +1428,7 @@ function driverJobCard(j){
     <div class="djob-sub muted">🗑️ ${esc(j.binSize)} · ${esc(j.waste)}</div>
     ${j.dumpTo?`<div class="djob-sub muted">♻️ Dispose to: <b>${esc(j.dumpTo)}</b></div>`:''}
     ${j.instructions?`<div class="djob-sub muted">📝 ${esc(j.instructions)}</div>`:''}
-    ${person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-top:10px">💬 Call ${esc(person.name||'customer')}</button></a>`:''}
+    ${!j._ephemeral && person && person.phone?`<a href="https://wa.me/65${esc(person.phone)}" target="_blank" style="text-decoration:none"><button class="btn wa" style="margin-top:10px">💬 Call ${esc(person.name||'customer')}</button></a>`:''}
     ${wp
       ? `<button class="btn djob-act" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>`
       : started
@@ -1440,6 +1461,7 @@ function vMyJobs(){
   const voided    = mine.filter(j=> j.status==='void' && j.voidedOn===TODAY).slice().reverse();
   $('#main').innerHTML = `
     <h2 style="margin:8px 2px 12px; font-size:17px">🗂️ My jobs — ${fmtDate(TODAY)}</h2>
+    ${isTestMode()?`<div class="card" style="background:#fff7e8;border:1px solid var(--amber)"><b>TEST ONLY</b> — copied from Yao Jun’s newest job${testJob()?' #'+testJob()._sourceJobId:''}. Photos stay in this browser session; no job, trip or photo is sent to the office.</div>`:''}
     ${fleetOrdersHTML()}
     ${todayActive.map(driverJobCard).join('') || (late.length?'':'<div class="card empty">No jobs right now. 👍</div>')}
     ${late.length?`<h2 style="margin:18px 2px 8px; font-size:15px; color:var(--red)">⏰ Late jobs (${late.length}) — from earlier days</h2>${late.map(driverJobCard).join('')}`:''}
@@ -1576,6 +1598,10 @@ async function acceptJob(id){
   const now = Date.now();
   const startedAt = new Date(now).toTimeString().slice(0,5); /* moment the driver pressed Accept */
   closeSheet();
+  if(id===-1 && isTestMode()){
+    Object.assign(testJob(), {status:'in_progress', startedAt, acceptedAtMs:now});
+    render(); openTripForm({jobId:id}); return;
+  }
   await api('updateJob', {id, patch:{status:'in_progress', startedAt, acceptedAtMs:now}});
   render();
   toast(`Job accepted at ${fmtTime12(startedAt)} — safe driving! 🚛`);
@@ -1594,6 +1620,9 @@ async function reassignJob(id){
   render(); toast('Job reassigned to '+driver(driverId).name);
 }
 async function voidJob(id){
+  if(id===-1 && isTestMode()){
+    testJob().status='void'; TEST_TRIP=null; render(); toast('Test job cleared from this session'); return;
+  }
   const invoiced = S.trips.some(t=>t.jobId===id && t.invoiced);
   if(invoiced){ await lrInfo('This job has an invoiced trip and cannot be cancelled.'); return; }
   const isDriver = S.role.kind==='driver';
@@ -1622,6 +1651,7 @@ let JF_EDIT = null;
 let JF_PREFILL = null;   /* the planned order this Add-job form was opened from (31 Aug 2026) */
 let JF_PENDING = null;   /* handed to the next openJobForm() call, then consumed */
 function openJobForm(presetClientId, editJobId){
+  if(isTestMode()){ toast('Test Driver cannot create shared jobs'); return; }
   /* the same form serves both roles. A DRIVER adding their own job doesn't pick a driver
      (it's them) and doesn't set surcharges (those are office fees) — everything else is
      identical, and the job they create flows through the exact same accept→e-DO→weigh path. */
@@ -1799,6 +1829,7 @@ function jfPriceHint(){
   el.textContent = msg;
 }
 async function saveJob(){
+  if(isTestMode()){ toast('Test Driver cannot save shared jobs'); return; }
   const isDriver = S.role.kind==='driver';
   /* a driver adding a job assigns it to themselves; the operator picks the driver */
   const driverId = isDriver ? S.role.driverId : Number($('#jf-driver').value);
@@ -2018,9 +2049,9 @@ let existingTripPhotos = []; /* already-uploaded photos when resuming a saved-fo
 function openTripForm(opts){
   tripPhotos = [];
   existingTripPhotos = [];
-  const job = opts.jobId ? S.jobs.find(j=>j.id===opts.jobId) : null;
+  const job = opts.jobId ? jobById(opts.jobId) : null;
   /* a job still open with a trip already against it = the driver tapped "Save" earlier — resume it */
-  const draft = (S.role.kind==='driver' && job) ? S.trips.find(t=>t.jobId===job.id) : null;
+  const draft = (S.role.kind==='driver' && job) ? (job._ephemeral ? TEST_TRIP : S.trips.find(t=>t.jobId===job.id)) : null;
   const presetClient = job ? job.clientId : (opts.clientId || S.clients[0].id);
   const presetType = job ? job.task : 'col_m';
   const cli = job ? clientForJob(job) : client(presetClient);
@@ -2065,7 +2096,8 @@ function openTripForm(opts){
     openSheet(sheetTitle(draft ? 'Continue job' : 'Job — e-DO') + `
       <input type="hidden" id="tf-job" value="${job?job.id:''}">
       <input type="hidden" id="tf-draft" value="${draft?draft.id:''}">
-      ${draft ? `<div class="muted" style="margin-bottom:8px">📝 Picking up where you left off — already-sent photos are marked SENT.</div>` : ''}
+      ${job && job._ephemeral ? '<div class="card" style="background:#fff7e8;border:1px solid var(--amber)"><b>TEST ONLY</b> — selected photos stay in this browser session and disappear on reload. Nothing is uploaded or sent to the office.</div>' : ''}
+      ${draft ? `<div class="muted" style="margin-bottom:8px">📝 Picking up where you left off — photos are marked ${job && job._ephemeral ? 'HELD' : 'SENT'}.</div>` : ''}
 
       <div class="edo">
         <div class="edo-head">
@@ -2137,9 +2169,9 @@ function openTripForm(opts){
 
       <div class="card" id="tf-times" style="box-shadow:none; background:var(--bg); margin:12px 0 4px; padding:10px 12px; font-size:13px">
         ⏱️ Times are logged automatically from your photos — you can't change them.</div>
-      ${job && job.price ? `<div class="payline"><span>Pay for this job</span><span>${money(jobPay(job))}</span></div>` : ''}
-      <div style="margin-top:14px"><button class="btn" onclick="saveTrip(true)">✅ Done — send to office</button></div>
-      <div style="margin-top:8px"><button class="btn ghost" onclick="saveTrip(false)">💾 Save — I'll finish later (e.g. waiting for the DO)</button></div>`);
+      ${job && job.price ? `<div class="payline"><span>${job._ephemeral ? 'Copied job pay (test only)' : 'Pay for this job'}</span><span>${money(jobPay(job))}</span></div>` : ''}
+      <div style="margin-top:14px"><button class="btn" onclick="saveTrip(true)">${job && job._ephemeral ? '✅ Finish local test' : '✅ Done — send to office'}</button></div>
+      <div style="margin-top:8px"><button class="btn ghost" onclick="saveTrip(false)">${job && job._ephemeral ? '💾 Keep in this session' : "💾 Save — I'll finish later (e.g. waiting for the DO)"}</button></div>`);
     updateTimesDisplay();
     renderFormThumbs();
     if(!flow.noDO) sigPadInit('tf');
@@ -2288,7 +2320,7 @@ async function onPhotoAdd(input, kind){
 /* read-only live summary of the photo-stamped times on the driver form */
 function updateTimesDisplay(){
   const box = $('#tf-times'); if(!box) return;
-  const job = ($('#tf-job') && $('#tf-job').value) ? S.jobs.find(j=>j.id===Number($('#tf-job').value)) : null;
+  const job = ($('#tf-job') && $('#tf-job').value) ? jobById(Number($('#tf-job').value)) : null;
   const flow = jobFlow(job);
   /* always show the DATE alongside the time: a gallery photo from another day used to
      render as a perfectly ordinary "10:00 AM" with nothing to give it away */
@@ -2329,7 +2361,7 @@ function removePhoto(id){ tripPhotos = tripPhotos.filter(p=>p.id!==id); renderFo
 function alreadySentThumbHTML(p){
   return `<div style="position:relative">
       <img src="${p.thumb||p.url}" alt="photo" style="opacity:.75; cursor:pointer" onclick="viewFormPhoto('${p.id}')">
-      <span class="tag" style="position:absolute; bottom:2px; left:2px; font-size:8px; background:var(--brand); color:#fff">SENT</span>
+      <span class="tag" style="position:absolute; bottom:2px; left:2px; font-size:8px; background:var(--brand); color:#fff">${isTestMode()?'HELD':'SENT'}</span>
     </div>`;
 }
 /* Full-screen viewer for photos in the trip form. When the DO-number OCR misses,
@@ -2578,7 +2610,19 @@ async function saveTrip(final){
 async function saveTripInner(final){
   const isDriver = S.role.kind==='driver';
   const jobId = $('#tf-job').value ? Number($('#tf-job').value) : null;
-  const job = jobId ? S.jobs.find(j=>j.id===jobId) : null;
+  const job = jobId ? jobById(jobId) : null;
+  if(job && job._ephemeral){
+    const previous = TEST_TRIP && TEST_TRIP.photos ? TEST_TRIP.photos : [];
+    TEST_TRIP = {id:-1, jobId:job.id, date:TODAY, photos:previous.concat(tripPhotos),
+      doNo:Number((($('#tf-dono')||{}).value))||0,
+      binIn:((($('#tf-binin')||{}).value)||'').trim().toUpperCase(),
+      binOut:((($('#tf-binout')||{}).value)||'').trim().toUpperCase(),
+      vehicleNo:((($('#tf-vehicle')||{}).value)||'').trim().toUpperCase()};
+    if(final) job.status='done';
+    closeSheet(); render();
+    toast(`Test only — ${TEST_TRIP.photos.length} photo(s) held in this browser session. Nothing uploaded.`);
+    return;
+  }
   const draftId = Number((($('#tf-draft')||{}).value))||0;
   /* ONE TRIP PER JOB (Michelle, 14 Aug 2026). The draft id is captured when the form opens;
      if a trip already exists for this job — another tab, a slow double-tap, a second device —
@@ -3165,6 +3209,10 @@ function mutationEntity(d, name){
   return Array.isArray(list) && list.length ? list[list.length-1] : null;
 }
 async function api(action, payload){
+  if(isTestMode()){
+    toast('Test Driver cannot write to the shared database');
+    throw new Error('test driver database write blocked');
+  }
   const url = S.settings && S.settings.sheetUrl;
   if(!url){ toast('⚠️ No database URL configured'); throw new Error('no url'); }
   if(!navigator.onLine){ toast('⚠️ You are offline — change NOT saved. Reconnect and try again.'); throw new Error('offline'); }
@@ -3262,7 +3310,7 @@ async function fetchSheetDB(){
         else c.prices = row.prices;
       }
     });
-    if(added && remoteReady) api('replaceClients', {clients:S.clients}).catch(()=>{});
+    if(added && remoteReady && !isTestMode()) api('replaceClients', {clients:S.clients}).catch(()=>{});
     /* merge bin numbers + sizes from the "Bin DB" tab — never touches live status/location,
        that only ever comes from a driver's trip or an operator override */
     let binsAdded = 0;
@@ -3276,7 +3324,7 @@ async function fetchSheetDB(){
         b.size = row.size; binsAdded++;
       }
     });
-    if(binsAdded && remoteReady) api('replaceBins', {bins:S.bins}).catch(()=>{});
+    if(binsAdded && remoteReady && !isTestMode()) api('replaceBins', {bins:S.bins}).catch(()=>{});
     /* reference lists for the pulldowns (drivers/vehicles, bin types, waste, dumping) */
     const seenD = new Set();
     S.sheetDB = {
