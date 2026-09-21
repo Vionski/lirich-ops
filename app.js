@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v75';
+const APP_BUILD = 'v78';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -565,6 +565,15 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function money(n){ return '$' + (Number(n)||0).toFixed(2); }
 function client(id){ return S.clients.find(c=>c.id===id); }
+/* The shared job can outlive its CRM client row (or arrive before the client sync).
+   Keep its e-DO usable from the name/address saved on the assigned job. This is a
+   display fallback only; it does not create a second client or alter the job id. */
+function clientForJob(job){
+  const c = job && client(job.clientId);
+  if(c || !job) return c;
+  return {id:job.clientId, name:job._client || 'Client pending CRM sync', type:'land',
+          sites:[{label:'Job site', addr:job._addr || ''}], contacts:[]};
+}
 function driver(id){ return DRIVERS.find(d=>d.id===Number(id)); }
 function ttype(id){ return TRIP_TYPES.find(t=>t.id===id); }
 function binByNo(no){ return S.bins.find(b=>b.no===no); }
@@ -1374,7 +1383,7 @@ function weightPending(j){
   return true;
 }
 function driverJobCard(j){
-  const c = client(j.clientId);
+  const c = clientForJob(j);
   const site = cSite(c, j.siteIdx);
   const person = jobContact(j);
   const started = j.status==='in_progress';
@@ -2014,7 +2023,7 @@ function openTripForm(opts){
   const draft = (S.role.kind==='driver' && job) ? S.trips.find(t=>t.jobId===job.id) : null;
   const presetClient = job ? job.clientId : (opts.clientId || S.clients[0].id);
   const presetType = job ? job.task : 'col_m';
-  const cli = client(presetClient);
+  const cli = job ? clientForJob(job) : client(presetClient);
 
   /* ---- DRIVER: the screen mirrors the paper Service Engagement Form (e-DO), so the
      driver fills in the same boxes in the same order they already know from the pad.
@@ -2052,7 +2061,7 @@ function openTripForm(opts){
           value="${esc(draft?(isOut?draft.binOut:draft.binIn)||'':'')}"></div>
       </div>`;
     };
-    const isVessel = cli.type==='vessel';
+    const isVessel = !!(cli && cli.type==='vessel');
     openSheet(sheetTitle(draft ? 'Continue job' : 'Job — e-DO') + `
       <input type="hidden" id="tf-job" value="${job?job.id:''}">
       <input type="hidden" id="tf-draft" value="${draft?draft.id:''}">
@@ -2168,8 +2177,8 @@ function openTripForm(opts){
         <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>
     <label class="f">DELIVERY ORDER</label>
     <div class="seg" id="tf-dotype">
-      <button class="${cli.type!=='vessel'?'on':''}" data-v="land" onclick="segPick(this,'#tf-dotype')">Company (land · DO no.)</button>
-      <button class="${cli.type==='vessel'?'on':''}" data-v="vessel" onclick="segPick(this,'#tf-dotype')">Vessel (V no.)</button>
+      <button class="${!cli || cli.type!=='vessel'?'on':''}" data-v="land" onclick="segPick(this,'#tf-dotype')">Company (land · DO no.)</button>
+      <button class="${cli && cli.type==='vessel'?'on':''}" data-v="vessel" onclick="segPick(this,'#tf-dotype')">Vessel (V no.)</button>
     </div>
     <label class="f">DO / V NUMBER <span style="font-weight:600">(required — from the paper form: scan 🔍 or type it)</span></label>
     <input type="number" id="tf-dono" placeholder="e.g. 24119">
@@ -2577,7 +2586,7 @@ async function saveTripInner(final){
   const draft = (draftId ? S.trips.find(x=>x.id===draftId) : null)
              || (jobId ? S.trips.find(x=>x.jobId===jobId) : null);
   const clientId = job ? job.clientId : ($('#tf-client') ? $('#tf-client').value : S.clients[0].id);
-  const c = client(clientId);
+  const c = job ? clientForJob(job) : client(clientId);
   /* weight is captured only in phase 2 now — these fields only exist on the operator's own form */
   const gross = Number((($('#tf-gross')||{}).value))||0, tare = Number((($('#tf-tare')||{}).value))||0;
   const hasWeight = gross>0 && tare>0;
