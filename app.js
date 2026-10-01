@@ -975,7 +975,6 @@ function renderLogin(){
   const needsPin = !!(u && u.role==='operator');
   $('#main').innerHTML = `
     <div class="card" style="text-align:center; padding:24px 18px">
-      <img src="logo.png" alt="Lirich Resources" style="width:132px; max-width:60%; height:auto; display:block; margin:0 auto 10px">
       <h2 style="justify-content:center; font-size:19px">Sign in to Lirich Resources</h2>
       <p class="muted" style="margin:4px 0 0">${lock ? 'This device is set up for '+esc(lock.name)+'.' : 'Tap your name to start.'}</p>
     </div>
@@ -2102,7 +2101,6 @@ function openTripForm(opts){
       <div class="edo">
         <div class="edo-head">
           <div class="edo-brand">
-            <img src="logo.png" alt="Lirich Resources" class="edo-logo">
             <div class="edo-tag">(Enrichment of Resources)</div>
             <div class="edo-cn">利瑞资源私人有限公司</div>
           </div>
@@ -3037,12 +3035,12 @@ async function saveDriverFix(id){
 const LOGO_URL = new URL('logo.png', location.href).href;
 const DO_LETTERHEAD = `
   <div class="doh">
-    <img class="doh-logo" src="${LOGO_URL}" alt="Lirich Resources">
     <div class="doh-co">
       <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
       <div class="doh-tag">(Enrichment of Resources)</div>
       <div class="doh-addr">23 Gul Drive, Singapore 629471<br>
-      Tel: 6793 0173 &nbsp; Fax: 6793 2309</div>
+      Tel: 6793 0173 &nbsp; Fax: 6793 2309<br>
+      UEN: 201434521G &nbsp; www.lirichgroup.com</div>
     </div>
   </div>`;
 function doPrintHTML(t){
@@ -3051,6 +3049,14 @@ function doPrintHTML(t){
   const isVessel = t.doType==='vessel';
   const noLabel = isVessel ? 'No. V' : 'No. DO';
   const dateStr = fmtDate(t.date);
+  /* 1 Oct 2026: job location on the printed DO, under the client name. Trip carries a
+     denormalised _addr; fall back to the job's site, then the client's first site. */
+  const jobSite = (function(){
+    if(t._addr) return t._addr;
+    var j = (t.jobId!=null && typeof jobById==='function') ? jobById(t.jobId) : null;
+    if(j){ var s = cSite(c, j.siteIdx); if(s && s.addr) return s.addr; }
+    var s0 = cSite(c, 0); return (s0 && s0.addr) || '';
+  })();
   const sigBlock = `
     <div class="do-sig-row">
       <div class="do-sig-box">
@@ -3083,6 +3089,7 @@ function doPrintHTML(t){
     <div class="do-field" style="margin-top:10px">I hereby certified that the waste information stated above is correct.</div>
   ` : `
     <div class="do-field"><b>COMPANY NAME</b> : ${esc(c?c.name:'')}</div>
+    ${jobSite ? `<div class="do-field"><b>JOB LOCATION</b> : ${esc(jobSite)}</div>` : ''}
     <div class="do-field"><b>DATE OF COLLECTION</b> : ${dateStr}</div>
     <div class="do-sef-title">SERVICE ENGAGEMENT FORM (SEF)</div>
     <div class="do-jd-title">JOB DESCRIPTION</div>
