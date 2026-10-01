@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v82';
+const APP_BUILD = 'v83';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -3103,7 +3103,7 @@ function doPrintHTML(t){
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${noLabel} ${t.doNo||''} — ${esc(c?c.name:'')}</title>
   <style>
     body{font-family:Arial,Helvetica,sans-serif; color:#1a1a1a; max-width:720px; margin:20px auto; padding:0 16px}
-    .doh{display:flex; align-items:center; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px}
+    .doh{display:flex; align-items:center; justify-content:center; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px; text-align:left}
     .doh-logo{height:48px; width:auto; max-width:160px; object-fit:contain; flex:none}
     .doh-name{font-weight:800; font-size:16px}
     .doh-tag{font-size:11px; font-style:italic; color:#444}
