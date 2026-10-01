@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v79';
+const APP_BUILD = 'v81';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -975,6 +975,7 @@ function renderLogin(){
   const needsPin = !!(u && u.role==='operator');
   $('#main').innerHTML = `
     <div class="card" style="text-align:center; padding:24px 18px">
+      <img src="logo.png" alt="Lirich Resources" style="width:132px; max-width:60%; height:auto; display:block; margin:0 auto 10px">
       <h2 style="justify-content:center; font-size:19px">Sign in to Lirich Resources</h2>
       <p class="muted" style="margin:4px 0 0">${lock ? 'This device is set up for '+esc(lock.name)+'.' : 'Tap your name to start.'}</p>
     </div>
@@ -2101,6 +2102,7 @@ function openTripForm(opts){
       <div class="edo">
         <div class="edo-head">
           <div class="edo-brand">
+            <img src="edo-logo-gold.png" alt="Lirich Resources" class="edo-logo" width="789" height="363">
             <div class="edo-tag">(Enrichment of Resources)</div>
             <div class="edo-cn">利瑞资源私人有限公司</div>
           </div>
@@ -3032,31 +3034,26 @@ async function saveDriverFix(id){
    ============================================================ */
 /* the print window is written into a blank tab, so it has no base URL of its own —
    the logo must be an absolute href or it silently renders as a broken image */
-const LOGO_URL = new URL('logo.png', location.href).href;
+const LOGO_URL = new URL('edo-logo-gold.png', location.href).href;
 const DO_LETTERHEAD = `
   <div class="doh">
+    <img class="doh-logo" src="${LOGO_URL}" alt="Lirich Resources">
     <div class="doh-co">
       <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
       <div class="doh-tag">(Enrichment of Resources)</div>
       <div class="doh-addr">23 Gul Drive, Singapore 629471<br>
-      Tel: 6793 0173 &nbsp; Fax: 6793 2309<br>
-      UEN: 201434521G &nbsp; www.lirichgroup.com</div>
+      Tel: 6793 0173 &nbsp; Fax: 6793 2309</div>
     </div>
   </div>`;
 function doPrintHTML(t){
   const c = client(t.clientId), d = driver(t.driverId);
+  const job = S.jobs.find(j=>j.id===t.jobId);
+  const jobLocation = job ? cSite(client(job.clientId), job.siteIdx).addr : '';
+  const disposalSite = t.disposeTo || (job && job.dumpTo) || '';
   const sigPhoto = (t.photos||[]).find(p=>p && p.kind==='signature');
   const isVessel = t.doType==='vessel';
   const noLabel = isVessel ? 'No. V' : 'No. DO';
   const dateStr = fmtDate(t.date);
-  /* 1 Oct 2026: job location on the printed DO, under the client name. Trip carries a
-     denormalised _addr; fall back to the job's site, then the client's first site. */
-  const jobSite = (function(){
-    if(t._addr) return t._addr;
-    var j = (t.jobId!=null && typeof jobById==='function') ? jobById(t.jobId) : null;
-    if(j){ var s = cSite(c, j.siteIdx); if(s && s.addr) return s.addr; }
-    var s0 = cSite(c, 0); return (s0 && s0.addr) || '';
-  })();
   const sigBlock = `
     <div class="do-sig-row">
       <div class="do-sig-box">
@@ -3089,7 +3086,8 @@ function doPrintHTML(t){
     <div class="do-field" style="margin-top:10px">I hereby certified that the waste information stated above is correct.</div>
   ` : `
     <div class="do-field"><b>COMPANY NAME</b> : ${esc(c?c.name:'')}</div>
-    ${jobSite ? `<div class="do-field"><b>JOB LOCATION</b> : ${esc(jobSite)}</div>` : ''}
+    <div class="do-field"><b>JOB LOCATION</b> : ${esc(jobLocation||'—')}</div>
+    <div class="do-field"><b>DISPOSAL SITE</b> : ${esc(disposalSite||'—')}</div>
     <div class="do-field"><b>DATE OF COLLECTION</b> : ${dateStr}</div>
     <div class="do-sef-title">SERVICE ENGAGEMENT FORM (SEF)</div>
     <div class="do-jd-title">JOB DESCRIPTION</div>
@@ -3097,21 +3095,21 @@ function doPrintHTML(t){
     <div class="do-waste-list">${(t.wasteTypes&&t.wasteTypes.length?t.wasteTypes:(t.waste?[t.waste]:[])).map(w=>`<div>☑ ${esc(w)}</div>`).join('') || '<div class="muted">(none ticked)</div>'}
       ${t.wasteOther?`<div>☑ Others: ${esc(t.wasteOther)}</div>`:''}</div>
     <table class="do-bin-table">
-      <tr><td>Bin In (empty, at client)</td><td><b>${esc(t.binIn||'—')}</b></td></tr>
-      <tr><td>Bin Out (full, back to yard)</td><td><b>${esc(t.binOut||'—')}</b></td></tr>
+      <tr><td>Bin In</td><td><b>${esc(t.binIn||'—')}</b></td></tr>
+      <tr><td>Bin Out</td><td><b>${esc(t.binOut||'—')}</b></td></tr>
     </table>
   `;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${noLabel} ${t.doNo||''} — ${esc(c?c.name:'')}</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${noLabel} ${t.doNo||''} — ${esc(c?c.name:'')}</title>
   <style>
     body{font-family:Arial,Helvetica,sans-serif; color:#1a1a1a; max-width:720px; margin:20px auto; padding:0 16px}
-    .doh{display:flex; align-items:flex-start; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px}
-    .doh-logo{height:52px; width:auto; flex:none}
+    .doh{display:flex; align-items:center; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px}
+    .doh-logo{height:48px; width:auto; max-width:160px; object-fit:contain; flex:none}
     .doh-name{font-weight:800; font-size:16px}
     .doh-tag{font-size:11px; font-style:italic; color:#444}
     .doh-addr{font-size:11px; color:#333; margin-top:2px}
-    .do-no{float:right; font-size:20px; font-weight:800; color:#b0281c}
+    .do-no{float:right; font-size:18px; font-weight:800; color:#b0281c}
     .do-field{margin:8px 0; font-size:13.5px}
-    .do-sef-title{background:#111; color:#fff; font-weight:800; padding:6px 10px; margin-top:14px; font-size:13px}
+    .do-sef-title{background:#111; color:#fff; font-weight:800; padding:6px 10px; margin-top:14px; font-size:13px; -webkit-print-color-adjust:exact; print-color-adjust:exact}
     .do-jd-title{font-weight:800; margin-top:8px; font-size:12.5px}
     .do-waste-list{margin:8px 0; font-size:13px; line-height:1.7}
     .do-bin-table, .do-table{width:100%; border-collapse:collapse; margin-top:8px; font-size:13px}
@@ -3129,7 +3127,8 @@ function doPrintHTML(t){
     .do-actions button{padding:10px 16px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer}
     .do-print-btn{background:#050A30; color:#fff}
     .do-close-btn{background:#eee; color:#333}
-    @media print{ .do-actions{display:none} body{margin:0; max-width:none} }
+    @media screen and (max-width:520px){body{padding:0 12px}.doh{gap:10px}.doh-logo{height:42px;max-width:110px}.doh-name{font-size:14px}}
+    @media print{ .do-actions{display:none} body{margin:0; max-width:none} .do-sef-title{background:#111!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact} }
   </style></head>
   <body>
     <div class="do-actions"><button class="do-print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button><button class="do-close-btn" onclick="window.close()">Close</button></div>

@@ -1,6 +1,6 @@
-const CACHE = 'lirich-ops-v84';
+const CACHE = 'lirich-ops-v81';
 const ASSETS = ['./', './index.html', './app.js', './manifest.json',
-  './logo.png', './icon-192.png', './icon-512.png'];
+  './logo.png', './edo-logo-gold.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));

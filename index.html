@@ -142,8 +142,8 @@ label.f{display:block; font-size:11px; font-weight:800; color:var(--muted); marg
 /* ---------- e-DO: the driver's job screen mirrors the paper Service Engagement Form ---------- */
 .edo{border:1px solid var(--line); border-radius:12px; background:#fff; padding:14px 14px 4px; margin:6px 0 14px}
 .edo-head{display:flex; gap:10px; align-items:flex-start; border-bottom:2.5px solid var(--ink); padding-bottom:9px}
-.edo-brand{flex:none}
-.edo-logo{height:38px; width:auto; display:block}
+.edo-brand{flex:0 1 120px; min-width:0}
+.edo-logo{width:120px; max-width:100%; height:auto; display:block}
 .edo-tag{font-size:8px; font-style:italic; color:var(--muted); margin-top:3px}
 .edo-cn{font-size:8.5px; color:var(--muted); margin-top:1px}
 .edo-co{flex:1; text-align:right; min-width:0}
@@ -318,7 +318,7 @@ body.big-ui .edo-daywarn{font-size:13.5px}
 </div>
 <div id="toasts"></div>
 
-<script src="app.js?v=79"></script>
+<script src="app.js?v=81"></script>
 <script>
 if('serviceWorker' in navigator && (location.protocol==='https:' || ['localhost','127.0.0.1'].includes(location.hostname))){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
