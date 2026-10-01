@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v83';
+const APP_BUILD = 'v84';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -3103,8 +3103,9 @@ function doPrintHTML(t){
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${noLabel} ${t.doNo||''} — ${esc(c?c.name:'')}</title>
   <style>
     body{font-family:Arial,Helvetica,sans-serif; color:#1a1a1a; max-width:720px; margin:20px auto; padding:0 16px}
-    .doh{display:flex; align-items:center; justify-content:center; gap:14px; border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px; text-align:left}
-    .doh-logo{height:48px; width:auto; max-width:160px; object-fit:contain; flex:none}
+    .doh{display:flex; align-items:center; justify-content:center; gap:14px; width:90%; margin:0 auto 14px; border-bottom:3px solid #111; padding-bottom:10px; text-align:left}
+    .doh-logo{height:48px; width:24%; max-width:190px; object-fit:contain; flex:none}
+    .doh-co{flex:1}
     .doh-name{font-weight:800; font-size:16px}
     .doh-tag{font-size:11px; font-style:italic; color:#444}
     .doh-addr{font-size:11px; color:#333; margin-top:2px}
@@ -3129,7 +3130,7 @@ function doPrintHTML(t){
     .do-actions button{padding:10px 16px; border-radius:8px; border:none; font-weight:700; font-size:13px; cursor:pointer}
     .do-print-btn{background:#050A30; color:#fff}
     .do-close-btn{background:#eee; color:#333}
-    @media screen and (max-width:520px){body{padding:0 12px}.doh{gap:10px}.doh-logo{height:42px;max-width:110px}.doh-name{font-size:14px}}
+    @media screen and (max-width:520px){body{padding:0 12px}.doh{width:100%;gap:10px}.doh-logo{height:42px;width:23%;max-width:110px}.doh-name{font-size:14px}}
     @media print{ .do-actions{display:none} body{margin:0; max-width:none} .do-sef-title{background:#111!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact} }
   </style></head>
   <body>
