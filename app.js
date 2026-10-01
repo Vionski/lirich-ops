@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v86';
+const APP_BUILD = 'v87';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -424,7 +424,14 @@ function tripPay(trip){
     const sc = SURCHARGES.find(s=>s.id===id);
     if(sc) p += sc.amt;
   });
+  p += Number(trip.otherFeeAmount)||0;
   return Math.round(p*100)/100;
+}
+function surchargeSummary(record){
+  const labels = (record.surcharges||[]).map(id=>SURCHARGES.find(s=>s.id===id)?.label).filter(Boolean);
+  const otherAmount = Number(record.otherFeeAmount)||0;
+  if(otherAmount>0) labels.push(`${String(record.otherFeeReason||'Others').trim()} (+${money(otherAmount)})`);
+  return labels.join('; ');
 }
 /* job-request types this SITE is priced for (from the Customers sheet) — pricing is per
    site, not per client, since the same company can have different addresses on different
@@ -490,6 +497,7 @@ function jobTypeLabel(j){ return j.jobType || (ttype(j.task)||{}).label || j.tas
 function jobPay(j){
   let p = Number(j.price)||0;
   (j.surcharges||[]).forEach(id=>{ const sc=SURCHARGES.find(s=>s.id===id); if(sc) p+=sc.amt; });
+  p += Number(j.otherFeeAmount)||0;
   return Math.round(p*100)/100;
 }
 
@@ -1570,6 +1578,7 @@ function openJobDetail(id){
       <div class="muted" style="margin-top:6px">🛠️ ${esc(ty?ty.label:j.task)} · ${esc(j.binSize)} · ${esc(j.waste)}</div>
       ${j.dumpTo?`<div class="muted">♻️ Dump to: ${esc(j.dumpTo)}</div>`:''}
       ${j.instructions?`<div class="muted" style="margin-top:6px">📝 ${esc(j.instructions)}</div>`:''}
+      ${S.role.kind==='operator' && Number(j.otherFeeAmount)>0?`<div class="muted" style="margin-top:6px">➕ Others — ${esc(j.otherFeeReason||'')} · +${money(j.otherFeeAmount)}</div>`:''}
       <div class="muted" style="margin-top:6px">🚛 ${d?esc(d.name):'Unassigned'} · ${fmtDate(j.date)}${j.startedAt?` · ▶️ started ${fmtTime12(j.startedAt)}`:''}</div>
       <div class="muted" style="margin-top:6px">💵 Base pay: <b>${ty && !ty.perKm ? money(ty.base) : '$1.50 × km'}</b></div>
     </div>
@@ -1700,12 +1709,18 @@ function openJobForm(presetClientId, editJobId){
     ${isDriver ? '' : `<label class="f">SURCHARGES / EXTRA FEES (TICK IF ANY) <span style="font-weight:600">(added to driver pay; editable after the job is done)</span></label>
     <div id="jf-sur">${SURCHARGES.map(s=>`
       <label class="checkline"><input type="checkbox" value="${s.id}" ${editJob&&(editJob.surcharges||[]).includes(s.id)?'checked':''}> ${esc(s.label)}
-        <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>`}
+        <span class="amt">+${money(s.amt)}</span></label>`).join('')}
+      <label class="checkline"><input type="checkbox" id="jf-other" onchange="jfOtherFeeToggled()" ${editJob&&(editJob.otherFeeReason||Number(editJob.otherFeeAmount)>0)?'checked':''}> Others</label>
+      <div id="jf-other-fields" class="grid2" style="display:none;margin:4px 0 8px">
+        <div><label class="f">REASON</label><input id="jf-other-reason" maxlength="120" placeholder="Reason for extra pay" value="${editJob?esc(editJob.otherFeeReason||''):''}"></div>
+        <div><label class="f">AMOUNT ($)</label><input id="jf-other-amount" type="number" min="0.01" step="0.01" placeholder="0.00" value="${editJob&&Number(editJob.otherFeeAmount)>0?Number(editJob.otherFeeAmount):''}"></div>
+      </div></div>`}
     <div class="muted" id="jf-sync" style="margin-top:4px">Options come from the "Customer DB" tab of the Google Sheet.</div>
     <label class="f">${isDriver?'NOTES':'INSTRUCTIONS FOR DRIVER'}</label>
     <textarea id="jf-notes" rows="2" placeholder="Gate code, contact on site, timing…">${editJob?esc(editJob.instructions||''):''}</textarea>
     <div style="margin-top:16px"><button class="btn" onclick="saveJob()">${isDriver?'Add job':(editJob?'Save changes':'Assign job')}</button></div>`);
   jfClientChanged();
+  jfOtherFeeToggled();
   /* edit mode: apply the remaining stored values once the selects exist (jfClientChanged
      already restored site/contact/jobtype from JF_EDIT) */
   if(editJob){
@@ -1716,6 +1731,10 @@ function openJobForm(presetClientId, editJobId){
     jfJobTypeChanged(true); /* show the qty box + live price, keep the saved bin type */
   }
   refreshJobFormOptions();
+}
+function jfOtherFeeToggled(){
+  const cb=$('#jf-other'), fields=$('#jf-other-fields');
+  if(fields) fields.style.display=cb&&cb.checked?'grid':'none';
 }
 /* live-refresh the pulldowns from the Google Sheet while the form is open */
 function refreshJobFormOptions(){
@@ -1844,12 +1863,20 @@ async function saveJob(){
   const price = Math.round(unitPrice * binQty * 100) / 100;
   const cOvrName = ($('#jf-cname-ovr').value||'').trim();
   const cOvrPhone = ($('#jf-cphone-ovr').value||'').trim();
+  let otherFeeReason='', otherFeeAmount=0;
+  if(!isDriver && $('#jf-other') && $('#jf-other').checked){
+    otherFeeReason = ($('#jf-other-reason').value||'').trim();
+    otherFeeAmount = Number($('#jf-other-amount').value);
+    if(!otherFeeReason){ toast('⚠️ Add a reason for the Other fee'); return; }
+    if(!Number.isFinite(otherFeeAmount) || otherFeeAmount<=0){ toast('⚠️ Enter an Other fee amount greater than $0'); return; }
+    otherFeeAmount = Math.round(otherFeeAmount*100)/100;
+  }
   const j = {
     clientId: cid,
     siteIdx: Number($('#jf-site').value)||0, contactIdx: Number($('#jf-contact').value)||0,
     contactName: cOvrName, contactPhone: cOvrPhone, /* per-job on-site contact override (blank = use CRM contact) */
     jobType, price, unitPrice, binQty,
-    surcharges: $$('#jf-sur input:checked').map(i=>i.value), /* driver form has none → [] */
+    surcharges: $$('#jf-sur input:checked:not(#jf-other)').map(i=>i.value), /* driver form has none → [] */
     binSize: $('#jf-size').value, waste: $('#jf-waste').value || 'General',
     dumpTo: $('#jf-dump').value,
     distance: Number($('#jf-dist').value) || 0,
@@ -1857,6 +1884,7 @@ async function saveJob(){
     driverId,
     status:'assigned', date: $('#jf-date').value || TODAY, createdAt: TODAY+'T'+new Date().toTimeString().slice(0,5),
   };
+  if(!isDriver){ j.otherFeeReason=otherFeeReason; j.otherFeeAmount=otherFeeAmount; }
   if(isDriver) j._bydriver = true; /* so the office can see this one was added by the driver, not assigned */
   if(JF_PREFILL && !JF_EDIT) j._order = JF_PREFILL.order_no; /* links the job back to its planned order */
   /* denormalised display fields for the Google Sheet "Jobs" tab */
@@ -1888,8 +1916,11 @@ async function saveJob(){
         clientId: j.clientId, jobSiteIdx: j.siteIdx, jobType: j.jobType,
         waste: j.waste, disposeTo: j.dumpTo, price: j.price, binQty: j.binQty,
         distance: j.distance, surcharges: j.surcharges,
+        ...(isDriver?{}:{otherFeeReason:j.otherFeeReason||'',otherFeeAmount:Number(j.otherFeeAmount)||0}),
         _client: j._client, _addr: j._addr, _type: j.jobType || tr._type,
       };
+      tpatch._surch = surchargeSummary({...tr,...tpatch});
+      tpatch._pay = tripPay({...tr,...tpatch});
       await api('updateTrip', {id: tr.id, patch: tpatch});
       toast('✅ Job + DO updated — console will show the change');
     }
@@ -2274,10 +2305,13 @@ function tfSwapWeights(){
 /* shared guard so no weight path can ever store a negative net */
 function netIsValid(gross, tare){ return (Number(gross)||0) - (Number(tare)||0) >= 0; }
 function tfFormTrip(){
+  const jobId = $('#tf-job') && $('#tf-job').value;
+  const job = jobId ? S.jobs.find(j=>String(j.id)===String(jobId)) : null;
   return {
     typeId: $('#tf-type').value,
     distance: $('#tf-dist').value,
     surcharges: $$('#tf-sur input:checked').map(i=>i.value),
+    ...(job?{price:job.price,otherFeeAmount:job.otherFeeAmount}:{}),
   };
 }
 function calcFormPay(){
@@ -2744,6 +2778,7 @@ async function saveTripInner(final){
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
     tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight: 0,
     disposeTo, tonnage, tonnAdj: 0, distance, surcharges, remarks,
+    otherFeeReason: job ? (job.otherFeeReason||'') : '', otherFeeAmount: job ? (Number(job.otherFeeAmount)||0) : 0,
     doType: doTypeV, doNo: doNoInput,
     waste, wasteTypes, wasteOther, vessel, sigName, sigPosition,
     photos: [],
@@ -2762,7 +2797,7 @@ async function saveTripInner(final){
   t._driver = d.name;
   t._type = t.jobType || (ty ? ty.label : t.typeId);
   t._charge = (t.price != null ? t.price : '');
-  t._surch = t.surcharges.map(s=>(SURCHARGES.find(x=>x.id===s)||{}).label).filter(Boolean).join('; ');
+  t._surch = surchargeSummary(t);
   t._pay = tripPay(t);
   t.photosB64 = photosToUpload.map(p=>p.full.split(',')[1]);
   t.photoKinds = photosToUpload.map(p=>p.kind || 'do');
@@ -2820,6 +2855,7 @@ function openTripDetail(id){
       <div class="muted" style="margin-top:4px">${esc(d.name)} · ${fmtDate(t.date)}</div>
       <div class="muted" style="margin-top:6px">🛠️ ${esc(t.jobType||(ty?ty.label:''))}${t.binOut?' · bin out '+esc(t.binOut):''}${t.binIn?' · bin in '+esc(t.binIn):''}</div>
       ${t.waste?`<div class="muted">🗑️ ${esc(t.waste)}</div>`:''}
+      ${S.role.kind==='operator' && Number(t.otherFeeAmount)>0?`<div class="muted">➕ Others — ${esc(t.otherFeeReason||'')} · +${money(t.otherFeeAmount)}</div>`:''}
       ${tripTimesHTML(t)}
       ${t.disposeTo || t.tonnage || t.tonnAdj ? `<div class="muted">♻️ ${t.disposeTo?'Dispose to '+esc(t.disposeTo)+' · ':''}tonnage ${t.tonnage||0}${t.tonnAdj?` <b>${t.tonnAdj>0?'+':''}${t.tonnAdj}</b> = <b>${tonnTotal(t)} t</b> <span class="tag">ADJUSTED</span>`:' t'}</div>`:''}
       ${t.surcharges.length?`<div class="muted">➕ ${t.surcharges.map(s=>esc(SURCHARGES.find(x=>x.id===s)?.label)).join(', ')}</div>`:''}
@@ -2947,8 +2983,8 @@ async function saveTripEdit(id){
   patch._sales = c ? (c.salesRep||'') : t._sales;
   patch._type = t.jobType || (ty ? ty.label : typeId);
   patch._charge = price!=null ? price : '';
-  patch._surch = surcharges.map(s=>(SURCHARGES.find(x=>x.id===s)||{}).label).filter(Boolean).join('; ');
-  patch._pay = tripPay({price, typeId, distance, surcharges}); /* price wins if set */
+  patch._surch = surchargeSummary({...t,...patch});
+  patch._pay = tripPay({...t,...patch,price, typeId, distance, surcharges}); /* price wins if set */
   await api('updateTrip', {id, patch});
   render(); toast('Trip updated — Trips sheet refreshed ✅');
   openTripDetail(id);
@@ -3175,7 +3211,7 @@ function sheetRows(){
     rows.push([t.date, d?d.name:'', d?d.truck:'', c?c.name:'', c?(c.salesRep||''):'', ty?ty.label:'',
       t.doNo, t.binOut||'', t.binIn||'', t.timeStart||'', t.timeEnd||'', t.disposeTo||'',
       t.tonnage||0, t.tonnAdj||0, tonnTotal(t), t.distance||'',
-      (t.surcharges||[]).map(s=>{const x=SURCHARGES.find(y=>y.id===s); return x?x.label:s;}).join('; '),
+      surchargeSummary(t),
       tripPay(t), t.doType, (t.photos||[]).length]);
   });
   return rows;
@@ -3688,7 +3724,7 @@ function exportDayCSV(){
   trips.forEach(t=>{
     const d = driver(t.driverId), c = client(t.clientId), ty = ttype(t.typeId);
     rows.push([t.date, d.name, c?c.name:'', c?c.salesRep||'':'', ty?ty.label:'', t.doNo, t.binOut, t.binIn,
-      t.tonnage||'', t.tonnAdj||'', tonnTotal(t)||'', t.distance||'', t.surcharges.map(s=>SURCHARGES.find(x=>x.id===s)?.label).join('; '), tripPay(t).toFixed(2)]);
+      t.tonnage||'', t.tonnAdj||'', tonnTotal(t)||'', t.distance||'', surchargeSummary(t), tripPay(t).toFixed(2)]);
   });
   rows.push(['','','','','','','','','','','','','TOTAL', payOf(trips).toFixed(2)]);
   downloadCSV(`lirich-earnings-${earnDate}.csv`, rows);

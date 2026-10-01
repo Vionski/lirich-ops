@@ -445,7 +445,7 @@
      audited operator overrides (append-only), Cartrack mileage prefill, MTD totals ---- */
   var JC_SUR={after7:8,after7v:5,midnight:5,penjuru:10,spot:8,wait2:10,wait4:20,sunph:5}; /* mirror of app SURCHARGES */
   var JC={state:null,trips:[],ovr:{},drv:null,date:null,inited:false};
-  function jcPay(t){var p=Number(t.price)||0;(t.surcharges||[]).forEach(function(id){if(JC_SUR[id]!=null)p+=JC_SUR[id];});return Math.round(p*100)/100;}
+  function jcPay(t){var p=Number(t.price)||0;(t.surcharges||[]).forEach(function(id){if(JC_SUR[id]!=null)p+=JC_SUR[id];});p+=Number(t.otherFeeAmount)||0;return Math.round(p*100)/100;}
   function jcMoney(v){return '$'+(Number(v)||0).toFixed(2);}
   function jcClientName(st,id){var c=(st.clients||[]).find(function(x){return x.id===id});return c?c.name:'';}
   function jcSiteAddr(st,t){var j=t.jobId!=null?(st.jobs||[]).find(function(x){return x.id===t.jobId}):null;if(!j)return '';var c=(st.clients||[]).find(function(x){return x.id===j.clientId});var s0=c&&c.sites&&(c.sites[j.siteIdx]||c.sites[0]);return s0?(s0.addr||s0.label||''):'';}
