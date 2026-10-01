@@ -130,7 +130,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v81';
+const APP_BUILD = 'v82';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -3042,7 +3042,8 @@ const DO_LETTERHEAD = `
       <div class="doh-name">LIRICH RESOURCES PTE LTD</div>
       <div class="doh-tag">(Enrichment of Resources)</div>
       <div class="doh-addr">23 Gul Drive, Singapore 629471<br>
-      Tel: 6793 0173 &nbsp; Fax: 6793 2309</div>
+      Tel: 6793 0173 &nbsp; Fax: 6793 2309<br>
+      UEN: 201434521G &nbsp; <a href="https://www.lirichgroup.com">www.lirichgroup.com</a></div>
     </div>
   </div>`;
 function doPrintHTML(t){
@@ -3107,6 +3108,7 @@ function doPrintHTML(t){
     .doh-name{font-weight:800; font-size:16px}
     .doh-tag{font-size:11px; font-style:italic; color:#444}
     .doh-addr{font-size:11px; color:#333; margin-top:2px}
+    .doh-addr a{color:inherit; text-decoration:none}
     .do-no{float:right; font-size:18px; font-weight:800; color:#b0281c}
     .do-field{margin:8px 0; font-size:13.5px}
     .do-sef-title{background:#111; color:#fff; font-weight:800; padding:6px 10px; margin-top:14px; font-size:13px; -webkit-print-color-adjust:exact; print-color-adjust:exact}
