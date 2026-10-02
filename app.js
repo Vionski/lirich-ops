@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v79';
+const APP_VERSION = 'v80';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -168,17 +168,17 @@ const JOBTYPE_BIN = {Compactor:'Compactor', '660L':'660L'};  /* auto-filled bin 
    Times come ONLY from the photo capture on the phone — the driver never types a time. */
 const JOB_FLOW = {
   Exchange: { photos:[
-      {k:'in',  label:'📷 BIN IN — empty bin dropped at site', hint:'sets Time Start', req:true},
-      {k:'out', label:'📷 BIN OUT — full bin picked up', hint:'sets Time End', req:true},
-      {k:'do',  label:'📷 DO / PSA', hint:'required', req:true}],
+      {k:'in',  label:'📷 BIN IN — empty bin dropped at site', hint:'optional · sets Time Start', req:false},
+      {k:'out', label:'📷 BIN OUT — full bin picked up', hint:'optional · sets Time End', req:false},
+      {k:'do',  label:'📷 DO / PSA', hint:'optional', req:false}],
     bins:['in','out'], start:'in', end:'out' },
   Collect:  { photos:[
-      {k:'out', label:'📷 BIN OUT — full bin collected', hint:'sets Time Collect', req:true},
-      {k:'do', label:'📷 DO', hint:'required', req:true}],
+      {k:'out', label:'📷 BIN OUT — full bin collected', hint:'optional · sets Time Collect', req:false},
+      {k:'do', label:'📷 DO', hint:'optional', req:false}],
     bins:['out'], mark:'out', markLabel:'Time Collect' },
   Delivery: { photos:[
-      {k:'in', label:'📷 BIN IN — empty bin delivered', hint:'sets Time Delivered', req:true},
-      {k:'do',  label:'📷 DO', hint:'required', req:true}],
+      {k:'in', label:'📷 BIN IN — empty bin delivered', hint:'optional · sets Time Delivered', req:false},
+      {k:'do',  label:'📷 DO', hint:'optional', req:false}],
     bins:['in'], mark:'in', markLabel:'Time Delivered' },
   Sell:     { photos:[
       {k:'bin', label:'📷 BIN ON SITE', hint:'sets Time Finish', req:true}],
@@ -187,9 +187,9 @@ const JOB_FLOW = {
       {k:'bin', label:'📷 BIN ON SITE', hint:'sets Time Finish', req:true}],
     bins:[], fixed:true, noDO:true },
   Load:     { photos:[
-      {k:'in',  label:'📷 BIN IN — empty bin dropped for loading', hint:'sets Time Start', req:true},
-      {k:'out', label:'📷 BIN OUT — same bin picked up loaded', hint:'sets Time End', req:true},
-      {k:'do',  label:'📷 DO / PSA', hint:'required', req:true}],
+      {k:'in',  label:'📷 BIN IN — empty bin dropped for loading', hint:'optional · sets Time Start', req:false},
+      {k:'out', label:'📷 BIN OUT — same bin picked up loaded', hint:'optional · sets Time End', req:false},
+      {k:'do',  label:'📷 DO / PSA', hint:'optional', req:false}],
     bins:['in','out'], start:'in', end:'out' },
 };
 /* weighbridge photos are NOT part of phase 1 — the yard is a different location from the client
@@ -1442,7 +1442,7 @@ function driverJobCard(j){
       : started
         ? `<button class="btn djob-act" onclick="openTripForm({jobId:${j.id}})">📸 Continue job</button>`
         : `<button class="btn djob-act" onclick="acceptJob(${j.id})">▶️ Accept job</button>`}
-    ${!wp && trip && !hasWeight && hasAllRequired ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
+    ${!wp && trip && !hasWeight ? `<button class="btn ghost" style="margin-top:8px" onclick="openWeighForm(${trip.id})">⚖️ Add weight</button>` : ''}
     ${j.status!=='done' ? `<button class="btn ghost slim" style="margin-top:8px; color:var(--red); border-color:var(--red)" onclick="voidJob(${j.id})">🚫 Cancel job</button>` : ''}
   </div>`;
 }
@@ -1532,9 +1532,10 @@ async function saveWeigh(id){
   }
   /* a disposal trip cannot close without the facility's receipt — that receipt IS the
      evidence for this trip, and each trip has its own */
+  /* 2 Oct 2026 (Michelle): receipt photo made OPTIONAL — never blocks the save. A missing
+     receipt still shows under the driver's 🔧 To fix tab (fixNeeds) so it can be added later. */
   if(isDisposalTrip(t) && !tripHasReceiptPhoto(t)){
-    await lrInfo('Photograph the receipt from ' + (t.disposeTo || 'the disposal site') + ' before saving this trip.\n\nEach trip gets its own receipt — three trips means three receipts, one on each job.\n\nTap "Add photo" on this job, then weigh again.');
-    return;
+    toast('Saved without receipt photo — add it later under 🔧 To fix');
   }
   closeSheet(); toast('Saving weighbridge…');
   /* upload the scale photos to Drive, then attach weight + photos to the existing trip */
