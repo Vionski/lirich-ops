@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v80';
+const APP_VERSION = 'v81';
 
 /* ---------------- storage adapter ---------------- */
 const DB = {
@@ -702,13 +702,18 @@ function segPick(el, wrap){
    shared state blob — read-only here apart from Accept. Pay still flows only
    from trips; these cards are the driver's forward schedule. */
 const FLEET_CODE = {1:'SATHISH', 2:'KARTHIK', 3:'KUMAR', 4:'LIU', 5:'YAO_JUN'};
-const DRIVER_BACKGROUND_POLL_MS = 3 * 60 * 60 * 1000;
+/* B1 (20 Oct 2026): drivers polled every 3 h, so a job assigned mid-shift did not appear
+   and 4 saved trips could show as 2 for hours. Delta sync already exists (?changes=since),
+   so a 15 min poll costs a small rev probe, not a full state download. The fleet-order
+   helper keeps its own 3 h cache - that call is not cheap. */
+const DRIVER_BACKGROUND_POLL_MS = 15 * 60 * 1000;
+const FLEET_ORDERS_CACHE_MS = 3 * 60 * 60 * 1000;
 const OPERATOR_POLL_MS = 60 * 1000;
 let FLEET_ORDERS = {list:[], at:0, loading:false, err:null};
 async function fetchFleetOrders(force){
   const code = FLEET_CODE[S.role && S.role.driverId];
   if(!code || !navigator.onLine || !(S.settings && S.settings.sheetUrl)) return;
-  if(!force && Date.now()-FLEET_ORDERS.at < DRIVER_BACKGROUND_POLL_MS) return;
+  if(!force && Date.now()-FLEET_ORDERS.at < FLEET_ORDERS_CACHE_MS) return;
   if(FLEET_ORDERS.loading) return;
   FLEET_ORDERS.loading = true;
   try{
@@ -806,6 +811,31 @@ function tripHasReceiptPhoto(t){
   try{ return Array.isArray(tripPhotos) && tripPhotos.some(p=>p.kind!=='gross' && p.kind!=='tare'); }
   catch(e){ return false; }
 }
+/* ⭐ REL day rate (Michelle, 6 Oct 2026). A REL day is ONE day's pay for that driver — $80 —
+   however many REL orders the office deploys that day. The rate was previously 0 here, so a
+   completed REL route showed the driver nothing; the $80 lived only on the office side.
+   Kept as a named constant and overridable from the REL client's own site price, so the office
+   can change the rate without a release. Per DRIVER per day: if the route is ever split, each
+   driver who completes REL work that day earns the day rate once, and a SECOND REL record by
+   the SAME driver on the SAME day is priced 0 so the day can never pay twice. */
+var REL_DAY_RATE = 80;
+function relDayRate(){
+  try{
+    var c = (S.clients||[]).find(function(x){ return /\bREL\b/i.test(String(x.name||'')); });
+    var p = c && ((c.sites && c.sites[0] && c.sites[0].prices) || c.prices);
+    var v = p && (p['Collect'] != null ? p['Collect'] : p['REL']);
+    var n = Number(v);
+    if(isFinite(n) && n > 0) return n;
+  }catch(e){}
+  return REL_DAY_RATE;
+}
+function relPaidAlready(driverId, date){
+  return (S.trips||[]).some(function(t){
+    return isRelTrip(t) && String(t.date) === String(date)
+      && String(t.driverId) === String(driverId)
+      && (Number(t.price)||0) > 0 && t.status !== 'void';
+  });
+}
 function isRelTrip(t){
   if(!t) return false;
   if(/^REL-/.test(String(t.doNo||''))) return true;
@@ -850,9 +880,11 @@ async function relWeigh(order_no){
   closeSheet(); toast('Saving REL route…');
   const c = client(cid), dv = driver(S.role.driverId);
   const jdate = o.service_date || TODAY;
+  /* the day rate, once per driver per day - see relDayRate/relPaidAlready above */
+  const relPrice = relPaidAlready(S.role.driverId, jdate) ? 0 : relDayRate();
   const j = {
     clientId: cid, siteIdx, contactIdx:0, contactName:'', contactPhone:'',
-    jobType:'Collect', price:0, unitPrice:0, binQty: Number(o.bin_qty)||1,
+    jobType:'Collect', price: relPrice, unitPrice: relPrice, binQty: Number(o.bin_qty)||1,
     surcharges:[], binSize:'REL', waste:'General', dumpTo:'', distance:0,
     instructions: String(o.notes||''),
     driverId: S.role.driverId, status:'done', date: jdate,
@@ -866,7 +898,7 @@ async function relWeigh(order_no){
   const nj = mutationEntity(js, 'job');
   const t = {
     driverId: j.driverId, date: jdate, clientId: cid, typeId:'col_m',
-    jobType:'Collect', price:0, binQty: j.binQty,
+    jobType:'Collect', price: relPrice, binQty: j.binQty,
     binOut:'', binIn:'', vehicleNo: driverVehicle(dv.name) || '',
     timeStart:'', timeEnd:'',
     tAccept:0, tDO:0, tBinOut:0, tBinIn:0, tEnd:0, tWeight: Date.now(),
@@ -884,7 +916,9 @@ async function relWeigh(order_no){
   await api('addTrip', {trip:t, final:true});
   FLEET_ORDERS.at = 0; fetchFleetOrders(true);
   render();
-  toast('✅ REL route weighed — NET ' + (gross-tare) + ' kg. Day rate, no DO needed.');
+  toast('✅ REL route weighed — NET ' + (gross-tare) + ' kg. ' +
+    (relPrice > 0 ? ('Day rate ' + money(relPrice) + ' — whole route, no DO needed.')
+                  : 'Already counted in today’s REL day rate — no extra pay.'));
 }
 /* An order already accepted still needs a way into the job form - otherwise a driver who
    tapped Accept before this shipped is stuck with no job to upload against (31 Aug 2026). */
@@ -1741,7 +1775,10 @@ function jfOtherFeeToggled(){
 function refreshJobFormOptions(){
   fetchSheetDB().then(ok=>{
     const note = $('#jf-sync');
-    if(!ok){ if(note) note.textContent = '⚠️ Could not reach the Google Sheet — using last-known options.'; return; }
+    /* B5b (20 Oct 2026): there is no Google Sheet any more - this is Supabase, and on 20 Oct
+       this exact path was failing while the quota was exhausted. Say what is actually wrong,
+       and say that the job can still be saved, because now it can (see B2 in saveJob). */
+    if(!ok){ if(note) note.textContent = '⚠️ Cannot reach the customer list right now - you can still type the name and save the job.'; return; }
     const keep = (sel, rebuild)=>{
       const el = $(sel); if(!el) return;
       const v = el.value; el.innerHTML = rebuild;
@@ -1855,13 +1892,27 @@ async function saveJob(){
   const driverId = isDriver ? S.role.driverId : Number($('#jf-driver').value);
   const cid = jfClientId();
   const c = client(cid);
-  if(!c){ toast('⚠️ Pick a customer from the list'); return; }
+  /* B2 (20 Oct 2026): this used to refuse the save outright. A customer added in the console
+     Master data does not reach this blob until master.upsert mirrors it, so on 20 Oct two
+     drivers could not book real work that was standing in front of them. The job is now kept
+     with the typed name and flagged _crmPending; the office attaches the real CRM record from
+     the console (collection.set_customer), which already patches the name through. */
+  const typedClient = (($('#jf-client') || {}).value || '').trim();
+  if(!c && !typedClient){ toast('⚠️ Type the customer name'); return; }
   const jobType = $('#jf-jobtype').value;
   /* price rules (11 Aug 2026): a Lirich job is priced by its dumping location, not by
      the pickup site; a 660L job is priced per bin. Everything else is the site price. */
   const unitPrice = jfUnitPrice();
   const binQty = jfQty();
   const price = Math.round(unitPrice * binQty * 100) / 100;
+  /* B4 (20 Oct 2026): 71 trips are priced $0. A zero price is legitimate for some work, so
+     this warns and still saves rather than blocking - but it can no longer happen unnoticed.
+     A customer that is not in the blob yet has no price to find, so that case is not nagged. */
+  if(!(price > 0) && c){
+    const ok = await lrConfirm('This job is priced $0.00, so it will pay nothing.\n\nSave it anyway?',
+      {okText:'Save at $0', cancelText:'Go back and fix'});
+    if(!ok) return;
+  }
   const cOvrName = ($('#jf-cname-ovr').value||'').trim();
   const cOvrPhone = ($('#jf-cphone-ovr').value||'').trim();
   let otherFeeReason='', otherFeeAmount=0;
@@ -1889,7 +1940,8 @@ async function saveJob(){
   if(isDriver) j._bydriver = true; /* so the office can see this one was added by the driver, not assigned */
   if(JF_PREFILL && !JF_EDIT) j._order = JF_PREFILL.order_no; /* links the job back to its planned order */
   /* denormalised display fields for the Google Sheet "Jobs" tab */
-  j._client = c ? c.name : ''; j._addr = cSite(c, j.siteIdx).addr;
+  j._client = c ? c.name : typedClient; j._addr = cSite(c, j.siteIdx).addr;
+  if(!c) j._crmPending = true; /* office must attach the CRM record - see B2 above */
   j._contact = (jobContact(j)||{}).name || ''; j._contactPhone = (jobContact(j)||{}).phone || '';
   j._driver = driver(driverId).name; j._task = jobType;
   if(isTestDriver(driverId)) j._test = true; /* keeps the test account out of the Sheet + reports */
@@ -3275,6 +3327,15 @@ async function api(action, payload){
 }
 let remoteReady = false;
 let lastRemotePollAt = 0;
+/* B5 (20 Oct 2026): pollRemote ended in catch(e){}, so every failed sync was invisible -
+   including the hour on 20 Oct when the database was unhealthy and taps did nothing. */
+let LAST_SYNC_OK_AT = 0;
+let LAST_SYNC_ERR = null;
+function syncAgeLabel(){
+  if(!LAST_SYNC_OK_AT) return 'not synced yet';
+  var m = Math.round((Date.now()-LAST_SYNC_OK_AT)/60000);
+  return m < 1 ? 'synced just now' : ('synced ' + m + ' min ago');
+}
 async function bootRemote(){
   const url = S.settings && S.settings.sheetUrl;
   if(!url || !navigator.onLine) return;
@@ -3318,7 +3379,14 @@ async function pollRemote(force){
         if(st.rev){ adoptShared(st); render(); }
       }
     }
-  }catch(e){}
+    LAST_SYNC_OK_AT = Date.now(); LAST_SYNC_ERR = null;
+  }catch(e){
+    LAST_SYNC_ERR = {at: Date.now(), msg: String((e && e.message) || e)};
+    window.__SYNC = {okAt: LAST_SYNC_OK_AT, err: LAST_SYNC_ERR};
+    /* only speak up on a sync the driver asked for (app reopened, pull to refresh) so a flaky
+       background poll does not nag, but a real outage is never silent again */
+    if(force){ try{ toast('⚠️ Cannot reach the database - ' + syncAgeLabel() + '. Work is saved on this phone.'); }catch(_){} }
+  }
 }
 
 /* ---- pull the "Customer DB" tab → dropdown options + CRM merge ---- */
@@ -4041,8 +4109,8 @@ if(S.viewAs){ delete S.viewAs; if(S.auth && S.auth.userId==='op') S.role={kind:'
 render();
 bootRemote();                       /* connect to the central database */
 fetchSheetDB();                     /* dropdown options from "Customer DB" tab */
-setInterval(()=>pollRemote(false), 60000); /* operators: 1 min; drivers: 3 h while visible */
-setInterval(()=>{ if(S.role && S.role.kind==='driver' && !document.hidden) fetchFleetOrders(); }, 60000); /* driver helper enforces its 3 h cache */
+setInterval(()=>pollRemote(false), 60000); /* operators: 1 min; drivers: 15 min while visible */
+setInterval(()=>{ if(S.role && S.role.kind==='driver' && !document.hidden) fetchFleetOrders(); }, 60000); /* driver helper enforces its own 3 h cache (FLEET_ORDERS_CACHE_MS) */
 document.addEventListener('visibilitychange', ()=>{
   if(!document.hidden && S.auth){
     pollRemote(true);
