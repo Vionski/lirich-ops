@@ -8,9 +8,10 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v81';
+const APP_VERSION = 'v82';
 
 /* ---------------- storage adapter ---------------- */
+let STORAGE_FULL = false;
 const DB = {
   KEY: 'lirich-ops-v1',
   load(){
@@ -20,7 +21,25 @@ const DB = {
     }catch(e){}
     return null;
   },
-  save(s){ localStorage.setItem(this.KEY, JSON.stringify(s)); },
+  /* 21 Oct 2026 - THE OUTAGE. The saved state passed the browser's ~5 MB localStorage
+     ceiling (2,047 trips and 2,310 jobs came to 5.15 MB against a 4.95 MB stored copy), so
+     every setItem threw QuotaExceededError. save() had no catch, load() did - so the throw
+     escaped into whatever called persist() and killed the handler BEFORE render() ran.
+     setTab(), saveJob() and every other caller simply stopped responding, which is why the
+     whole app read as "nothing is clickable" on every phone whose data had grown past the
+     line. A failed local save must NEVER stop the interface: the app holds its state in
+     memory and re-syncs from the database on load, so losing the offline copy is a
+     degradation, not a stoppage. Says so once, out loud, rather than failing silently. */
+  save(s){
+    try{ localStorage.setItem(this.KEY, JSON.stringify(s)); STORAGE_FULL=false; return true; }
+    catch(e){
+      if(!STORAGE_FULL){
+        STORAGE_FULL = true;
+        try{ toast('\u26a0\ufe0f This phone is out of storage for the offline copy. The app still works and still saves to the database \u2014 tell the office.'); }catch(_){}
+      }
+      return false;
+    }
+  },
 };
 
 /* ---------------- photo database (IndexedDB) ----------------
