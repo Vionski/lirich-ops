@@ -172,7 +172,7 @@ async function read(what: string, f: any) {
   if (what === "jobs") return (await supa.from("jobs").select("*").order("date", { ascending: false }).limit(lim)).data;
   if (what === "drivers") return (await supa.from("drivers").select("driver_id,name,active").order("driver_id").limit(lim)).data; // collections driver filter (13 Aug 2026)
   if (what === "collections") {
-    let q = supa.from("collections").select("do_no,do_date,do_type,trip_type,vessel_name,berth,waste_type,job_type,dispose_to,gross_kg,tare_kg,net_kg,vol_total_m3,site_id,source,photo_do_ref,driver_id").order("do_date", { ascending: false }).limit(lim);
+    let q = supa.from("collections").select("do_no,do_date,do_type,trip_type,vessel_name,berth,waste_type,job_type,dispose_to,gross_kg,tare_kg,net_kg,vol_cat_a,vol_cat_b,vol_cat_c,vol_cat_d,vol_cat_e,vol_cat_f,vol_cat_i,vol_oily_rags_m3,vol_expired_med_m3,vol_other_m3,vol_total_m3,site_id,source,photo_do_ref,driver_id").order("do_date", { ascending: false }).limit(lim);
     if (s(f?.site_id)) q = q.eq("site_id", s(f.site_id));
     return (await q).data;
   }

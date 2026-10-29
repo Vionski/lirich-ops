@@ -89,7 +89,7 @@
   <div class="wrap">
     <div class="status" id="cstatus">Loading…</div>
     <div class="legend">Collections are <b>immutable</b>. A weight/volume correction is recorded as an audited <b>adjustment</b> — the raw DO is never changed, and reports use the corrected value.</div>
-    <div class="tablewrap"><table id="cgrid"><thead><tr><th>DO&nbsp;no</th><th>Date</th><th>Site</th><th>Waste</th><th>Gross&nbsp;kg</th><th>Tare&nbsp;kg</th><th>Adj&nbsp;kg</th><th>Net&nbsp;kg</th><th>Source</th><th></th></tr></thead><tbody></tbody></table></div>
+    <div class="tablewrap"><table id="cgrid"><thead><tr><th>DO&nbsp;no</th><th>Date</th><th>Site</th><th>Waste</th><th>Gross&nbsp;kg</th><th>Tare&nbsp;kg</th><th>Adj&nbsp;kg</th><th>Net&nbsp;kg</th><th title="Vessel DO — Plastics">Cat&nbsp;A&nbsp;m³</th><th title="Food waste">Cat&nbsp;B</th><th title="Domestic waste">Cat&nbsp;C</th><th title="Cooking oil">Cat&nbsp;D</th><th title="Incinerator ashes">Cat&nbsp;E</th><th title="Operational waste">Cat&nbsp;F</th><th title="E-waste, oily rags, expired medicine, others">Other</th><th title="PSA/JP vessel DO: sum of categories. Penjuru/MSW cargo declaration: no. of lifts = m³">Total&nbsp;m³</th><th>Source</th><th></th></tr></thead><tbody></tbody></table></div>
     <div class="audit"><h3>Recent adjustments</h3><ul id="adjlist"><li class="t">—</li></ul></div>
   </div>
 </div>
@@ -403,8 +403,21 @@
       var grossCell = gross==null?"—":(delta?('<span style="text-decoration:line-through;color:#9aa">'+num(gross)+'</span> <b style="color:#c05600">'+num(gross+delta)+'</b>'):num(gross));
       var adjCell = delta?('<b style="color:#c05600">'+(delta>0?'+':'')+num(delta)+'</b>'):'—';
       var netCell = (effNet==null)?"—":(delta&&rawNet!=null?('<span style="text-decoration:line-through;color:#9aa">'+num(rawNet)+'</span> <b>'+num(effNet)+'</b> <span title="adjusted" style="color:#c4860a">&#9998;</span>'):num(effNet));
+      /* vessel DOs are volume-based (m³), not weighed. PSA / Jurong Port V-form
+         carries Cat A–F; the Penjuru / MSW cargo declaration only gives a total
+         (no. of lifts = m³) so its category cells stay blank. Weight columns
+         are left untouched. */
+      var volCells="";
+      if(isVol(r)){
+        var cats=["vol_cat_a","vol_cat_b","vol_cat_c","vol_cat_d","vol_cat_e","vol_cat_f"].map(function(k){return r[k]==null||r[k]===""?null:Number(r[k]);});
+        var oth=["vol_cat_i","vol_oily_rags_m3","vol_expired_med_m3","vol_other_m3"].reduce(function(a,k){return (r[k]==null||r[k]==="")?a:(a||0)+Number(r[k]);},null);
+        var rawVol=(r.vol_total_m3==null||r.vol_total_m3==="")?null:Number(r.vol_total_m3);
+        var effVol=(adj.vol_total_m3!==undefined?Number(adj.vol_total_m3):rawVol);
+        var volCell=(effVol==null)?"—":((adj.vol_total_m3!==undefined&&rawVol!=null&&effVol!==rawVol)?('<span style="text-decoration:line-through;color:#9aa">'+num(rawVol)+'</span> <b>'+num(effVol)+'</b> <span title="adjusted" style="color:#c4860a">&#9998;</span>'):'<b>'+num(effVol)+'</b>');
+        volCells=cats.map(function(v){return '<td>'+(v==null?"—":num(v))+'</td>';}).join("")+'<td>'+(oth==null?"—":num(oth))+'</td><td>'+volCell+'</td>';
+      } else volCells='<td colspan="8" class="muted" style="text-align:center">—</td>';
       var tr=document.createElement("tr");
-      tr.innerHTML='<td>'+esc(r.do_no)+'</td><td>'+esc(r.do_date||"—")+'</td><td>'+esc(r.site_id||"—")+'</td><td>'+esc(r.waste_type||"—")+'</td><td>'+grossCell+'</td><td>'+num(tare)+'</td><td>'+adjCell+'</td><td>'+netCell+'</td><td class="muted">'+esc(r.source||"")+'</td><td><button class="ghost" type="button">Adjust</button></td>';
+      tr.innerHTML='<td>'+esc(r.do_no)+'</td><td>'+esc(r.do_date||"—")+'</td><td>'+esc(r.site_id||"—")+'</td><td>'+esc(r.waste_type||"—")+'</td><td>'+grossCell+'</td><td>'+num(tare)+'</td><td>'+adjCell+'</td><td>'+netCell+'</td>'+volCells+'<td class="muted">'+esc(r.source||"")+'</td><td><button class="ghost" type="button">Adjust</button></td>';
       tr.querySelector("button").addEventListener("click",function(){adjustFlow(r);});
       tb.appendChild(tr);
     });
@@ -418,7 +431,30 @@
       ul.appendChild(li);
     });
   }
+  /* volume-based (vessel) row: vessel DO type, or any m³ captured with no weighbridge net */
+  function isVol(r){
+    if(r.do_type==="vessel")return true;
+    if(r.net_kg!=null&&r.net_kg!=="")return false;
+    return ["vol_total_m3","vol_cat_a","vol_cat_b","vol_cat_c","vol_cat_d","vol_cat_e","vol_cat_f"].some(function(k){return r[k]!=null&&r[k]!==""&&Number(r[k])!==0;});
+  }
+  function adjustVolFlow(r){
+    var m=adjMap(), adj=m[r.do_no]||{};
+    var raw=(r.vol_total_m3==null||r.vol_total_m3==="")?null:Number(r.vol_total_m3);
+    var eff=(adj.vol_total_m3!==undefined?Number(adj.vol_total_m3):raw);
+    var av=window.prompt("Corrected TOTAL m³ for V "+r.do_no+" (currently "+(eff==null?"—":eff)+" m³).\nPenjuru/MSW cargo declaration: no. of lifts = m³.","");
+    if(av==null||String(av).trim()==="")return;
+    var nv=Number(String(av).replace(/[ m³]/g,""));
+    if(isNaN(nv)||nv<0){setCStatus("Volume must be a number of m³ (e.g. 1.41 or 2).","err");return;}
+    nv=Math.round(nv*100)/100;
+    setCStatus("Saving adjustment…","");
+    api("adjustment.add",{do_no:r.do_no,field:"vol_total_m3",new_value:nv,reason:"Volume correction "+(eff==null?"—":eff)+" → "+nv+" m³"}).then(function(res){
+      var rr=res&&res.j&&res.j.result;
+      if(rr&&rr.ok){setCStatus("Adjustment saved — V "+r.do_no+" vol_total_m3 → "+nv+" (audited).","ok"); loadCollections();}
+      else{setCStatus("Adjustment failed: "+((rr&&rr.error)||JSON.stringify(res)).slice(0,120),"err");}
+    }).catch(function(e){setCStatus("Adjustment failed: "+e,"err");});
+  }
   function adjustFlow(r){
+    if(isVol(r))return adjustVolFlow(r);
     var field="net_kg";
     var m=adjMap(), adj=m[r.do_no]||{};
     var rawNet=(r.net_kg==null?null:Number(r.net_kg));
