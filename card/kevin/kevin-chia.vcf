@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Chia;Kevin;;;
+FN:Kevin Chia
+ORG:Lirich Resources Pte Ltd
+TITLE:Trader
+TEL;TYPE=CELL,VOICE:+6591112833
+TEL;TYPE=WORK,VOICE:+6567930173
+EMAIL;TYPE=INTERNET,WORK:kevin@lirichresources.sg
+ADR;TYPE=WORK:;;23 Gul Drive;Singapore;;629471;Singapore
+URL:https://www.lirichgroup.com
+END:VCARD

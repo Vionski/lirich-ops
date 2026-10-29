@@ -56,7 +56,7 @@ the seed data lines up.
 
 - Clients can have **multiple yards/addresses** and **multiple contact persons**
   — the Assign-job form pulls client → yard → contact as chained dropdowns.
-- Each client is linked to a **salesperson** (Marcus or Patrick) for commission:
+- Each client is linked to a **salesperson** (Kevin or Patrick) for commission:
   Earnings shows a per-salesperson card (clients, trips, adjusted tonnage, value).
 - **Import from Excel / Google Sheets** (CRM → ⬆️ Import): upload a CSV or paste
   a shared Google Sheet link; one row per address+contact, same-name rows merge

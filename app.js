@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v82';
+const APP_VERSION = 'v83';
 
 /* ---------------- storage adapter ---------------- */
 let STORAGE_FULL = false;
@@ -168,7 +168,7 @@ const DRIVERS = [
   {id:6, code:'TD', name:'Test Driver', truck:'X1234Y', pin:'9999', color:'#6b7a72', test:true},
 ];
 const BIN_SIZES = ['5ft','10ft','15ft','20ft','30ft'];
-const SALES = ['Marcus', 'Patrick'];
+const SALES = ['Kevin', 'Patrick'];
 /* customer job-request types — priced per customer in the "Customers" sheet (cols F-J) */
 /* Compactor and 660L added 11 Aug 2026 (Michelle). They are priced per site like any
    other job type; picking one also pre-fills the matching bin type, and 660L alone
@@ -532,16 +532,16 @@ function seed(){
       {id:'c1', name:'Eng Lee Logistics Pte Ltd', type:'land', salesRep:'Patrick',
        sites:[{label:'Gul Circle yard', addr:'9 Gul Circle'}, {label:'Tuas yard', addr:'15 Tuas Ave 8'}],
        contacts:[{name:'Jacky', phone:'84118884'}, {name:'Mei Ling', phone:'91234567'}]},
-      {id:'c2', name:'Radha Exports Pte Ltd', type:'land', salesRep:'Marcus',
+      {id:'c2', name:'Radha Exports Pte Ltd', type:'land', salesRep:'Kevin',
        sites:[{label:'Pioneer Rd', addr:'118 Pioneer Rd L1'}],
        contacts:[{name:'Radha', phone:''}]},
       {id:'c3', name:'Aspiration City', type:'land', salesRep:'Patrick',
        sites:[{label:'Main', addr:'Boon Lay Ave'}], contacts:[]},
       {id:'c4', name:'SLG Construction', type:'land', salesRep:'Patrick',
        sites:[{label:'Main', addr:'Tuas South Ave 10'}], contacts:[]},
-      {id:'c5', name:'Tian Heng Eng', type:'land', salesRep:'Marcus',
+      {id:'c5', name:'Tian Heng Eng', type:'land', salesRep:'Kevin',
        sites:[{label:'Main', addr:'Tractor Rd'}], contacts:[]},
-      {id:'c6', name:'Pacific International Lines', type:'vessel', salesRep:'Marcus',
+      {id:'c6', name:'Pacific International Lines', type:'vessel', salesRep:'Kevin',
        sites:[{label:'PSA', addr:'PSA, BT Gate 2 Commercial Lane'}],
        contacts:[{name:'Ops Desk', phone:''}]},
     ],
@@ -560,12 +560,14 @@ function migrate(s){
     if(!c.sites) c.sites = [{label:'Main', addr:c.addr||''}];
     if(!c.contacts) c.contacts = (c.contact||c.phone) ? [{name:c.contact||'', phone:c.phone||''}] : [];
     if(c.salesRep === undefined) c.salesRep = '';
+    /* Kevin Chia replaced Marcus as salesperson in everything (Michelle, 29 Oct 2026) */
+    if(c.salesRep === 'Marcus') c.salesRep = 'Kevin';
   });
   (s.jobs||[]).forEach(j=>{
     if(j.siteIdx === undefined) j.siteIdx = 0;
     if(j.contactIdx === undefined) j.contactIdx = 0;
   });
-  (s.trips||[]).forEach(t=>{ if(t.tonnAdj === undefined) t.tonnAdj = 0; if(t.weightAdj === undefined) t.weightAdj = 0;
+  (s.trips||[]).forEach(t=>{ if(t._sales === 'Marcus') t._sales = 'Kevin'; if(t.tonnAdj === undefined) t.tonnAdj = 0; if(t.weightAdj === undefined) t.weightAdj = 0;
     if(t.wasteTypes === undefined) t.wasteTypes = t.waste ? [t.waste] : []; if(t.wasteOther === undefined) t.wasteOther = '';
     if(t.vehicleNo === undefined) t.vehicleNo = ''; if(t.sigName === undefined) t.sigName = ''; if(t.sigPosition === undefined) t.sigPosition = ''; });
   (s.bins||[]).forEach(b=>{
@@ -4015,7 +4017,7 @@ function downloadTemplate(){
     ['Client','Type','Salesperson','Address Label','Address','Contact Name','Contact Phone'],
     ['Eng Lee Logistics Pte Ltd','land','Patrick','Gul Circle yard','9 Gul Circle','Jacky','84118884'],
     ['Eng Lee Logistics Pte Ltd','land','Patrick','Tuas yard','15 Tuas Ave 8','Mei Ling','91234567'],
-    ['New Client Pte Ltd','land','Marcus','Main','1 Example Road','Contact Person','81234567'],
+    ['New Client Pte Ltd','land','Kevin','Main','1 Example Road','Contact Person','81234567'],
   ]);
   toast('Template downloaded — fill it in Excel or Google Sheets');
 }
