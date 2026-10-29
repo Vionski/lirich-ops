@@ -2,8 +2,7 @@ begin;
 
 -- Kevin Chia (Trader) replaces Marcus in everything: portal account, operator
 -- console access and salesperson attribution (Michelle, 29 Oct 2026).
--- Assumes Kevin's WordPress login is `kevin`. His WordPress user id is bound
--- at the end once the WP user exists; portal sign-in matches on wp_login.
+-- Kevin's WordPress login is `kevin`, user id 11 (created 29 Oct 2026).
 
 -- 1. Portal account: copy Marcus's role, then retire Marcus.
 insert into public.portal_accounts (
@@ -12,7 +11,7 @@ insert into public.portal_accounts (
 )
 select
   'kevin@lirichresources.sg', 'Kevin Chia', m.client_id, 'active', now(), now(),
-  'Trader · replaces Marcus 2026-10-29', null, m.role, null, now(), 'kevin'
+  'Trader · replaces Marcus 2026-10-29', 11, m.role, null, now(), 'kevin'
 from public.portal_accounts m
 where lower(m.wp_login) = 'marcus'
   and not exists (select 1 from public.portal_accounts where lower(wp_login) = 'kevin');
@@ -20,6 +19,7 @@ where lower(m.wp_login) = 'marcus'
 update public.portal_accounts
 set email = 'kevin@lirichresources.sg',
     display_name = 'Kevin Chia',
+    wp_user_id = 11,
     status = 'active',
     revoked_at = null,
     updated_at = now()
@@ -77,6 +77,3 @@ on conflict (version) do nothing;
 
 commit;
 
--- After creating Kevin in WordPress, bind his immutable WP user id
--- (wp-admin → Users → Kevin → the number after user_id= in the URL):
---   update public.portal_accounts set wp_user_id = <ID> where lower(wp_login) = 'kevin';
