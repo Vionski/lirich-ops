@@ -222,10 +222,52 @@ async function addPhoto(q: any) {
 }
 
 /* ---------------- normalized SSOT mirror ---------------- */
+/* NEW client / address raised from a planned order by the driver app (30 Oct 2026): file it in
+   Master Data as INACTIVE = pending operator approval, with the best-match rate the driver was
+   paid on, so the trip still lands on a real site_id. Inactive rows stay out of ?db=1, so the
+   app never sees a duplicate; approving in the console (Save on the row) sets active = true. */
+async function ensurePendingMaster(c: any, site: any): Promise<string | null> {
+  if (!site || !(site._pending || c._pending)) return null;
+  if (site._siteId) return site._siteId;
+  let { data: cust } = await supa.from("customers").select("client_id").ilike("name", c.name).maybeSingle();
+  if (!cust) {
+    const base = (String(c.name).replace(/[^A-Za-z]/g, "").toUpperCase() + "XXX").slice(0, 3);
+    let cid = base;
+    for (let n = 2; n < 100; n++) {
+      const { data: hit } = await supa.from("customers").select("client_id").eq("client_id", cid).maybeSingle();
+      if (!hit) break;
+      cid = base + n;
+    }
+    const { error } = await supa.from("customers").insert({ client_id: cid, name: c.name, active: false });
+    if (error) return null;
+    cust = { client_id: cid };
+  }
+  const cid = (cust as any).client_id;
+  const { data: existing } = await supa.from("sites").select("site_id").eq("client_id", cid).ilike("address", site.addr || "").maybeSingle();
+  if (existing) { site._siteId = existing.site_id; return existing.site_id; }
+  const { data: all } = await supa.from("sites").select("site_id").eq("client_id", cid);
+  const nums = (all || []).map((r: any) => Number(String(r.site_id).split("_").pop()) || 0);
+  const sid = cid + "_" + String(Math.max(0, ...nums) + 1).padStart(3, "0");
+  const ct = (c.contacts || [])[0] || {};
+  const { error: se } = await supa.from("sites").insert({
+    site_id: sid, client_id: cid, site_name: "PENDING APPROVAL · " + c.name, address: site.addr || "",
+    contact_name: ct.name || null, contact_phone: ct.phone || null, active: false,
+  });
+  if (se) return null;
+  const rates = Object.entries(site.prices || {}).filter(([, v]) => v != null && v !== "")
+    .map(([job_type, price]) => ({ site_id: sid, job_type, price: Number(price), valid_from: new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10), created_by: "driver-app (pending)" }));
+  if (rates.length) await supa.from("rate_card").insert(rates);
+  await supa.from("audit_log").insert({ actor: "driver-app", action: "site.pending", entity: "sites", entity_id: sid,
+    after: { client: c.name, address: site.addr, order: site._pendingFrom || null, price_from: site._priceFrom || null } });
+  site._siteId = sid;
+  return sid;
+}
 async function siteIdFor(st: any, clientId: string | null, siteIdx: number) {
   try {
     const c = (st.clients || []).find((x: any) => x.id === clientId);
     if (!c) return null;
+    const ps = c.sites && (c.sites[siteIdx || 0] || c.sites[0]);
+    if (ps && (ps._pending || c._pending)) { const pid = await ensurePendingMaster(c, ps); if (pid) return pid; }
     const addr = c.sites && c.sites.length ? (c.sites[siteIdx || 0] || c.sites[0]).addr : "";
     const { data: cust } = await supa.from("customers").select("client_id").ilike("name", c.name).maybeSingle();
     if (!cust) return null;

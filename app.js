@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v87';
+const APP_BUILD = 'v88';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -784,13 +784,118 @@ function orderMatch(o){
   }
   return null;
 }
-function openJobFromOrder(o){
-  const m = orderMatch(o);
+/* ---- NEW client / address on a planned order (Michelle, 30 Oct 2026) ----
+   The automation posts an order it cannot match as site NEW with the proposal in the notes
+   ("NEW SITE: {json}" or Patrick's raw " / "-separated line). The driver must NEVER have to
+   build the job himself: resolve it here to the best-matched client + address, add that
+   client/address to the shared list flagged _pending (office approves it in Master Data;
+   the sync mirror files it there as inactive / PENDING), and carry on with the job. */
+const ADDR_WORD = /\b(road|rd|street|st|avenue|ave|drive|dr|crescent|cres|square|sq|lane|ln|way|close|cl|walk|link|place|pl|park|loop|view|terrace|circle|boulevard|blvd|jalan|lorong|tuas|gul|pandan|blk|block|level|#\d)/i;
+function normCo(n){ return String(n||'').toLowerCase().replace(/\(.*?\)/g,' ').replace(/\b(pte|ltd|private|limited|co|company|singapore|s'?pore)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim(); }
+function streetKey(a){ return String(a||'').toLowerCase().replace(/#[\w-]+/g,' ').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+function parseOrderProposal(o){
+  const notes = String(o.notes||'');
+  let name='', addr='', contact='', phone='';
+  const jm = notes.match(/NEW SITE:\s*(\{[\s\S]*?\})/i);
+  if(jm){ try{ const j = JSON.parse(jm[1]); name = j.client_name||j.name||''; addr = j.address||j.addr||''; }catch(e){} }
+  const pre = jm ? notes.slice(0, jm.index) : notes;
+  const pm = pre.match(/\b(?:\+?65)?\s*([689]\d{3})\s?(\d{4})\b/); if(pm) phone = pm[1]+pm[2];
+  const cm = pre.match(/([A-Za-z][A-Za-z .'-]{1,30}?)\s+(?:\+?65)?\s*[689]\d{3}\s?\d{4}/); if(cm) contact = cm[1].replace(/^.*[·:]/,'').trim();
+  if(!name || !addr){
+    /* raw Patrick line: "3) 5pm-6pm. / Engie Services. / 1 Havelock Square, State Court. / Issue 1 x 5ft. / 96646512." */
+    const raw = pre.replace(/NEEDS CHECKING\s*\([^)]*\)/i,'').replace(/^[\s·]*\d{1,2}\)\s*/,'').split(/\s*\/\s*|\s*·\s*/).map(x=>x.replace(/\.\s*$/,'').trim()).filter(Boolean);
+    for(const seg of raw){
+      if(/^(\d{1,2}\)\s*)?\d{1,2}([.:]\d{2})?\s*(am|pm)\b/i.test(seg)) continue;                       /* time window */
+      if(/^(issue|exchange|collect|delivery|deliver|send|swap|dump|load)\b/i.test(seg)) continue;  /* the job itself */
+      if(/^[+\d\s]{8,}$/.test(seg)) continue;                                                       /* phone */
+      if(/needs checking|no site match/i.test(seg)) continue;
+      if(!addr && (/^\d+[a-z]?\s+\S/i.test(seg) || ADDR_WORD.test(seg))){ addr = seg; continue; }
+      if(!name && /[a-z]/i.test(seg)) name = seg;
+    }
+  }
+  if(!addr && o.site_text && o.site_text!=='NEW') addr = String(o.site_text);
+  return {name:name.trim(), addr:addr.trim(), contact, phone};
+}
+/* best client by name: exact (normalised) first, else the strongest token overlap */
+function bestClientByName(name){
+  const n = normCo(name); if(!n) return null;
+  const toks = n.split(' ').filter(w=>w.length>2);
+  let best=null, score=0;
+  for(const c of (S.clients||[])){
+    const cn = normCo(c.name);
+    if(cn===n) return c;
+    const ct = cn.split(' ').filter(w=>w.length>2);
+    const hit = toks.filter(w=>ct.includes(w)).length;
+    const sc = toks.length ? hit/Math.max(toks.length, ct.length) : 0;
+    if(sc>score){ score=sc; best=c; }
+  }
+  return score>=0.5 ? best : null;
+}
+/* price for a new address: same client's own site first, else the nearest known address
+   (shared street words), else the most common rate per job type. Flagged for the office. */
+function bestPricesFor(c, addr){
+  if(c){ const s0 = (c.sites||[]).find(s=>s.prices && Object.keys(s.prices).length); if(s0) return {prices:Object.assign({},s0.prices), from:c.name+' · '+(s0.addr||s0.label||'')}; }
+  const words = streetKey(addr).split(' ').filter(w=>w.length>2 && !/^\d+$/.test(w));
+  let best=null, bs=0;
+  (S.clients||[]).forEach(cl=>(cl.sites||[]).forEach(s=>{
+    if(!s.prices || !Object.keys(s.prices).length || s._pending) return;
+    const sw = streetKey(s.addr).split(' ');
+    const sc = words.filter(w=>sw.includes(w)).length;
+    if(sc>bs){ bs=sc; best={prices:Object.assign({},s.prices), from:cl.name+' · '+(s.addr||'')}; }
+  }));
+  if(best) return best;
+  const tally={};
+  (S.clients||[]).forEach(cl=>(cl.sites||[]).forEach(s=>Object.entries(s.prices||{}).forEach(([jt,v])=>{ (tally[jt]=tally[jt]||{})[v]=(tally[jt][v]||0)+1; })));
+  const prices={}; Object.entries(tally).forEach(([jt,m])=>{ prices[jt]=Number(Object.entries(m).sort((a,b)=>b[1]-a[1])[0][0]); });
+  return {prices, from:'standard rate'};
+}
+async function resolveNewOrder(o){
+  const p = parseOrderProposal(o);
+  if(!p.name && !p.addr) return null;
+  const flag = {_pending:true, _pendingFrom:o.order_no, _pendingAt:new Date().toISOString()};
+  let c = bestClientByName(p.name);
+  if(c && p.addr){
+    const k = streetKey(p.addr);
+    const i = (c.sites||[]).findIndex(s=>streetKey(s.addr)===k);
+    if(i>-1) return {cid:c.id, siteIdx:i};
+  }
+  const pr = bestPricesFor(c, p.addr);
+  const site = Object.assign({label:'NEW · pending approval', addr:p.addr||'(address to confirm)', prices:pr.prices, _priceFrom:pr.from}, flag);
+  if(c){
+    const clients = (S.clients||[]).map(x=>x.id===c.id ? Object.assign({}, x, {sites:(x.sites||[]).concat([site])}) : x);
+    await api('replaceClients', {clients});
+    S.clients = clients; persist();
+    const nc = client(c.id); return nc ? {cid:nc.id, siteIdx:nc.sites.length-1} : null;
+  }
+  const nc = Object.assign({id:'c'+Date.now().toString(36), name:p.name||('NEW · '+p.addr), type:'land', salesRep:'',
+    sites:[site], contacts:(p.contact||p.phone)?[{name:p.contact, phone:p.phone}]:[]}, flag);
+  await api('addClient', {client:nc});
+  return client(nc.id) ? {cid:nc.id, siteIdx:0} : null;
+}
+async function openJobFromOrder(o){
+  let m = orderMatch(o);
+  if(!m){ try{ m = await resolveNewOrder(o); }catch(e){ m = null; } }
   JF_PENDING = {order_no:o.order_no, siteIdx:m?m.siteIdx:0, jobType:o.job_type||'',
                 binType:o.bin_type||'', binQty:Number(o.bin_qty)||1,
                 waste:o.waste_type||'', notes:o.notes||'', date:o.service_date||TODAY};
   openJobForm(m ? m.cid : undefined);
-  if(!m) toast('⚠️ Pick the customer — this address is not in the app list yet');
+  const nc = m && client(m.cid), ns = nc && nc.sites && nc.sites[m.siteIdx];
+  if(ns && ns._pending) toast('🆕 New address added for office approval — check it and tap Add');
+  else if(!m) toast('⚠️ Pick the customer — this address is not in the app list yet');
+}
+/* card text for a NEW order: the proposed client/address, never the raw JSON or "NEW - see notes" */
+function orderTitle(o){
+  const site=o.site||{};
+  if(site.name) return site.name;
+  if(o.site_id && o.site_id!=='NEW' && !/^NEW\b/i.test(String(o.site_text||''))) return o.site_text || o.site_id;
+  const p=parseOrderProposal(o);
+  return (p.name||'New customer') + (p.addr?' — '+p.addr:'') + ' 🆕';
+}
+function orderNotes(o){
+  let n=String(o.notes||'');
+  if(/NEW SITE:\s*\{/i.test(n)) n=n.replace(/·?\s*NEW SITE:\s*\{[\s\S]*?\}/i,'');
+  n=n.replace(/NEEDS CHECKING\s*\([^)]*\)\s*·?\s*/i,'');
+  return n.replace(/^\s*·\s*|\s*·\s*$/g,'').trim();
 }
 function fleetOrderCard(o){
   const urgent = o.priority==='urgent';
@@ -799,10 +904,10 @@ function fleetOrderCard(o){
   const when = o.window_from ? (hm(o.window_from) + (o.window_to ? '\u2013'+hm(o.window_to) : '')) : '';
   return `<div class="card" style="${urgent?'border:2px solid var(--red);':''}margin-bottom:8px">
     <div class="item"><div class="grow">
-      <div class="title">${urgent?'<span style="background:var(--red);color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-right:6px">URGENT</span>':''}${esc(site.name || o.site_text || o.site_id || '?')}</div>
+      <div class="title">${urgent?'<span style="background:var(--red);color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;margin-right:6px">URGENT</span>':''}${esc(orderTitle(o))}</div>
       <div class="sub">${esc(fmtDate(o.service_date))}${when?' \u00b7 \ud83d\udd50 '+esc(when):''} \u00b7 ${esc(o.job_type)}${o.bin_type?' \u00b7 '+esc(o.bin_type):''}${Number(o.bin_qty)>1?' \u00d7'+Number(o.bin_qty):''}</div>
       ${site.addr?`<div class="sub">\ud83d\udccd ${esc(site.addr)}</div>`:''}
-      ${o.notes?`<div class="sub">\ud83d\udcdd ${esc(o.notes)}</div>`:''}
+      ${orderNotes(o)?`<div class="sub">\ud83d\udcdd ${esc(orderNotes(o))}</div>`:''}
       ${isRelOrder(o)?`<div class="sub" style="color:var(--brand);font-weight:600">\ud83d\udcb5 Day rate \u2014 one weighing for the whole route closes it. No DO needed.</div>`:''}
     </div>
     ${fleetOrderAction(o)}
@@ -947,7 +1052,8 @@ function fleetOrderAction(o){
   const done = (S.jobs||[]).find(j=>j._order===o.order_no && j.status!=='void');
   if(done) return `<button class="btn slim ghost" style="min-width:92px" onclick="openJobDetail(${done.id})">\u2705 job #${done.id}</button>`;
   if(isRelOrder(o)) return `<button class="btn" style="min-width:92px" onclick="relWeigh('${esc(o.order_no)}')">⚖️ Weigh</button>`;
-  const label = o.status==='assigned' ? '\u2705 Accept' : '\u2795 Add job';
+  /* always Accept: an order the office already posted is never the driver's job to build */
+  const label = '\u2705 Accept';
   return `<button class="btn" style="min-width:92px" onclick="acceptFleetOrder('${esc(o.order_no)}')">${label}</button>`;
 }
 function fleetOrdersHTML(){
