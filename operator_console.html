@@ -229,9 +229,11 @@
   function buildRows(sites,customers,rate){
     var cname={}; (customers||[]).forEach(function(c){cname[c.client_id]=c.name;});
     var price={}; (rate||[]).forEach(function(r){ (price[r.site_id]=price[r.site_id]||{})[r.job_type]=r.price; });
-    return (sites||[]).map(function(s){
-      var row={site_id:s.site_id,client_id:s.client_id,customer_name:cname[s.client_id]||s.site_name||"",
-        address:s.address||"",contact_name:s.contact_name||"",contact_phone:s.contact_phone||""};
+    /* driver-raised NEW client/address (pending approval) sort to the top */
+    return (sites||[]).slice().sort(function(a,b){return (b.active===false?1:0)-(a.active===false?1:0);}).map(function(s){
+      var row={site_id:s.site_id,client_id:s.client_id,customer_name:cname[s.client_id]||String(s.site_name||"").replace(/^PENDING APPROVAL · /,""),
+        address:s.address||"",contact_name:s.contact_name||"",contact_phone:s.contact_phone||"",
+        _pending:(s.active===false && /^PENDING APPROVAL/.test(String(s.site_name||"")))};
       JOBS.forEach(function(j){ row["price_"+j]=(price[s.site_id]&&price[s.site_id][j]!=null)?price[s.site_id][j]:""; });
       return row;
     });
@@ -244,12 +246,16 @@
     rows.forEach(function(row,i){
       if(q){var hay=(row.site_id+" "+row.client_id+" "+row.customer_name+" "+row.address).toLowerCase();if(hay.indexOf(q)<0)return;}
       var tr=document.createElement("tr"); tr.dataset.i=i; if(dirty[i])tr.className="dirty";
+      if(row._pending){tr.style.background="#fff4d6";tr.title="NEW from a driver job \u2014 check name, address and rates, then Save to approve";}
       COLS.forEach(function(c){
         var td=document.createElement("td"); td.className=(c.price?"price ":"")+(c.key?"key ":"")+(c.narrow?"narrow ":"")+(c.cls||"");
         var inp=document.createElement("input"); inp.value=esc(row[c.k]); inp.dataset.k=c.k;
         if(c.price){inp.inputMode="decimal";}
         inp.addEventListener("input",function(){ row[c.k]=inp.value; dirty[i]=true; tr.className="dirty"; refreshSave(); });
-        td.appendChild(inp); tr.appendChild(td);
+        td.appendChild(inp);
+        if(c.key&&row._pending){var b=document.createElement("button");b.type="button";b.className="ghost";b.textContent="\u26a0 Approve";b.style.cssText="margin-left:4px;padding:2px 6px;font-size:11px;color:#8a4708;border-color:#f4831f";
+          b.addEventListener("click",function(){dirty[i]=true;tr.className="dirty";refreshSave();setStatus("Marked "+row.site_id+" for approval \u2014 press Save.","ok");});td.appendChild(b);}
+        tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
@@ -285,8 +291,8 @@
     var seen={};
     idx.forEach(function(i){
       var r=rows[i];
-      if(r.client_id && !seen[r.client_id]){seen[r.client_id]=1; customers.push({client_id:r.client_id,name:r.customer_name});}
-      sites.push({site_id:r.site_id,client_id:r.client_id,site_name:r.customer_name,address:r.address,contact_name:r.contact_name,contact_phone:r.contact_phone});
+      if(r.client_id && !seen[r.client_id]){seen[r.client_id]=1; customers.push(Object.assign({client_id:r.client_id,name:r.customer_name},r._pending?{active:true}:{}));}
+      sites.push(Object.assign({site_id:r.site_id,client_id:r.client_id,site_name:r.customer_name,address:r.address,contact_name:r.contact_name,contact_phone:r.contact_phone},r._pending?{active:true}:{}));
       JOBS.forEach(function(j){var v=r["price_"+j];if(v!==""&&v!=null)rate.push({site_id:r.site_id,job_type:j,price:v});});
     });
     setStatus("Saving "+idx.length+" row(s)…");
