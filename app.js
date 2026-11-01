@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v88';
+const APP_BUILD = 'v89';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -730,16 +730,21 @@ const FLEET_CODE = {1:'SATHISH', 2:'KARTHIK', 3:'KUMAR', 4:'LIU', 5:'YAO_JUN'};
 const DRIVER_BACKGROUND_POLL_MS = 15 * 60 * 1000;
 const FLEET_ORDERS_CACHE_MS = 3 * 60 * 60 * 1000;
 const OPERATOR_POLL_MS = 60 * 1000;
-let FLEET_ORDERS = {list:[], at:0, loading:false, err:null};
+/* 2 Nov 2026 (Michelle, Yao Jun's preview showing Sathish's three cards): this cache held ONE
+   list with no record of whose it was, so switching driver inside the office preview found a
+   timestamp minutes old, returned early, and left the previous driver's jobs on screen under the
+   new driver's name. The list is now keyed by driver code - a different driver is always a miss. */
+let FLEET_ORDERS = {code:null, list:[], at:0, loading:false, err:null};
 async function fetchFleetOrders(force){
   const code = FLEET_CODE[S.role && S.role.driverId];
   if(!code || !navigator.onLine || !(S.settings && S.settings.sheetUrl)) return;
-  if(!force && Date.now()-FLEET_ORDERS.at < FLEET_ORDERS_CACHE_MS) return;
+  if(!force && FLEET_ORDERS.code === code && Date.now()-FLEET_ORDERS.at < FLEET_ORDERS_CACHE_MS) return;
   if(FLEET_ORDERS.loading) return;
+  if(FLEET_ORDERS.code !== code) FLEET_ORDERS = {code, list:[], at:0, loading:false, err:null};
   FLEET_ORDERS.loading = true;
   try{
     const d = await (await fetch(dbGet('?orders=1&driver='+code))).json();
-    FLEET_ORDERS = {list:(d && d.orders)||[], at:Date.now(), loading:false, err:(d && d.error)||null};
+    FLEET_ORDERS = {code, list:(d && d.orders)||[], at:Date.now(), loading:false, err:(d && d.error)||null};
   }catch(e){ FLEET_ORDERS.loading = false; return; }
   if(S.role && S.role.kind==='driver' && curTab()==='myjobs') render();
 }
@@ -887,9 +892,17 @@ async function openJobFromOrder(o){
 function orderTitle(o){
   const site=o.site||{};
   if(site.name) return site.name;
-  if(o.site_id && o.site_id!=='NEW' && !/^NEW\b/i.test(String(o.site_text||''))) return o.site_text || o.site_id;
+  /* 2 Nov 2026 (Michelle, on Sathish's card reading "New customer - Engie Services..."):
+     "dont put the new custmer text. just give client and address like the info in whatsapp."
+     The deploy writes site_text as "<customer> - <address>", so where it exists it IS the
+     answer. parseOrderProposal below stays for older cards that carried Patrick's raw line in
+     their notes - it reads those notes segment by segment, which is why a note rewritten by
+     hand came out as "contact 96646512 - State Courts, 1 Havelock Square". */
+  const st = String(o.site_text||'').trim();
+  if(st && !/^NEW\b/i.test(st) && !/see notes/i.test(st)) return st;
+  if(o.site_id && o.site_id!=='NEW') return o.site_id;
   const p=parseOrderProposal(o);
-  return (p.name||'New customer') + (p.addr?' — '+p.addr:'') + ' 🆕';
+  return [p.name, p.addr].filter(Boolean).join(' - ') || 'See notes';
 }
 function orderNotes(o){
   let n=String(o.notes||'');
