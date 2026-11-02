@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v89';
+const APP_BUILD = 'v90';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -669,7 +669,9 @@ function driverJobs(id, date){
   }
   return S.jobs.filter(j=>j.driverId===id && (!date || j.date===date));
 }
-function payOf(trips){ return trips.reduce((a,t)=>a+tripPay(t),0); }
+/* One change here covers every total in the app - pay today, this week, 30 days, the job card
+   footer, the official printed card, earnings and client billing. A rejected trip counts 0. */
+function payOf(trips){ return trips.reduce((a,t)=>a+(tripIsRejected(t)?0:tripPay(t)),0); }
 
 /* ---------------- ui primitives ---------------- */
 function toast(msg){
@@ -1422,6 +1424,31 @@ function tripIsReviewed(t){
   if(!s.size) return false;
   return s.has(String(t.doNo || ('APP-T'+t.id)).toUpperCase());
 }
+/* 2 Nov 2026 (Michelle): a DO the office REJECTED is not paid. The trip STAYS on this card,
+   struck through with the office's reason, so the driver sees what happened instead of finding a
+   smaller number with no explanation. The office's own job card drops it entirely - deliberate,
+   and that half lives in the console. The edit lock is unchanged: rejecting is office-only, so
+   `reviewedDOs` still carries these DOs and tripIsReviewed() still locks them.
+   Tolerant of either payload shape until the sync function settles on one. */
+function rejectedMap(){
+  const raw = (S.sheetDB && S.sheetDB.rejectedDOs) || null;
+  if(!raw) return {};
+  const o = {};
+  if(Array.isArray(raw)){
+    raw.forEach(x => { if(x && x.do_no) o[String(x.do_no).toUpperCase()] = String(x.reason || x.reject_reason || ''); });
+    return o;
+  }
+  Object.keys(raw).forEach(k => { o[String(k).toUpperCase()] = String(raw[k] || ''); });
+  return o;
+}
+function tripIsRejected(t){
+  if(!t) return false;
+  return Object.prototype.hasOwnProperty.call(rejectedMap(), String(t.doNo || ('APP-T'+t.id)).toUpperCase());
+}
+function tripRejectReason(t){
+  if(!t) return '';
+  return rejectedMap()[String(t.doNo || ('APP-T'+t.id)).toUpperCase()] || '';
+}
 /* date maths on the YYYY-MM-DD strings the app stores.
    ⚠ Do NOT use toISOString() here — it converts to UTC, and at SGT (+8) a local midnight
    comes back as the PREVIOUS day. Local getters only. */
@@ -2153,7 +2180,7 @@ function jobCardHTML(driverId, date){
       <td class="c">${esc(t.binIn||'')}</td><td class="c">${esc(t.binOut||'')}</td>
       <td class="c">${esc(t.timeStart||'')}</td><td class="c">${esc(t.timeEnd||'')}</td>
       <td class="c">${esc(t.disposeTo||(j&&j.dumpTo)||'')}</td><td class="c">${esc(ton)}</td>
-      <td class="r">${tripPay(t)?money(tripPay(t)):''}</td><td>${esc(t.remarks||'')}</td></tr>`);
+      <td class="r">${tripIsRejected(t)?`<s>${tripPay(t)?money(tripPay(t)):''}</s>`:(tripPay(t)?money(tripPay(t)):'')}</td><td>${esc(t.remarks||'')}${tripIsRejected(t)?`<div class="jc-sub"><b>REJECTED</b>${tripRejectReason(t)?' — '+esc(tripRejectReason(t)):''}</div>`:''}</td></tr>`);
   });
   for(let i=trips.length;i<10;i++){ rows.push(`<tr class="blank"><td class="c">${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`); }
   return `<!doctype html><html><head><meta charset="utf-8"><title>Driver Daily Job Card — ${esc(d.name)} ${esc(fmtDate(date))}</title>
@@ -2254,9 +2281,9 @@ function vJobCard(){
           const lock = isDriver ? driverFixLock(t) : 'notyours';
           return `<tr onclick="openTripDetail(${t.id})" style="cursor:pointer">
             <td>${i+1}</td>
-            <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span>${isDriver && needsWeight ? `<br><button class="btn slim" style="margin-top:6px" onclick="event.stopPropagation(); openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}${isDriver && !lock ? `<br><button class="btn ghost slim" style="margin-top:6px" onclick="event.stopPropagation(); openTripDetail(${t.id})">✏️ Fix${t.doNo?'':' — add DO no.'}</button>` : ''}${isDriver && lock==='reviewed' ? '<br><span class="muted">🔒 checked by the office</span>' : ''}</td>
+            <td><b>${esc(c?c.name:'?')}</b><br><span class="muted">${esc(ty?ty.label:'')}${t.binOut?' · out '+esc(t.binOut):''}${t.binIn?' · in '+esc(t.binIn):''} · ${doLabel(t)}</span>${isDriver && needsWeight ? `<br><button class="btn slim" style="margin-top:6px" onclick="event.stopPropagation(); openWeighForm(${t.id})">⚖️ Add weight</button>` : ''}${isDriver && !lock ? `<br><button class="btn ghost slim" style="margin-top:6px" onclick="event.stopPropagation(); openTripDetail(${t.id})">✏️ Fix${t.doNo?'':' — add DO no.'}</button>` : ''}${isDriver && lock==='reviewed' && !tripIsRejected(t) ? '<br><span class="muted">🔒 checked by the office</span>' : ''}${tripIsRejected(t) ? `<br><span class="tag" style="background:#fdeaea; color:#b4231f; font-weight:800">REJECTED — NOT PAID</span>${tripRejectReason(t)?`<br><span class="muted">✏️ ${esc(tripRejectReason(t))}</span>`:''}` : ''}</td>
             <td>${esc(t.timeStart||'—')}<br>${esc(t.timeEnd||'')}</td>
-            <td style="text-align:right"><b>${money(tripPay(t))}</b></td>
+            <td style="text-align:right">${tripIsRejected(t)?`<span style="text-decoration:line-through; color:var(--muted)">${money(tripPay(t))}</span>`:`<b>${money(tripPay(t))}</b>`}</td>
           </tr>`;
         }).join('') || `<tr><td colspan="4"><div class="empty">No trips logged on ${fmtDate(day)}.${day===TODAY?' Open a job from My Jobs to start.':''}</div></td></tr>`}
         </tbody>
