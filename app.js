@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v90';
+const APP_BUILD = 'v91';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -390,6 +390,7 @@ const USERS = [
 /* ---- Driver's Trip Incentive (effective 01 May 2026) ---- */
 const TRIP_TYPES = [
   {id:'send',    label:'Send Bin — Island Wide',            base:8,    note:'Empty truck return = full trip by distance'},
+  {id:'send_nc', label:'Send without collect',               base:13,   note:'Bin sent, nothing collected on the same trip (10 Nov 2026, Michelle)'},
   {id:'col_s',   label:'Collect / Exchange — Short',        base:8},
   {id:'col_m',   label:'Collect / Exchange — Middle',       base:13},
   {id:'col_l',   label:'Collect / Exchange — Long',         base:18},
