@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v91';
+const APP_BUILD = 'v92';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -173,7 +173,10 @@ const SALES = ['Kevin', 'Patrick'];
 /* Compactor and 660L added 11 Aug 2026 (Michelle). They are priced per site like any
    other job type; picking one also pre-fills the matching bin type, and 660L alone
    asks how many bins, because one location can put out several 660L at once. */
-const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load','Compactor','660L'];
+/* 11 Nov 2026 (Michelle): 'Send without collect' - a bin is sent and nothing is collected on
+   the same trip. Priced per site in Master data like any other job type, so a site only
+   offers it once the office has given it a price there. */
+const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load','Compactor','660L','Send without collect'];
 /* Job types whose price is multiplied by a quantity. 660L counts BINS (one location can put
    out several at once); Dump counts TRIPS (Michelle, 28 Aug 2026 - a dump run is often several
    loads to the same place, and every trip must be paid, so one job line carries N trips at Z
@@ -205,6 +208,10 @@ const JOB_FLOW = {
   Dump:     { photos:[
       {k:'bin', label:'📷 BIN ON SITE', hint:'sets Time Finish', req:true}],
     bins:[], fixed:true, noDO:true },
+  'Send without collect': { photos:[
+      {k:'in', label:'\ud83d\udcf7 BIN IN \u2014 bin sent, nothing collected', hint:'optional \u00b7 sets Time Delivered', req:false},
+      {k:'do', label:'\ud83d\udcf7 DO', hint:'optional', req:false}],
+    bins:['in'], mark:'in', markLabel:'Time Delivered' },
   Load:     { photos:[
       {k:'in',  label:'📷 BIN IN — empty bin dropped for loading', hint:'optional · sets Time Start', req:false},
       {k:'out', label:'📷 BIN OUT — same bin picked up loaded', hint:'optional · sets Time End', req:false},
