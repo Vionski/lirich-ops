@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v92';
+const APP_BUILD = 'v94';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -176,7 +176,12 @@ const SALES = ['Kevin', 'Patrick'];
 /* 11 Nov 2026 (Michelle): 'Send without collect' - a bin is sent and nothing is collected on
    the same trip. Priced per site in Master data like any other job type, so a site only
    offers it once the office has given it a price there. */
-const JOB_TYPES = ['Exchange','Collect','Delivery','Sell','Dump','Load','Compactor','660L','Send without collect'];
+const JOB_TYPES = ['Exchange','Collect','Delivery','Send without collect','Sell','Dump','Load','Compactor','660L'];
+/* 11 Nov 2026 (Michelle): 'Delivery' is called 'Send with collect' on screen and on paper.
+   The STORED value stays 'Delivery' - it is in 318 rate-card rows, in job orders and in every
+   past collection, and collections are immutable. Only the displayed word changes. */
+const JOB_LABEL = {'Delivery':'Send with collect'};
+function jobTypeName(v){ return JOB_LABEL[v] || v || ''; }
 /* Job types whose price is multiplied by a quantity. 660L counts BINS (one location can put
    out several at once); Dump counts TRIPS (Michelle, 28 Aug 2026 - a dump run is often several
    loads to the same place, and every trip must be paid, so one job line carries N trips at Z
@@ -397,7 +402,6 @@ const USERS = [
 /* ---- Driver's Trip Incentive (effective 01 May 2026) ---- */
 const TRIP_TYPES = [
   {id:'send',    label:'Send Bin — Island Wide',            base:8,    note:'Empty truck return = full trip by distance'},
-  {id:'send_nc', label:'Send without collect',               base:13,   note:'Bin sent, nothing collected on the same trip (10 Nov 2026, Michelle)'},
   {id:'col_s',   label:'Collect / Exchange — Short',        base:8},
   {id:'col_m',   label:'Collect / Exchange — Middle',       base:13},
   {id:'col_l',   label:'Collect / Exchange — Long',         base:18},
@@ -472,11 +476,11 @@ function jobTypeOptions(clientId, siteIdx, selected){
      the DUMPING LOCATION sets the rate (Michelle, 11 Aug 2026). Every job type stays
      available so the operator can still describe the work. */
   if(isLirichClient(clientId)){
-    return JOB_TYPES.map(jt=>`<option value="${jt}" data-price="0" ${jt===selected?'selected':''}>${jt} — set by dumping location</option>`).join('');
+    return JOB_TYPES.map(jt=>`<option value="${jt}" data-price="0" ${jt===selected?'selected':''}>${jobTypeName(jt)} — set by dumping location</option>`).join('');
   }
   const avail = JOB_TYPES.filter(jt => prices[jt] != null);
   if(!avail.length) return '<option value="">— no price set for this site —</option>';
-  return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jt} — ${money(prices[jt])}${QTY_JOB_TYPES.includes(jt)?(jt==='Dump'?' per trip':' each'):''}</option>`).join('');
+  return avail.map(jt=>`<option value="${jt}" data-price="${prices[jt]}" ${jt===selected?'selected':''}>${jobTypeName(jt)} — ${money(prices[jt])}${QTY_JOB_TYPES.includes(jt)?(jt==='Dump'?' per trip':' each'):''}</option>`).join('');
 }
 /* ---- Lirich-own jobs are priced by where the load goes, not where it came from ---- */
 function isLirichClient(clientId){
@@ -519,7 +523,7 @@ function jfRefreshDump(){
   el.innerHTML = '<option value="">— select —</option>' + dumpSelectHTML(v, isLirichClient(jfClientId()));
   if([...el.options].some(o=>o.value===v)) el.value = v;
 }
-function jobTypeLabel(j){ return j.jobType || (ttype(j.task)||{}).label || j.task || ''; }
+function jobTypeLabel(j){ return jobTypeName(j.jobType) || (ttype(j.task)||{}).label || j.task || ''; }
 /* full expected pay for a job = basic price + office-set surcharges */
 function jobPay(j){
   let p = Number(j.price)||0;
@@ -2427,10 +2431,21 @@ function openTripForm(opts){
       </div>
 
       <div class="card" id="tf-times" style="box-shadow:none; background:var(--bg); margin:12px 0 4px; padding:10px 12px; font-size:13px">
-        ⏱️ Times are logged automatically from your photos — you can't change them.</div>
+        ⏱️ Times are logged automatically from your photos.</div>
+      <div class="card" id="tf-mantimes" style="box-shadow:none; background:var(--bg); margin:4px 0; padding:10px 12px">
+        <div style="font-weight:700; margin-bottom:2px">⌨️ Type the times yourself</div>
+        <div class="muted" style="margin-bottom:6px">Only needed when a photo did not set the time. A photo time always wins.</div>
+        <div class="grid2">
+          <div><label class="f">TIME IN</label>${timeInput('tfm-in', 'manTimesSync()')}</div>
+          <div><label class="f">TIME OUT</label>${timeInput('tfm-out', 'manTimesSync()')}</div>
+        </div>
+        <div class="muted" id="tfm-hint" style="margin-top:6px"></div>
+      </div>
       ${job && job.price ? `<div class="payline"><span>${job._ephemeral ? 'Copied job pay (test only)' : 'Pay for this job'}</span><span>${money(jobPay(job))}</span></div>` : ''}
       <div style="margin-top:14px"><button class="btn" onclick="saveTrip(true)">${job && job._ephemeral ? '✅ Finish local test' : '✅ Done — send to office'}</button></div>
       <div style="margin-top:8px"><button class="btn ghost" onclick="saveTrip(false)">${job && job._ephemeral ? '💾 Keep in this session' : "💾 Save — I'll finish later (e.g. waiting for the DO)"}</button></div>`);
+    if(draft && draft.timeInTyped)  setTimeSel('#tfm-in',  draft.timeInTyped);
+    if(draft && draft.timeOutTyped) setTimeSel('#tfm-out', draft.timeOutTyped);
     updateTimesDisplay();
     renderFormThumbs();
     if(!flow.noDO) sigPadInit('tf');
@@ -2607,7 +2622,37 @@ function updateTimesDisplay(){
   /* one loud banner if ANY attached photo was taken on a different day to the job */
   const offCount = tripPhotos.filter(p=>tsOffDay(p.ts)).length;
   const banner = offCount ? `<div class="edo-daywarn">⚠️ ${offCount} photo${offCount===1?'':'s'} taken on a different day to this job (${fmtDate(formJobDate())}). The office will see this flagged.</div>` : '';
-  box.innerHTML = `<div style="font-weight:700; margin-bottom:4px">⏱️ Logged times (from the photos — locked)</div>${rows.join('')}${banner}`;
+  box.innerHTML = `<div style="font-weight:700; margin-bottom:4px">⏱️ Logged times (from the photos)</div>${rows.join('')}${banner}`;
+  manTimesSync();
+}
+/* 12 Nov 2026 — bin photos are optional, so a great many e-DOs went out with empty time
+   boxes. The driver can now type the times. A photo-stamped time still wins; a typed one
+   is used only where the photo left a blank. This keeps the hint under the two boxes
+   honest about which of the two is about to be used. */
+function manTimesSync(){
+  const hint = $('#tfm-hint'); if(!hint) return;
+  const job = ($('#tf-job') && $('#tf-job').value) ? jobById(Number($('#tf-job').value)) : null;
+  const flow = jobFlow(job);
+  const p = photoTimes(flow);
+  /* Sell / Dump have no bin-in photo — their start is the moment the job was accepted */
+  if(flow.fixed && job && job.acceptedAtMs) p.start = job.acceptedAtMs;
+  const srcWord = flow.fixed ? 'when you accepted the job' : 'the photo';
+  const typedIn = getTimeSel('tfm-in'), typedOut = getTimeSel('tfm-out');
+  const bits = [];
+  if(p.start) bits.push('Time in comes from ' + srcWord + ' (' + msToHM(p.start) + ')' + (typedIn ? ' — what you typed is kept as a note only' : ''));
+  else bits.push(typedIn ? '✅ Time in: ' + typedIn + ' (yours)' : '⚠️ No time in yet — add a photo or type it');
+  if(p.end) bits.push('Time out comes from the photo (' + msToHM(p.end) + ')' + (typedOut ? ' — what you typed is kept as a note only' : ''));
+  else bits.push(typedOut ? '✅ Time out: ' + typedOut + ' (yours)' : '⚠️ No time out yet — add a photo or type it');
+  const fin = p.start ? msToHM(p.start) : typedIn, fout = p.end ? msToHM(p.end) : typedOut;
+  if(fin && fout && fout < fin) bits.push('⚠️ Time out is earlier than time in — check them');
+  hint.innerHTML = bits.map(b=>'<div>'+b+'</div>').join('');
+}
+/* the photo-stamped start/end for this job's flow, in ms (0 where there is no photo) */
+function photoTimes(flow){
+  if(flow.start) return {start: firstTs(flow.start), end: firstTs(flow.end)};
+  if(flow.mark)  return {start: firstTs(flow.mark), end: 0};
+  if(flow.fixed) return {start: 0, end: firstTs('bin')};
+  return {start: 0, end: 0};
 }
 function photoThumbHTML(p){
   const off = tsOffDay(p.ts);
@@ -2900,6 +2945,7 @@ async function saveTripInner(final){
 
   let doTypeV, typeId, surcharges, disposeTo, tonnage, distance, remarks;
   let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0;
+  let timeInTyped = '', timeOutTyped = '', timeStartSrc = '', timeEndSrc = '';
   if(isDriver){
     /* driver: photos are the record AND the clock — times can never be typed.
        Neither Save nor Done requires a photo to be present yet — DO/bin photos can be
@@ -2929,6 +2975,15 @@ async function saveTripInner(final){
       tEnd = (draft&&draft.tEnd) || firstTs('bin');
       timeStart = msToHM(tAccept); timeEnd = msToHM(tEnd);
     }
+    /* 12 Nov 2026 — typed times fill whatever the photos left blank. Photo wins where it
+       exists; the typed value is still stored so the office can see both. No swapping is
+       done here — the e-DO builder already applies the earlier-time-is-time-in rule. */
+    timeInTyped  = getTimeSel('tfm-in');
+    timeOutTyped = getTimeSel('tfm-out');
+    timeStartSrc = timeStart ? (flow.fixed ? 'accept' : 'photo') : '';
+    timeEndSrc   = timeEnd   ? 'photo' : '';
+    if(!timeStart && timeInTyped){  timeStart = timeInTyped;  timeStartSrc = 'driver'; }
+    if(!timeEnd   && timeOutTyped){ timeEnd   = timeOutTyped; timeEndSrc   = 'driver'; }
     /* DO number filled by background OCR after save, or by the office from the photo */
   }else{
     doTypeV = $('#tf-dotype .on').dataset.v;
@@ -2943,6 +2998,7 @@ async function saveTripInner(final){
     distance = Number($('#tf-dist').value)||0;
     remarks = $('#tf-remarks').value.trim();
     timeStart = getTimeSel('tf-ts'); timeEnd = getTimeSel('tf-te');
+    timeStartSrc = timeStart ? 'operator' : ''; timeEndSrc = timeEnd ? 'operator' : '';
   }
   const binOut = ((($('#tf-binout')||{}).value)||'').trim().toUpperCase();
   const binIn = ((($('#tf-binin')||{}).value)||'').trim().toUpperCase();
@@ -2982,6 +3038,7 @@ async function saveTripInner(final){
     }
     const patch = {
       binOut, binIn, vehicleNo, timeStart, timeEnd, tAccept, tDO, tBinOut, tBinIn, tEnd,
+      timeInTyped, timeOutTyped, timeStartSrc, timeEndSrc,
       doNo: doNoInput, doType: doTypeV, waste, wasteTypes, wasteOther, vessel, remarks,
       sigName, sigPosition, photos: existingTripPhotos.concat(newPhotoRecords), final,
     };
@@ -3003,6 +3060,10 @@ async function saveTripInner(final){
     binQty: job && job.binQty ? job.binQty : null,
     binOut, binIn, vehicleNo,
     timeStart, timeEnd,
+    /* where each of the two times came from: 'photo' (EXIF / upload), 'driver' (typed on
+       the phone) or 'operator'. Kept for the dMRV evidence trail — a declared time is not
+       the same class of evidence as a photo-stamped one. */
+    timeStartSrc, timeEndSrc, timeInTyped, timeOutTyped,
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
     tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight: 0,
     disposeTo, tonnage, tonnAdj: 0, distance, surcharges, remarks,
@@ -3081,7 +3142,7 @@ function openTripDetail(id){
     <div class="card" style="box-shadow:none; background:var(--bg); margin:8px 0">
       <div class="title" style="font-weight:800">${esc(c?c.name:'?')}</div>
       <div class="muted" style="margin-top:4px">${esc(d.name)} · ${fmtDate(t.date)}</div>
-      <div class="muted" style="margin-top:6px">🛠️ ${esc(t.jobType||(ty?ty.label:''))}${t.binOut?' · bin out '+esc(t.binOut):''}${t.binIn?' · bin in '+esc(t.binIn):''}</div>
+      <div class="muted" style="margin-top:6px">🛠️ ${esc(jobTypeName(t.jobType)||(ty?ty.label:''))}${t.binOut?' · bin out '+esc(t.binOut):''}${t.binIn?' · bin in '+esc(t.binIn):''}</div>
       ${t.waste?`<div class="muted">🗑️ ${esc(t.waste)}</div>`:''}
       ${S.role.kind==='operator' && Number(t.otherFeeAmount)>0?`<div class="muted">➕ Others — ${esc(t.otherFeeReason||'')} · +${money(t.otherFeeAmount)}</div>`:''}
       ${tripTimesHTML(t)}
@@ -3727,11 +3788,12 @@ function fmtTimeTyping(el){
   const d = el.value.replace(/\D/g, '').slice(0, 4); /* keep only up to 4 digits */
   el.value = d.length <= 2 ? d : d.slice(0, d.length - 2) + ':' + d.slice(d.length - 2);
 }
-function timeInput(id){
+function timeInput(id, onChange){
+  const extra = onChange ? ('; ' + onChange) : '';
   return `<div class="row" style="gap:4px">
     <input type="text" id="${id}-t" placeholder="--:--" inputmode="numeric" maxlength="5" style="flex:1.4"
-      oninput="fmtTimeTyping(this)">
-    <select id="${id}-ap" style="flex:1"><option>AM</option><option>PM</option></select>
+      oninput="fmtTimeTyping(this)${extra}">
+    <select id="${id}-ap" style="flex:1" ${onChange?`onchange="${onChange}"`:''}><option>AM</option><option>PM</option></select>
   </div>`;
 }
 /* read the typed time into 24h "HH:MM"; accepts 9:41 / 941 / 22:40 (24h trusted as-is) */
