@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lirich Learn</title>
+<meta name="description" content="Recycling games from Lirich, built on real Singapore sorting rules and the real jobs at Lirich's yard in Gul Drive.">
+<meta name="theme-color" content="#0B1630">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lirich Learn">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="lirich-learn.css">
+<style>
+ *{box-sizing:border-box}
+ html,body{margin:0;color:#fff;
+   background:radial-gradient(90% 50% at 70% -5%,rgba(214,169,58,.18),transparent 60%),
+              linear-gradient(180deg,#13274B 0%,#0F2040 45%,#0B1630 100%) fixed;
+   background-color:#0B1630;min-height:100%}
+ a{color:inherit}
+ .wrap{max-width:1080px;margin:0 auto;padding:18px 18px 56px}
+
+ /* top bar */
+ .top{display:flex;align-items:center;gap:12px}
+ .lock{display:flex;align-items:center;gap:12px;text-decoration:none}
+ .lock img{height:40px;width:auto;display:block}
+ .lock span{font-family:Cinzel,Georgia,serif;font-weight:700;color:#D6A93A;font-size:15px;letter-spacing:.34em;
+   border-left:1px solid rgba(214,169,58,.45);padding-left:12px}
+ .sp{flex:1}
+ .snd{display:flex;align-items:center;gap:8px;background:none;border:1px solid rgba(214,169,58,.35);color:#E7ECF7;
+   border-radius:999px;padding:7px 13px 7px 9px;font:800 13px Nunito,sans-serif;cursor:pointer}
+ .snd i{width:30px;height:18px;border-radius:9px;background:#3A4A6B;position:relative;transition:background .15s}
+ .snd i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+ .snd[aria-pressed=true] i{background:#E8772E}.snd[aria-pressed=true] i::after{left:14px}
+ .snd:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ /* install banner (21 Nov 2026) */
+ .install{display:flex;align-items:center;gap:12px;margin:18px 0 0;padding:12px 14px;border-radius:18px;
+   background:linear-gradient(135deg,rgba(214,169,58,.22),rgba(232,119,46,.14));border:1px solid rgba(214,169,58,.45)}
+ .install[hidden]{display:none}
+ .inst-ic img{width:46px;height:46px;border-radius:12px;display:block}
+ .inst-tx{flex:1;min-width:0}.inst-tx b{display:block;font-weight:900;font-size:15px}.inst-tx span{display:block;font-size:13px;color:#C9D6EE;line-height:1.35}
+ .inst-go{border:0;border-radius:12px;padding:10px 14px;background:#E8772E;color:#fff;font:900 14px Nunito,sans-serif;box-shadow:0 3px 0 #B95514;cursor:pointer}
+ .inst-x{border:0;background:none;color:#C9D6EE;font-size:22px;line-height:1;cursor:pointer;padding:4px}
+ .inst-go:focus-visible,.inst-x:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ /* room for the credits button on a phone (21 Nov 2026) */
+ @media (max-width:430px){ .top{gap:8px} .lock{gap:8px} .lock img{height:34px}
+   .lock span{letter-spacing:.2em;font-size:13px;padding-left:8px} .snd{padding:6px 10px 6px 7px;font-size:12px} .lw-chip{padding:5px 10px} }
+
+ /* hero */
+ .hero{margin:34px 0 18px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:end}
+ h1{font-family:Nunito,sans-serif;font-weight:900;font-size:clamp(38px,7vw,68px);line-height:.98;letter-spacing:-.03em;margin:0}
+ .lede{font-size:17px;line-height:1.5;color:#C9D6EE;max-width:34em;margin:12px 0 0;font-weight:600}
+ .rank{min-width:250px;background:rgba(255,255,255,.05);border:1px solid rgba(214,169,58,.3);border-radius:18px;padding:14px 16px}
+ .rank small{display:block;font-weight:800;font-size:12px;color:#B8C6E2}
+ .rank b{display:block;font-family:Cinzel,Georgia,serif;font-weight:700;color:#F2D27A;font-size:21px;letter-spacing:.04em;margin:3px 0 2px}
+ .rank .kg{font-weight:800;font-size:13px;color:#E7ECF7}
+ .bar{height:9px;border-radius:5px;background:rgba(255,255,255,.12);margin:9px 0 5px;overflow:hidden}
+ .bar i{display:block;height:100%;background:linear-gradient(90deg,#E8772E,#D6A93A);border-radius:5px;width:0;transition:width .8s}
+ .rank .nx{font-size:12px;color:#B8C6E2;font-weight:700}
+
+ /* a clear first choice for a learner who has never seen the eleven-game catalogue */
+ .start{margin:22px 0 12px;padding:18px;border-radius:22px;background:rgba(255,255,255,.045);border:1px solid rgba(214,169,58,.25)}
+ .start h2{font:900 22px Nunito,sans-serif;margin:0 0 3px}.start>.sub{margin:0 0 13px;color:#B8C6E2;font-size:14px;line-height:1.45}
+ .paths{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.path{display:flex;flex-direction:column;align-items:flex-start;min-height:148px;
+   padding:14px;border-radius:16px;background:#fff;color:#13213F;border-top:5px solid var(--pc,#E8772E)}
+ .path small{font-weight:900;color:#6B7690;text-transform:uppercase;font-size:10px;letter-spacing:.05em}.path b{font-size:18px;margin:3px 0}
+ .path p{font-size:12.5px;line-height:1.4;color:#56627C;margin:0 0 10px;flex:1}.path .go{display:inline-block;text-decoration:none;background:#E8772E;
+   color:#fff;border-radius:10px;padding:8px 11px;font-weight:900;font-size:13px;box-shadow:0 3px 0 #B95514}.path .go:focus-visible{outline:3px solid #D6A93A;outline-offset:3px}
+ .path .pg{display:block;font-size:11px;font-weight:800;color:#5A6781;margin-top:8px}
+
+ /* THE ROUTE — the waste chain, with the three games as stops on it */
+ .route{position:relative;display:grid;grid-template-columns:repeat(3,1fr) 120px;gap:16px;margin:26px 0 8px;padding-top:58px}
+ .road{position:absolute;left:0;right:0;top:20px;height:16px;border-radius:8px;background:#22355C;
+   box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+ .road::after{content:"";position:absolute;left:12px;right:12px;top:7px;height:2px;
+   background:repeating-linear-gradient(90deg,#D6A93A 0 18px,transparent 18px 34px);opacity:.7}
+ .truck{position:absolute;top:-4px;width:64px;height:40px;transition:left .9s cubic-bezier(.3,1.2,.4,1);z-index:2}
+ .stop{position:relative;display:flex;flex-direction:column;text-decoration:none;color:#13213F;background:#fff;border-radius:22px;
+   padding:16px 16px 14px;border-top:5px solid #E8772E;box-shadow:0 18px 40px rgba(0,0,0,.35);transition:transform .12s}
+ .stop:hover{transform:translateY(-3px)}
+ .stop:focus-visible{outline:3px solid #F2D27A;outline-offset:4px}
+ .stop::before{content:attr(data-n);position:absolute;top:-52px;left:16px;width:34px;height:34px;border-radius:50%;
+   background:#0B1630;border:3px solid #D6A93A;color:#F2D27A;font:900 15px/28px Nunito,sans-serif;text-align:center}
+ .stop .where{font-weight:800;font-size:12.5px;color:#7A5A12;background:#FFF4DA;border-radius:999px;padding:3px 10px;align-self:flex-start}
+ .stop h2{font-family:Nunito,sans-serif;font-weight:900;font-size:25px;letter-spacing:-.02em;margin:10px 0 4px}
+ .stop p{margin:0 0 12px;font-size:14.5px;line-height:1.45;color:#3A4763;flex:1}
+ .stop .art{height:86px;margin:2px -4px 8px;border-radius:14px;background:#F1F4FA;display:flex;align-items:center;justify-content:center;overflow:hidden}
+ .stop .foot{display:flex;align-items:center;gap:10px}
+ .stars{color:#D6A93A;font-size:17px;letter-spacing:1px;font-weight:900}
+ .stars small{color:#7B869C;font-size:12px;letter-spacing:0;margin-left:4px}
+ .play{margin-left:auto;background:#E8772E;color:#fff;font-weight:900;font-size:15px;border-radius:12px;padding:9px 16px;box-shadow:0 3px 0 #B95514}
+ .end{align-self:start;color:#9FB0D0;font-size:13px;font-weight:700;line-height:1.4;padding:4px 2px}
+ .end::before{content:"";display:block;width:34px;height:34px;margin:-52px 0 18px;border-radius:50%;background:#0B1630;border:3px dashed #5D6E92}
+ .end b{display:block;color:#E7ECF7;font-size:15px}
+
+ /* lower grid */
+ .lower{display:grid;grid-template-columns:1.05fr 1.45fr;gap:18px;margin-top:34px;align-items:start}
+ .panel{background:rgba(255,255,255,.045);border:1px solid rgba(214,169,58,.2);border-radius:22px;padding:18px}
+ .panel h3{font-family:Nunito,sans-serif;font-weight:900;font-size:21px;margin:0 0 4px;letter-spacing:-.01em}
+ .panel .sub{margin:0 0 14px;color:#B8C6E2;font-size:14px;font-weight:600;line-height:1.45}
+
+ /* today's item */
+ .today{background:#fff;color:#13213F;border-radius:18px;padding:16px;text-align:center}
+ .today .nm{font-weight:900;font-size:24px;letter-spacing:-.015em;margin:2px 0 12px}
+ .today .q{font-weight:700;color:#56627C;font-size:13.5px}
+ .today .pic{display:block;width:96px;height:96px;margin:4px auto 0}
+ .dc .dci{display:block;width:48px;height:48px;margin:0 auto 4px}
+ dialog .pic{display:block;width:110px;height:110px;margin:0 auto 6px}
+ .yn{display:flex;gap:10px}
+ .yn button{flex:1;border:0;border-radius:13px;padding:13px 6px;font:900 15px Nunito,sans-serif;color:#fff;cursor:pointer}
+ .yn .y{background:#3F78BD;box-shadow:0 4px 0 #26507F}.yn .n{background:#5D6880;box-shadow:0 4px 0 #3B4458}
+ .yn button:active{transform:translateY(3px);box-shadow:none}
+ .yn button:disabled{opacity:.45;cursor:default}
+ .verdict{margin-top:12px;text-align:left;font-size:14px;line-height:1.5;border-radius:12px;padding:11px 13px;display:none}
+ .verdict.ok{display:block;background:#E7F5EC;color:#1D5A37}.verdict.no{display:block;background:#FBE9ED;color:#7A2335}
+ .verdict b{display:block}
+ .streak{display:flex;align-items:center;gap:12px;margin-top:14px;font-weight:700;color:#C9D6EE;font-size:14px}
+ .streak b{font-size:30px;font-weight:900;color:#F2D27A;line-height:1}
+ .week{display:flex;gap:5px;margin-left:auto}
+ .week i{width:12px;height:12px;border-radius:4px;background:rgba(255,255,255,.12)}
+ .week i.on{background:#D6A93A}
+
+ /* recyclopedia */
+ .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+ .tabs button{border:1px solid rgba(214,169,58,.3);background:none;color:#C9D6EE;border-radius:999px;padding:6px 12px;font:800 13px Nunito,sans-serif;cursor:pointer}
+ .tabs button[aria-selected=true]{background:#D6A93A;color:#13213F;border-color:#D6A93A}
+ .tabs button:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ .dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;max-height:338px;overflow:auto;padding:2px}
+ .dc{position:relative;border:0;border-radius:12px;min-height:112px;padding:9px 8px 8px;text-align:left;cursor:pointer;
+   font:800 12.5px/1.2 Nunito,sans-serif;color:#13213F;background:#fff;border-top:6px solid var(--c)}
+ .dc small{display:block;font-weight:700;font-size:10.5px;color:#6B7690;margin-top:4px}
+ .dc.lock{background:rgba(255,255,255,.06);color:#6E7FA3;border-top-color:rgba(255,255,255,.12);cursor:default}
+ .dc.lock::after{content:"?";position:absolute;right:9px;bottom:5px;font-size:22px;font-weight:900;color:rgba(255,255,255,.14)}
+ .dc:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ .count{font-family:Nunito,sans-serif;font-weight:900;color:#F2D27A}
+ dialog{border:0;border-radius:20px;padding:20px;max-width:380px;width:calc(100% - 32px);color:#13213F;border-top:6px solid var(--c,#D6A93A)}
+ dialog::backdrop{background:rgba(7,14,30,.7)}
+ dialog h4{font:900 22px Nunito,sans-serif;margin:6px 0 8px}
+ dialog p{font-size:15px;line-height:1.55;margin:0 0 14px;color:#2E3B57}
+ dialog .chip{display:inline-block;font-weight:800;font-size:12px;border-radius:999px;padding:3px 10px;background:#F1F4FA}
+ dialog button{width:100%;border:0;border-radius:12px;padding:12px;background:#E8772E;color:#fff;font:900 15px Nunito,sans-serif;cursor:pointer;box-shadow:0 3px 0 #B95514}
+
+ /* the complete waste journey */
+ .more{margin-top:34px}
+ .more h3{font-family:Nunito,sans-serif;font-weight:900;font-size:21px;margin:0 0 4px}
+ .more .sub{margin:0 0 14px;color:#B8C6E2;font-size:14px;font-weight:600}
+ .mlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+ .mlist a{display:block;text-decoration:none;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.03)}
+ .mlist a:hover{border-color:rgba(214,169,58,.5)}
+ .mlist a:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ .mlist b{display:block;font-weight:900;font-size:15.5px}
+ .mlist span{font-size:13px;color:#AEBCD8;font-weight:600}
+ .jstage{display:grid;grid-template-columns:145px 1fr;gap:14px;margin-top:14px;align-items:start}
+ .jlabel{border-left:4px solid #D6A93A;padding:9px 10px;background:rgba(255,255,255,.045);border-radius:0 12px 12px 0}
+ .jlabel b{display:block;font-size:14px;color:#F2D27A}
+ .jlabel span{display:block;font-size:11.5px;line-height:1.35;color:#9FB0D0;margin-top:3px}
+ .mlist a{position:relative;padding-right:74px}
+ .age{position:absolute;right:10px;top:10px;border-radius:999px;padding:3px 8px;background:rgba(214,169,58,.13);
+   color:#F2D27A!important;font-size:10.5px!important;font-weight:900!important;white-space:nowrap}
+ .staff-stage{border:1px solid rgba(232,119,46,.38);border-radius:18px;padding:14px;margin-top:18px;
+   background:linear-gradient(135deg,rgba(232,119,46,.10),rgba(255,255,255,.025))}
+ .staff-stage h4{font:900 17px Nunito,sans-serif;margin:0 0 4px}
+ .staff-stage p{font-size:13px;color:#AEBCD8;margin:0 0 10px;line-height:1.45}
+
+ /* the company behind the learning journey */
+ .real{margin-top:34px;border-radius:22px;padding:22px;background:linear-gradient(135deg,rgba(214,169,58,.13),rgba(255,255,255,.04));
+   border:1px solid rgba(214,169,58,.32)}
+ .real h3{font:900 24px Nunito,sans-serif;margin:0 0 5px}
+ .real>.sub{margin:0;color:#C9D6EE;font-size:14px;line-height:1.5;max-width:62em}
+ .real-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+ .real-card{background:rgba(7,14,30,.42);border-radius:14px;padding:14px}
+ .real-card b{display:block;color:#F2D27A;font-size:15px;margin-bottom:3px}
+ .real-card span{display:block;color:#B8C6E2;font-size:13px;line-height:1.45}
+ .real-actions{display:flex;gap:10px;flex-wrap:wrap}
+ .real-actions a{display:inline-block;text-decoration:none;border-radius:12px;padding:10px 14px;font-weight:900;font-size:13.5px}
+ .real-actions .primary{background:#E8772E;color:#fff;box-shadow:0 3px 0 #B95514}
+ .real-actions .secondary{border:1px solid rgba(214,169,58,.45);color:#F2D27A}
+
+ footer{margin-top:40px;padding-top:18px;border-top:1px solid rgba(214,169,58,.2);display:flex;flex-wrap:wrap;gap:8px 22px;
+   font-size:12.5px;color:#93A3C4;line-height:1.55;font-weight:600}
+ footer .tl{font-family:Cinzel,Georgia,serif;font-weight:700;color:#D6A93A;letter-spacing:.12em;font-size:12px}
+ footer a{color:#C9D6EE}
+ footer button{background:none;border:0;color:#C9D6EE;text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+ .disc{flex-basis:100%;font-size:11.5px;color:#7486AA}
+
+ @media (max-width:860px){
+   .hero{grid-template-columns:1fr}
+   .rank{min-width:0}
+   .route{grid-template-columns:1fr;padding:0 0 0 54px;margin-top:22px;gap:22px}
+   .road{left:14px;right:auto;top:0;bottom:0;width:14px;height:auto}
+   .road::after{left:6px;right:auto;top:12px;bottom:12px;width:2px;height:auto;
+     background:repeating-linear-gradient(180deg,#D6A93A 0 18px,transparent 18px 34px)}
+   .truck{left:-6px!important;width:54px;height:34px;transition:top .9s cubic-bezier(.3,1.2,.4,1)}
+   .stop::before{top:18px;left:-54px}
+   .end::before{margin:0 0 0 -52px;position:absolute}
+   .end{position:relative;padding-left:0}
+   .lower{grid-template-columns:1fr}
+   .jstage{grid-template-columns:1fr}
+   .real-grid{grid-template-columns:1fr}
+   .paths{grid-template-columns:1fr}
+ }
+ @media (prefers-reduced-motion: reduce){ .truck,.bar i{transition:none} .stop{transition:none} }
+</style></head>
+<body>
+<div class="wrap">
+
+<div class="top">
+  <a class="lock" href="index.html"><img src="assets/lirich-mark.png" alt="Lirich"><span>LEARN</span></a>
+  <div class="sp"></div>
+  <span id="credits"></span>
+  <button class="snd" id="snd" aria-pressed="false"><i aria-hidden="true"></i>Sound</button>
+</div>
+
+<section class="hero">
+  <div>
+    <h1>Follow your rubbish.</h1>
+    <p class="lede">Follow one load from your bin to Lirich's yard, through the sorting line and on to its next use. Every mission teaches a real decision made in resource recovery.</p>
+  </div>
+  <div class="rank" id="rank" aria-live="polite">
+    <small>Your Lirich skills</small>
+    <b id="rkT">Trainee</b>
+    <span class="kg" id="rkKg">0 stars mastered · 0 kg diverted</span>
+    <div class="bar"><i id="rkBar"></i></div>
+    <span class="nx" id="rkNx">Earn 3 stars to become a Bin Checker</span>
+  </div>
+</section>
+
+<section class="install" id="install" hidden aria-label="Install Lirich Learn">
+  <div class="inst-ic" aria-hidden="true"><img src="assets/icon-192.png" alt=""></div>
+  <div class="inst-tx"><b>Put Lirich Learn on your home screen</b><span id="instHow">One tap. It opens like an app and works without internet.</span></div>
+  <button id="instGo" class="inst-go" type="button">Install</button>
+  <button id="instX" class="inst-x" type="button" aria-label="Not now">×</button>
+</section>
+
+<section class="start" aria-labelledby="startH">
+  <h2 id="startH">Choose your starting route</h2>
+  <p class="sub">New here? Follow one short route instead of choosing from all eleven missions.</p>
+  <div class="paths">
+    <article class="path" style="--pc:#3F78BD"><small>Most learners · about 25 minutes</small><b>Explorer route</b><p>Make choices at the bin, on the truck, at the tipping floor and on the sorting line.</p><a class="go" id="exploreGo" href="Lirich_BinOrNot_Game.html">Start with Bin or Not?</a><span class="pg" id="explorePg">0 of 5 missions tried</span></article>
+    <article class="path" style="--pc:#D6A93A"><small>Older learners · open-ended</small><b>Operator route</b><p>Design processes, prepare shipments and balance investment across a recovery system.</p><a class="go" id="operatorGo" href="Lirich_BuildTheLine_Game.html">Start with Build the Line</a><span class="pg" id="operatorPg">0 of 5 missions tried</span></article>
+    <article class="path" style="--pc:#E8772E"><small>Lirich staff and adult visitors</small><b>Operations route</b><p>Coordinate real operational pressures across vehicles, bins, sites and the Gul Drive floor.</p><a class="go" id="staffGo" href="Lirich_Dispatch_Game.html">Start Dispatch</a><span class="pg" id="staffPg">Advanced simulation</span></article>
+  </div>
+</section>
+
+<nav class="route" id="route" aria-label="The three jobs, in the order rubbish meets them">
+  <div class="road" aria-hidden="true"></div>
+  <svg class="truck" id="truck" viewBox="0 0 64 40" aria-hidden="true">
+    <rect x="2" y="6" width="38" height="22" rx="3" fill="#D6A93A"/><rect x="6" y="10" width="30" height="3" rx="1.5" fill="#A57E1C"/>
+    <path d="M40 12h12l8 9v7H40z" fill="#E8772E"/><rect x="45" y="15" width="8" height="6" rx="1" fill="#CFE0FF"/>
+    <circle cx="13" cy="31" r="6" fill="#0B1630" stroke="#E7ECF7" stroke-width="2"/><circle cx="50" cy="31" r="6" fill="#0B1630" stroke="#E7ECF7" stroke-width="2"/>
+  </svg>
+
+  <a class="stop" data-n="1" data-g="binornot" data-max="3" href="Lirich_BinOrNot_Game.html">
+    <span class="where">At your bin</span>
+    <h2>Bin or Not?</h2>
+    <p>Twelve everyday things. Blue recycling bin, or not? One minute, every day.</p>
+    <div class="foot"><span class="stars" data-stars></span><span class="play">Play</span></div>
+  </a>
+  <a class="stop" data-n="2" data-g="spot" data-max="12" href="Lirich_SpotTheContaminant_Game.html">
+    <span class="where">On the tipping floor</span>
+    <h2>Spot the Contaminant</h2>
+    <p>A truck has tipped its load. Find the batteries and gas cylinders before they reach the shredder.</p>
+    <div class="foot"><span class="stars" data-stars></span><span class="play">Play</span></div>
+  </a>
+  <a class="stop" data-n="3" data-g="sortit" data-max="18" href="Lirich_SortIt_Game.html">
+    <span class="where">On the sorting line</span>
+    <h2>Sort It!</h2>
+    <p>Match items into the right stream. Six levels, from the kerb all the way to recovery.</p>
+    <div class="foot"><span class="stars" data-stars></span><span class="play">Play</span></div>
+  </a>
+  <div class="end"><b>Semakau</b>Whatever nobody sorts ends up on Singapore's last landfill.</div>
+</nav>
+
+<div class="lower">
+  <section class="panel" aria-labelledby="tdH">
+    <h3 id="tdH">Today's item</h3>
+    <p class="sub">A new one every day. Answer it to keep your streak going.</p>
+    <div class="today" id="today">
+      <div class="q">Does this go in the blue recycling bin?</div>
+      <canvas id="tdPic" class="pic" width="192" height="192" aria-hidden="true"></canvas>
+      <div class="nm" id="tdName">—</div>
+      <div class="yn"><button class="y" id="tdY">Blue bin</button><button class="n" id="tdN">Not the blue bin</button></div>
+      <div class="verdict" id="tdV" role="status"></div>
+    </div>
+    <div class="streak"><b id="stN">0</b><span id="stT">days in a row</span>
+      <div class="week" id="week" aria-hidden="true"></div></div>
+  </section>
+
+  <section class="panel" aria-labelledby="dxH">
+    <h3 id="dxH">Your Recyclopedia <span class="count" id="dxC"></span></h3>
+    <p class="sub">Every item you get right in a game adds its card here. Tap a card to read the rule.</p>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" aria-selected="true" data-t="yes">Blue bin</button>
+      <button role="tab" aria-selected="false" data-t="no">Not the blue bin</button>
+      <button role="tab" aria-selected="false" data-t="haz">Hazards</button>
+    </div>
+    <div class="dex" id="dex" role="tabpanel"></div>
+  </section>
+</div>
+
+<section class="more" aria-labelledby="mrH">
+  <h3 id="mrH">The complete resource journey</h3>
+  <p class="sub">Choose the part of the real waste chain you want to master. Explorer missions use everyday decisions; Operator missions add plant, money and system trade-offs.</p>
+
+  <div class="jstage">
+    <div class="jlabel"><b>1 · Collection</b><span>Keep useful material clean before it reaches the yard.</span></div>
+    <div class="mlist">
+      <a href="Lirich_BinOrNot_Game.html"><b>Bin or Not?</b><span>Make the right decision at the blue bin.</span><span class="age">Explorer</span></a>
+      <a href="Lirich_OnRoute_Game.html"><b>On Route</b><span>Collect the right stream without contaminating the load.</span><span class="age">Explorer</span></a>
+    </div>
+  </div>
+  <div class="jstage">
+    <div class="jlabel"><b>2 · Tipping floor</b><span>Inspect the load before anything reaches a machine.</span></div>
+    <div class="mlist">
+      <a href="Lirich_SpotTheContaminant_Game.html"><b>Spot the Contaminant</b><span>Stop batteries, cylinders and hazardous items at the gate.</span><span class="age">Explorer</span></a>
+    </div>
+  </div>
+  <div class="jstage">
+    <div class="jlabel"><b>3 · Sorting line</b><span>Separate streams, protect quality and design the process.</span></div>
+    <div class="mlist">
+      <a href="Lirich_SortIt_Game.html"><b>Sort It!</b><span>Match items into the right recovery stream.</span><span class="age">Explorer</span></a>
+      <a href="Lirich_PickLine_Game.html"><b>Pick Line</b><span>Balance sorting speed with accuracy.</span><span class="age">Explorer</span></a>
+      <a href="Lirich_BuildTheLine_Game.html"><b>Build the Line</b><span>Put the trommel, magnet and other machines in a working order.</span><span class="age">Operator</span></a>
+    </div>
+  </div>
+  <div class="jstage">
+    <div class="jlabel"><b>4 · Prepare the product</b><span>Make recovered material dense and economical to move.</span></div>
+    <div class="mlist">
+      <a href="Lirich_UpgradeStream_Game.html"><b>Upgrade the Stream</b><span>Aggregate loose material into traded-scale loads.</span><span class="age">Explorer</span></a>
+      <a href="Lirich_LoadTheContainer_Game.html"><b>Load the Container</b><span>Learn why a load cubes out or weighs out.</span><span class="age">Operator</span></a>
+    </div>
+  </div>
+  <div class="jstage">
+    <div class="jlabel"><b>5 · Run the system</b><span>Make investment and policy decisions across the whole chain.</span></div>
+    <div class="mlist">
+      <a href="Lirich_PlantBuilder_Game.html"><b>Plant Builder</b><span>Grow a yard from a grapple to an RDF production line.</span><span class="age">Operator</span></a>
+      <a href="Lirich_ZeroWasteCity_Game.html"><b>Zero Waste City</b><span>Keep Singapore's only landfill open to 2040.</span><span class="age">Operator</span></a>
+    </div>
+  </div>
+
+  <div class="staff-stage">
+    <h4>Lirich Operations Training</h4>
+    <p>Dispatch is an advanced staff and visitor simulation based on Lirich's fleet, bins, sites, tipping floor and marine work. It is separate from pupil progression.</p>
+    <div class="mlist"><a href="Lirich_Dispatch_Game.html"><b>Dispatch</b><span>Run a five-day Lirich operations week.</span><span class="age">Staff</span></a></div>
+  </div>
+</section>
+
+<section class="real" aria-labelledby="realH">
+  <h3 id="realH">The real Lirich behind the games</h3>
+  <p class="sub">These missions simplify decisions made by Lirich Resources teams serving marine, industrial and commercial customers in Singapore. The game ends on screen; the real work continues through collection, recovery and documented disposal.</p>
+  <div class="real-grid">
+    <div class="real-card"><b>Collect safely</b><span>Match the waste, container, vehicle and route before a load moves.</span></div>
+    <div class="real-card"><b>Recover resources</b><span>Inspect mixed loads, protect clean streams and prepare material for its next use.</span></div>
+    <div class="real-card"><b>Keep the chain accountable</b><span>Coordinate bins, weigh loads and document where material goes.</span></div>
+  </div>
+  <div class="real-actions">
+    <a class="primary" href="https://www.lirichgroup.com/ourcompanies/lirich-resources/" target="_blank" rel="noopener">See Lirich Resources</a>
+    <a class="secondary" href="staff.html">Teacher and staff guide</a>
+  </div>
+</section>
+
+<footer>
+  <span class="tl">ENRICHMENT OF RESOURCES</span>
+  <span>Lirich Resources Pte Ltd · 23 Gul Drive, Singapore</span>
+  <a href="leaderboard.html">Team board</a>
+  <a href="staff.html">Staff and teacher page</a>
+  <a href="beta-guide.html">Privacy, safety and accessibility</a>
+  <a href="beta-feedback.html">Beta feedback sheet</a>
+  <button id="reset">Clear my progress on this device</button>
+  <span class="disc" id="disc">Sorting rules from NEA's published list. No accounts and nothing personal is saved. Stars, cards and streaks stay in this browser on this device only.</span>
+</footer>
+</div>
+
+<dialog id="dlg"><canvas id="dlP" class="pic" width="220" height="220" aria-hidden="true"></canvas><span class="chip" id="dlC"></span><h4 id="dlN"></h4><p id="dlR"></p><button id="dlX">Close</button></dialog>
+
+<script src="lirich-rules.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const L=window.LirichLearn, R=window.LirichRules;
+
+/* ---- rank and route -------------------------------------------------------------- */
+function paint(){
+  const s=L.store();
+  const skillSteps=[
+    {n:0,t:'Trainee'},{n:3,t:'Bin Checker'},{n:6,t:'Safety Spotter'},
+    {n:10,t:'Line Sorter'},{n:15,t:'Line Lead'},{n:18,t:'Resource Champion'}
+  ];
+  const mastered=['binornot','spot','sortit'].reduce((n,g)=>n+L.starsTotal(g),0);
+  let si=0; while(si<skillSteps.length-1 && mastered>=skillSteps[si+1].n) si++;
+  const cur=skillSteps[si], next=skillSteps[si+1];
+  $('rkT').textContent=cur.t;
+  $('rkKg').textContent=mastered+' stars mastered · '+Math.round(s.kg).toLocaleString('en-SG')+' kg diverted';
+  const pct=next ? (mastered-cur.n)/(next.n-cur.n) : 1;
+  $('rkBar').style.width=Math.round(Math.max(0,Math.min(1,pct))*100)+'%';
+  $('rkNx').textContent=next ? (next.n-mastered)+' more '+((next.n-mastered)===1?'star':'stars')+' to '+next.t : 'All flagship skills mastered';
+
+  let reached=0;
+  document.querySelectorAll('.stop').forEach((a,i)=>{
+    const g=a.dataset.g, max=+a.dataset.max, n=L.starsTotal(g), played=s.games[g]&&s.games[g].runs;
+    a.querySelector('[data-stars]').innerHTML='★ '+n+'<small>of '+max+'</small>';
+    if(played||n) reached=i+1;
+    a.setAttribute('aria-label',a.querySelector('h2').textContent+'. '+n+' of '+max+' stars. Play.');
+  });
+  placeTruck(Math.max(0,reached-1));
+  $('snd').setAttribute('aria-pressed',String(!!s.sound));
+  paintPaths(s);
+}
+function paintPaths(s){
+  const files={binornot:'Lirich_BinOrNot_Game.html',onroute:'Lirich_OnRoute_Game.html',spot:'Lirich_SpotTheContaminant_Game.html',sortit:'Lirich_SortIt_Game.html',pickline:'Lirich_PickLine_Game.html',buildtheline:'Lirich_BuildTheLine_Game.html',upgrade:'Lirich_UpgradeStream_Game.html',loadcontainer:'Lirich_LoadTheContainer_Game.html',plantbuilder:'Lirich_PlantBuilder_Game.html',zerowastecity:'Lirich_ZeroWasteCity_Game.html'};
+  const names={binornot:'Bin or Not?',onroute:'On Route',spot:'Spot the Contaminant',sortit:'Sort It!',pickline:'Pick Line',buildtheline:'Build the Line',upgrade:'Upgrade the Stream',loadcontainer:'Load the Container',plantbuilder:'Plant Builder',zerowastecity:'Zero Waste City'};
+  function route(ids,link,progress){
+    const tried=ids.filter(id=>s.games[id]&&s.games[id].runs).length;
+    const next=ids.find(id=>!(s.games[id]&&s.games[id].runs))||ids[ids.length-1];
+    $(link).href=files[next]; $(link).textContent=(tried?'Continue with ':'Start with ')+names[next];
+    $(progress).textContent=tried+' of '+ids.length+' missions tried';
+  }
+  route(['binornot','onroute','spot','sortit','pickline'],'exploreGo','explorePg');
+  route(['buildtheline','upgrade','loadcontainer','plantbuilder','zerowastecity'],'operatorGo','operatorPg');
+}
+function placeTruck(i){
+  const stops=document.querySelectorAll('.stop'), t=$('truck'), r=$('route').getBoundingClientRect(), b=stops[i].getBoundingClientRect();
+  if(matchMedia('(max-width:860px)').matches){ t.style.left=''; t.style.top=(b.top-r.top-28)+'px'; }
+  else { t.style.top=''; t.style.left=(b.left-r.left+60)+'px'; }
+}
+addEventListener('resize',paint);
+
+/* ---- today's item: one item per calendar day, the same for everyone --------------- */
+function hash(str){ let h=2166136261; for(const ch of str){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+const pool=R.items.slice();
+const item=pool[hash(L.today())%pool.length];
+$('tdName').textContent=item.name;
+/* the item's own picture, wherever one exists; a missing sprite file changes nothing else */
+function pic(cv,name){ const g=cv.getContext('2d'); g.clearRect(0,0,cv.width,cv.height);
+  const k=window.LirichSprites&&LirichSprites.forItem(name); cv.style.display=k?'':'none';
+  if(k){ try{ LirichSprites.draw(g,k,0,0,cv.width); }catch(e){ cv.style.display='none'; } } }
+pic($('tdPic'),item.name);
+function streakUI(){
+  const st=L.store().streak, t=L.today();
+  $('stN').textContent=st.n||0;
+  $('stT').textContent=(st.n===1?'day':'days')+' in a row'+(st.last===t?', today done':'');
+  const k=Math.min(7,st.n||0);
+  $('week').innerHTML=Array.from({length:7},(_,i)=>'<i class="'+(i<k?'on':'')+'"></i>').join('');
+}
+function answer(said){
+  const right=(said===1)===(item.ok===1);
+  $('tdY').disabled=$('tdN').disabled=true;
+  const v=$('tdV'); v.className='verdict '+(right?'ok':'no');
+  v.innerHTML='<b>'+(right?'Correct':'Not quite')+' — '+(item.ok?'blue bin':'not the blue bin')+'</b>'+item.rule;
+  const c=L.centre($('today'));
+  if(right){ L.fx.burst(c.x,c.y,'#D6A93A',18); L.sfx('good'); } else { L.fx.shake($('today')); L.sfx('bad'); }
+  L.learn(item.name,right,{cat:'item'});
+  const s=L.store(); s.dailyDone=L.today()+':'+(right?1:0); L.save();
+  L.daily(); streakUI(); renderDex();
+  try { L.earn(right?2:1, right ? "Today's item, right first time" : "Today's item answered"); } catch(e) {}
+}
+$('tdY').onclick=()=>answer(1); $('tdN').onclick=()=>answer(0);
+(function(){ const d=(L.store().dailyDone||'').split(':');
+  if(d[0]===L.today()){ $('tdY').disabled=$('tdN').disabled=true; const right=d[1]==='1';
+    $('tdV').className='verdict '+(right?'ok':'no');
+    $('tdV').innerHTML='<b>Done for today — '+(item.ok?'blue bin':'not the blue bin')+'</b>'+item.rule+' Come back tomorrow for a new one.'; } })();
+
+/* ---- the Recyclopedia ------------------------------------------------------------- */
+let tab='yes';
+function renderDex(){
+  const dex=L.store().dex;
+  const got=n=>!!(dex[n]&&dex[n].ok>0);
+  const yes=R.items.filter(i=>i.ok===1), no=R.items.filter(i=>i.ok===0);
+  const haz=Object.keys(dex).filter(n=>dex[n].cat==='hazard'&&dex[n].ok);
+  const total=R.items.length+L.hazardCount;
+  const have=R.items.filter(i=>got(i.name)).length+haz.length;
+  $('dxC').textContent=have+' / '+total;
+  let html='';
+  if(tab==='haz'){
+    html=haz.map(n=>card(n,'#C0455F','Hazard',true)).join('')+
+      Array.from({length:Math.max(0,L.hazardCount-haz.length)},()=>card('Not found yet','','',false)).join('');
+  } else {
+    const list=(tab==='yes'?yes:no).slice().sort((a,b)=>(got(b.name)-got(a.name))||a.name.localeCompare(b.name));
+    html=list.map(i=>got(i.name)?card(i.name,R.colour(i.s),R.streams[i.s].name,true):card('Not found yet','','',false)).join('');
+  }
+  $('dex').innerHTML=html;
+  $('dex').querySelectorAll('.dc[data-n]').forEach(b=>pic(b.querySelector('.dci'),b.dataset.n));
+}
+function card(n,c,sub,open){
+  const e=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  return open ? '<button class="dc" style="--c:'+c+'" data-n="'+e(n)+'"><canvas class="dci" width="96" height="96" aria-hidden="true"></canvas>'+e(n)+'<small>'+e(sub)+'</small></button>'
+              : '<div class="dc lock" aria-label="Locked card"></div>';
+}
+$('tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+  tab=b.dataset.t; [...$('tabs').children].forEach(x=>x.setAttribute('aria-selected',String(x===b))); renderDex(); });
+$('dex').addEventListener('click',e=>{
+  const b=e.target.closest('.dc:not(.lock)'); if(!b) return;
+  const n=b.dataset.n, it=R.find(n), d=L.store().dex[n]||{};
+  const dl=$('dlg');
+  dl.style.setProperty('--c', it?R.colour(it.s):'#C0455F');
+  $('dlC').textContent = it ? (it.ok?'Blue bin':'Not the blue bin') : 'Hazard: never in a general skip';
+  $('dlN').textContent=n; pic($('dlP'),n);
+  $('dlR').innerHTML = it ? it.rule : (d.r ? String(d.r).replace(/</g,'&lt;') : '');
+  dl.showModal ? dl.showModal() : dl.setAttribute('open','');
+});
+$('dlX').onclick=()=>{ const d=$('dlg'); d.close ? d.close() : d.removeAttribute('open'); };
+
+/* ---- settings --------------------------------------------------------------------- */
+$('snd').onclick=()=>{ const on=!L.store().sound; L.setSound(on); paint(); };
+/* two taps, not a browser confirm(): a modal dialog would block the page */
+$('reset').onclick=()=>{ const r=$('reset');
+  if(!r.dataset.arm){ r.dataset.arm='1'; r.textContent='Tap again to clear everything'; setTimeout(()=>{ delete r.dataset.arm; r.textContent='Clear my progress on this device'; },4000); return; }
+  delete r.dataset.arm; r.textContent='Progress cleared';
+  L.reset(); paint(); streakUI(); renderDex();
+  $('tdY').disabled=$('tdN').disabled=false; $('tdV').className='verdict'; };
+try { $('disc').textContent=R.disclaimer()+' No accounts and nothing personal is saved. Stars, cards and streaks stay in this browser on this device only.'; } catch(e) {}
+
+paint(); streakUI(); renderDex();
+try { if(window.LirichWallet) $('credits').appendChild(LirichWallet.chip()); } catch(e) {}
+
+/* ---- install as an app (21 Nov 2026) ------------------------------------------------
+   Android / Chrome / Edge raise beforeinstallprompt: the banner's button opens the real
+   install dialog. iPhone and iPad Safari have no such event, so the banner explains the
+   two taps instead. Nothing shows once the app is installed, or for a week after "×". */
+(function(){
+  var standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone) return;
+  var KEY='lirich-learn-install-later', later=0;
+  try { later = +localStorage.getItem(KEY) || 0; } catch(e) {}
+  if (Date.now() - later < 7*864e5) return;
+  var bar=$('install'), deferred=null;
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred=e; bar.hidden=false; });
+  if (ios) {
+    $('instHow').textContent = 'In Safari, tap the Share button, then "Add to Home Screen".';
+    $('instGo').textContent = 'How'; bar.hidden=false;
+  }
+  $('instGo').onclick = function(){
+    if (deferred) { deferred.prompt(); deferred.userChoice.then(function(){ deferred=null; bar.hidden=true; }); return; }
+    $('instHow').innerHTML = '<b style="display:inline">1.</b> Tap Share <span aria-hidden="true">⎋</span> at the bottom of Safari. <b style="display:inline">2.</b> Choose "Add to Home Screen".';
+  };
+  $('instX').onclick = function(){ bar.hidden=true; try { localStorage.setItem(KEY, String(Date.now())); } catch(e) {} };
+  addEventListener('appinstalled', function(){ bar.hidden=true; });
+})();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(paint);
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body></html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Pick Line — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pick Line">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:560px;height:100%;max-height:940px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ .stat.warn b{color:var(--bad)}
+ #belt{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;min-height:0}
+ #coach{min-height:34px;margin:0 12px 2px;border-radius:10px;padding:7px 10px;font-size:12px;
+   line-height:1.35;font-weight:700;color:var(--ink2);background:rgba(255,255,255,.045)}
+ #coach.good{color:#CFF2DD;background:rgba(63,164,107,.16)}
+ #coach.bad{color:#FFD7DF;background:rgba(192,69,95,.18)}
+ canvas{border-radius:12px;background:rgba(255,255,255,.05);max-width:100%;max-height:100%;
+   box-shadow:0 10px 30px rgba(0,0,0,.35)}
+ #keys{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;padding:8px 12px 12px;flex:0 0 auto}
+ .k{border:0;border-radius:12px;padding:15px 4px;font-size:13px;font-weight:700;cursor:pointer;
+   line-height:1.25}
+ .k small{display:block;font-size:9px;opacity:.8;font-weight:400}
+ .k:active{transform:translateY(2px)}
+ footer{padding:0 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:410px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;
+   font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+ #countdown{position:absolute;inset:0;display:none;place-items:center;background:rgba(9,14,26,.72);
+   z-index:8;font-size:clamp(72px,24vw,132px);font-weight:900;color:#F2D27A;text-shadow:0 8px 30px #000}
+ #countdown.on{display:grid}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Pick Line</b></div><div class="spacer"></div>
+  <div class="rt">RATE<b id="hRate">—</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Diverted</span><b id="hKg">0 kg</b></div>
+  <div class="stat"><span>Streak</span><b id="hSt">0</b></div>
+  <div class="stat" id="mBox"><span>Mistakes</span><b id="hMiss">0/5</b></div>
+</div>
+<div id="belt"><canvas id="cv" width="520" height="330"></canvas></div>
+<div id="coach" role="status" aria-live="polite">First three picks: watch the item enter the orange pick zone, then choose its stream.</div>
+<!-- The five sort keys are built by script from lirich-rules.js. They used to carry the
+     stream hexes inline, which made this file a second copy of the palette, and white
+     text on every one of them — which failed the contrast floor on paper, metal and
+     glass. Both problems are fixed in one place now. -->
+<div id="keys"></div>
+<footer>Pick rates are illustrative. Published vendor figures put a human sorter around 30–40 picks a
+  minute and a robotic picker up to about 70 — that gap is the point of the level.</footer>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">A timing game</div><h1>Pick Line</h1>
+  <p>Material comes down the belt. When an item reaches the <b>pick zone</b>, send it to the right
+     stream before it passes.</p>
+  <div class="fact"><b>Anything you miss is contamination.</b> It carries on down the line and ends up
+     in the wrong bale — which is exactly how a load gets rejected in real life.</div>
+  <p style="font-size:12.5px;color:#5B6472">Keys 1–5, or tap. A 3–2–1 countdown gives you time to
+     find the controls. It speeds up. Five mistakes and the line stops.</p>
+  <button class="btn" id="btnStart">Start the belt</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag">Line stopped</div><h1 id="eTitle">—</h1>
+  <p id="eBody"></p>
+  <div class="row2"><div class="cell"><span>Diverted</span><b id="eKg">—</b></div>
+    <div class="cell"><span>Your rate</span><b id="eRate">—</b></div></div>
+  <div class="fact" id="eFact"></div>
+  <button class="btn" id="btnAgain">Run it again</button>
+</div></div>
+<div id="countdown" aria-live="assertive"></div>
+</div>
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+if (!window.LirichRules) {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.innerHTML =
+      '<div style="font:16px/1.6 system-ui,sans-serif;max-width:34em;margin:12vh auto;padding:0 6vw;color:#2B3B55">' +
+      '<h1 style="font-size:1.3em">Missing file</h1>' +
+      '<p><b>lirich-rules.js</b> is not in this folder. Every Lirich Learn game reads its sorting ' +
+      'rules from that one file, so it will not run without it.</p>' +
+      '<p>Copy <b>lirich-rules.js</b> next to this game and reload.</p></div>';
+  });
+  throw new Error('lirich-rules.js not loaded');
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================================
+   Pick Line — Lirich Learn.  Game 9 of the basket.
+   Streams follow NEA's blue-bin categories. "Reject" is anything on the not-recyclable
+   list — the same five blockers used in Sort It!
+   ===================================================================================== */
+/* Belt items and stream colours come from lirich-rules.js — the shared file.
+   Anything not on NEA's recyclable list arrives in the reject lane automatically. */
+const KINDS = LirichRules.views.pickLineKinds();
+const COL   = LirichRules.views.pickLineColours();
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+const W=520,H=330, ZONE={x:200,w:120};
+let items=[], kg=0, streak=0, best=0, miss=0, picks=0, resolved=0, t0=0,
+    speed=0.075, spawnT=0, running=false, last=0, hitFlash=0;
+let coachTimer=0;
+let contUsed=false, pauseAt=0;   // one Continue per round — lirich-wallet.js (21 Nov 2026)
+
+function coach(text, kind){
+  const el=$('coach');
+  el.textContent=text; el.className=kind||'';
+  clearTimeout(coachTimer);
+  coachTimer=setTimeout(()=>{ el.className=''; el.textContent='Choose a stream only while the item is inside the orange pick zone.'; },1500);
+}
+
+function reset(){
+  items=[]; kg=0; streak=0; best=0; miss=0; picks=0; resolved=0;
+  contUsed=false; speed=0.075; spawnT=0; running=true; last=performance.now(); t0=last; hitFlash=0;
+  upd(); requestAnimationFrame(loop);
+}
+function upd(){
+  $('hKg').textContent=(Math.round(kg*100)/100).toFixed(2)+' kg';
+  $('hSt').textContent=streak;
+  $('hMiss').textContent=miss+'/5';
+  $('mBox').classList.toggle('warn',miss>=3);
+  const mins=(performance.now()-t0)/60000;
+  $('hRate').textContent = mins>0.15 ? Math.round(picks/mins)+'/min' : '—';
+}
+function spawn(){
+  const k=KINDS[Math.floor(Math.random()*KINDS.length)];
+  items.push({k, x:W+30, y:H*0.52, done:false});
+}
+function loop(now){
+  if(!running) return;
+  const dt=Math.min(50, now-last); last=now;
+  spawnT-=dt;
+  const learning = resolved<3;
+  if(spawnT<=0){ spawn(); spawnT = learning ? 1900 : Math.max(430, 1150 - (now-t0)/60); }
+  /* The first three pieces are coached practice. Their slower belt changes neither a
+     goal nor a score multiplier; it gives a new player enough time to read the item,
+     find the stream controls and understand the pick zone before normal pace begins. */
+  speed = learning ? 0.022 : 0.075 + (now-t0)/1000*0.0016;
+  items.forEach(it=>it.x -= speed*dt*10);
+  items = items.filter(it=>{
+    if(it.x < -40){
+      if(!it.done){ miss++; resolved++; streak=0; upd();
+        coach('Missed '+it.k.n+' — it belongs in '+LirichRules.streams[it.k.s].name+'.','bad');
+        if(miss>=5){ lose(); return false; } }
+      return false;
+    }
+    return true;
+  });
+  if(hitFlash>0) hitFlash-=dt;
+  draw(); requestAnimationFrame(loop);
+}
+function draw(){
+  cx.clearRect(0,0,W,H);
+  // belt — 21 Oct 2026: the shared sorting-hall scene when lirich-sprites.js is loaded
+  const off=(performance.now()*speed*6)%36;
+  const SC = window.LirichSprites && LirichSprites.scene;
+  if(SC){ SC.hall(cx,W,H); SC.belt(cx,0,H*0.40,W,H*0.26,off); }
+  else {
+  cx.fillStyle='#232F45'; cx.fillRect(0,H*0.40,W,H*0.26);
+  cx.strokeStyle='rgba(255,255,255,.10)'; cx.lineWidth=2;
+  for(let x=-36;x<W+36;x+=36){ cx.beginPath(); cx.moveTo(x-off,H*0.40); cx.lineTo(x-off-14,H*0.66); cx.stroke(); }
+  }
+  // pick zone
+  cx.fillStyle = hitFlash>0 ? 'rgba(63,164,107,.22)' : 'rgba(224,124,46,.13)';
+  cx.fillRect(ZONE.x,H*0.34,ZONE.w,H*0.38);
+  cx.strokeStyle='rgba(224,124,46,.85)'; cx.lineWidth=2;
+  cx.strokeRect(ZONE.x,H*0.34,ZONE.w,H*0.38);
+  cx.fillStyle='rgba(185,85,20,.95)'; cx.font='800 11px system-ui'; cx.textAlign='center';
+  cx.fillText('PICK ZONE', ZONE.x+ZONE.w/2, H*0.30);
+  // items
+  items.forEach(it=>{
+    if(it.done) return;
+    const s=46;
+    const sk = window.LirichSprites && LirichSprites.forItem(it.k.n);
+    if(sk){
+      /* the picture on a white tile, framed in its stream colour as before, so the
+         colour cue the game was tuned with is unchanged; the name sits under it */
+      cx.globalAlpha = inZone(it)?1:0.88;
+      cx.fillStyle=COL[it.k.s]; roundRect(it.x-s/2-3, it.y-s/2-9, s+6, s+6, 12); cx.fill();
+      cx.fillStyle='#fff'; roundRect(it.x-s/2, it.y-s/2-6, s, s, 10); cx.fill();
+      LirichSprites.draw(cx, sk, it.x-s/2+3, it.y-s/2-4, s-6);
+      cx.globalAlpha=1;
+      cx.font='800 10px Nunito,system-ui'; cx.textAlign='center';
+      const tw=Math.min(78, cx.measureText(it.k.n).width+10);
+      cx.fillStyle='rgba(19,33,63,.88)'; roundRect(it.x-tw/2, it.y+s/2-2, tw, 15, 7); cx.fill();
+      cx.fillStyle='#fff'; cx.fillText(it.k.n, it.x, it.y+s/2+9);
+    } else {
+      cx.fillStyle=COL[it.k.s];
+      cx.globalAlpha = inZone(it)?1:0.82;
+      roundRect(it.x-s/2, it.y-s/2, s, s, 9); cx.fill();
+      cx.globalAlpha=1;
+      cx.fillStyle = LirichRules.ink(it.k.s);
+      cx.font='700 10.5px system-ui'; cx.textAlign='center';
+      wrap(it.k.n, it.x, it.y-2, 44);
+    }
+  });
+  // ground shadow
+  if(!SC){ cx.fillStyle='rgba(0,0,0,.18)'; cx.fillRect(0,H*0.66,W,4); }
+}
+function roundRect(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+function wrap(txt,x,y,max){
+  const words=txt.split(' ');
+  if(words.length===1||cx.measureText(txt).width<=max){ cx.fillText(txt,x,y+4); return; }
+  cx.fillText(words[0],x,y-2); cx.fillText(words.slice(1).join(' '),x,y+10);
+}
+function inZone(it){ return it.x>ZONE.x-10 && it.x<ZONE.x+ZONE.w+10; }
+function pick(stream){
+  if(!running) return;
+  const it = items.find(i=>!i.done && inZone(i));
+  if(!it){ miss++; streak=0; coach('Wait until an item is inside the orange pick zone.','bad'); upd(); if(miss>=5) lose(); return; }
+  it.done=true; picks++;
+  resolved++;
+  if(it.k.s===stream){
+    streak++; best=Math.max(best,streak);
+    kg += it.k.kg*(it.k.s==='reject'?0.3:1)*(1+Math.min(2,streak*0.06));
+    hitFlash=140;
+    coach(it.k.n+' → '+LirichRules.streams[it.k.s].name+'. Clean pick.','good');
+    items=items.filter(i=>i!==it);
+  } else {
+    miss++; streak=0;
+    coach(it.k.n+' belongs in '+LirichRules.streams[it.k.s].name+', not '+LirichRules.streams[stream].name+'.','bad');
+    items=items.filter(i=>i!==it);
+    if(miss>=5){ upd(); lose(); return; }
+  }
+  upd();
+}
+/* Five mistakes would stop the line. Offer one Continue first: back to four mistakes and
+   a cleared belt. The paused time is taken off the clock so the picks-per-minute rate and
+   the belt speed are unaffected by how long the offer sat on screen. */
+function lose(){
+  running=false; pauseAt=performance.now();
+  if(!contUsed && window.LirichWallet){
+    contUsed=true;
+    LirichWallet.offerContinue({ title:'The line is about to stop', what:'one more chance (back to 4 of 5 mistakes)',
+      use:()=>{ miss=4; items=[]; const now=performance.now(); t0+=now-pauseAt; last=now; running=true; upd(); requestAnimationFrame(loop); },
+      decline:end });
+    return;
+  }
+  end();
+}
+function end(){
+  running=false;
+  const mins=(performance.now()-t0)/60000;
+  const rate = mins>=0.15 ? Math.round(picks/mins) : 0;   // too short a run to quote a rate
+  const acc  = picks>0 ? (picks-miss)/picks : 0;
+  const good = rate>=40 && acc>=0.85;
+  $('eTitle').textContent = good ? 'Faster than a human sorter'
+    : (rate>=25 && acc>=0.75) ? 'A working pace'
+    : acc<0.6 ? 'Speed without accuracy is contamination'
+    : 'The line beat you';
+  $('eBody').textContent = 'Five mistakes and the line stops. Best streak: '+best+'.';
+  $('eKg').textContent=(Math.round(kg*100)/100).toFixed(2)+' kg';
+  $('eRate').textContent = rate>0 ? rate+'/min' : '\u2014';
+  $('eFact').innerHTML = good
+    ? '<b>Now hold that for eight hours.</b> Published vendor figures put a human sorter at roughly 30–40 picks a minute. A robotic picker is quoted at up to about 70, and it does not slow down after lunch.'
+    : '<b>This is why sorting is the bottleneck.</b> A human sorter manages roughly 30–40 picks a minute. Robots are quoted at up to about 70 — which is what the automation in the plant is actually buying.';
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer: records the run, offers a team name, shows the board status */
+  try { LirichLearn.run('pickline', kg, true); } catch(e) {}
+  try { LirichScores.finish('pickline', kg, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+/* Build the sort keys from the shared file: one source for the colour, and an ink
+   colour chosen by measured contrast rather than by assuming white works on everything.
+   Paper, metal and glass now take navy ink; plastic keeps white and stays bold, because
+   nothing reaches 4.5:1 on that blue. */
+(function(){
+  var order = ['paper','plastic','metal','glass','reject'];
+  var host = document.getElementById('keys');
+  order.forEach(function(k, i){
+    var b = document.createElement('button');
+    b.className = 'k'; b.dataset.s = k;
+    b.style.background = LirichRules.colour(k);
+    b.style.color = LirichRules.ink(k);
+    b.innerHTML = LirichRules.streams[k].name + '<small>' + (i+1) + '</small>';
+    host.appendChild(b);
+  });
+})();
+document.querySelectorAll('.k').forEach(b=>b.onclick=()=>pick(b.dataset.s));
+addEventListener('keydown',e=>{
+  const m={'1':'paper','2':'plastic','3':'metal','4':'glass','5':'reject'};
+  if(m[e.key]){ e.preventDefault(); pick(m[e.key]); }
+});
+function countedStart(){
+  running=false;
+  const el=$('countdown'); let n=3;
+  el.textContent=n; el.classList.add('on');
+  const tick=setInterval(()=>{
+    n--;
+    if(n>0){ el.textContent=n; return; }
+    clearInterval(tick); el.textContent='SORT';
+    setTimeout(()=>{ el.classList.remove('on'); reset(); },420);
+  },650);
+}
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); countedStart(); };
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); countedStart(); };
+draw();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

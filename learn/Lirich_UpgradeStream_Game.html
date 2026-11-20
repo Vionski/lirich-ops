@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Upgrade the Stream — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Upgrade the Stream">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;--ink2:#AEBCD4}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:500px;height:100%;max-height:920px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ #board{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 12px;min-height:0}
+ canvas{touch-action:none;border-radius:14px;background:rgba(255,255,255,.05);max-width:100%;max-height:100%;
+   box-shadow:0 10px 30px rgba(0,0,0,.35)}
+ .chain{padding:6px 14px 4px;font-size:10.5px;color:var(--ink2);line-height:1.6;flex:0 0 auto}
+ .chain b{color:#fff}
+ .hint{padding:0 14px 6px;font-size:11px;color:#7C8AA3;flex:0 0 auto}
+ footer{padding:2px 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:400px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;
+   font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+</style>
+<link rel="stylesheet" href="lirich-learn.css">
+<style>
+ /* 21 Oct 2026: the same bright yard-and-sky board as Sort It!, framed in white and gold */
+ #board canvas{background:linear-gradient(180deg,#BFE6FF 0%,#E4F5FF 55%,#D7F0D2 100%);
+   border:4px solid #fff;border-radius:22px;box-shadow:0 0 0 2px rgba(214,169,58,.55),0 16px 40px rgba(0,0,0,.45)}
+</style></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Upgrade the Stream</b></div><div class="spacer"></div></header>
+<div id="hud">
+  <div class="stat"><span>Diverted</span><b id="hKg">0 kg</b></div>
+  <div class="stat"><span>Best tier</span><b id="hBest">Bottle</b></div>
+  <div class="stat"><span>Moves</span><b id="hMv">0</b></div>
+</div>
+<div id="board"><canvas id="cv"></canvas></div>
+<div class="chain" id="chain"></div>
+<div class="hint">Swipe or use the arrow keys. Two of the same merge into the next tier up.</div>
+<footer>Weights are indicative for scoring only. The tiers follow how material actually aggregates —
+  loose items are worth little until they are baled and containerised.</footer>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">A merge puzzle</div><h1>Upgrade the Stream</h1>
+  <p>Slide the board. Two of the same thing merge into the next tier up.</p>
+  <div class="fact"><b>Why the tiers matter.</b> A loose bottle is almost worthless to move. The same
+     material baled, palletised and containerised is a traded commodity. Recycling is an
+     <b>aggregation business</b> before it is anything else.</div>
+  <button class="btn" id="btnStart">Start</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Board full</div><h1 id="eTitle">No moves left</h1>
+  <p id="eBody"></p>
+  <div class="row2"><div class="cell"><span>Diverted</span><b id="eKg">—</b></div>
+    <div class="cell"><span>Best tier</span><b id="eBest">—</b></div></div>
+  <div class="fact" id="eFact"></div>
+  <button class="btn" id="btnAgain">Play again</button>
+</div></div>
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Upgrade the Stream — Lirich Learn.  Game 5 of the basket.
+   A merge puzzle where the tiers are the real aggregation chain a recycler works through.
+   Weights are indicative for scoring only.
+   ===================================================================================== */
+const TIER = [
+  {n:'Bottle',    s:'1 item',    c:'#4E86C8', kg:0.03},
+  {n:'Bundle',    s:'10 items',  c:'#3FA46B', kg:0.3},
+  {n:'Bag',       s:'sack',      c:'#54A98C', kg:3},
+  {n:'Bale',      s:'baled',     c:'#B87D22', kg:250},
+  {n:'Pallet',    s:'4 bales',   c:'#C08A4A', kg:1000},
+  {n:'Half load', s:'half a lorry',c:'#C0455F',kg:4000},
+  {n:'Container', s:'20-footer', c:'#8C6BB1', kg:12000},
+  {n:'Shipment',  s:'traded lot',c:'#C9A227', kg:40000}
+];
+const ART_KEY=['pet','bundle','sack','bale','pallet','lorry','container','ship'];   // one picture per tier, from lirich-sprites.js
+const N=4;
+let grid, kg, moves, best, over;
+let contUsed=false;   // one Continue per board — lirich-wallet.js (21 Nov 2026)
+const fmtKg = v => v>=1000 ? (v/1000).toFixed(1)+' t'
+  : v>=10 ? Math.round(v)+' kg' : v>=1 ? v.toFixed(1)+' kg' : v.toFixed(2)+' kg';
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+let CELL=76, PAD=8, DPR=Math.min(2,devicePixelRatio||1);
+
+function blank(){ return [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]; }
+function spawn(){
+  const free=[]; for(let r=0;r<N;r++)for(let c=0;c<N;c++) if(!grid[r][c]) free.push([r,c]);
+  if(!free.length) return false;
+  const [r,c]=free[Math.floor(Math.random()*free.length)];
+  grid[r][c]= Math.random()<0.85?1:2;         // tier index +1 (1 = Bottle)
+  return true;
+}
+function reset(){
+  grid=blank(); kg=0; moves=0; best=1; over=false; contUsed=false;
+  spawn(); spawn(); upd(); fit();
+}
+function slide(row){                          // returns [newRow, gained]
+  const a=row.filter(v=>v); let gained=0;
+  for(let i=0;i<a.length-1;i++){
+    if(a[i]===a[i+1] && a[i]<TIER.length){
+      a[i]++; gained += TIER[a[i]-1].kg; best=Math.max(best,a[i]); a.splice(i+1,1);
+    }
+  }
+  while(a.length<N) a.push(0);
+  return [a,gained];
+}
+function move(dir){                            // 0 left 1 right 2 up 3 down
+  if(over) return;
+  const before=JSON.stringify(grid); let gained=0;
+  const get=(r,c)=>grid[r][c], set=(r,c,v)=>grid[r][c]=v;
+  for(let i=0;i<N;i++){
+    let line=[];
+    for(let j=0;j<N;j++) line.push(dir<2 ? get(i,j) : get(j,i));
+    if(dir===1||dir===3) line.reverse();
+    let [out,g2]=slide(line); gained+=g2;
+    if(dir===1||dir===3) out.reverse();
+    for(let j=0;j<N;j++){ if(dir<2) set(i,j,out[j]); else set(j,i,out[j]); }
+  }
+  if(JSON.stringify(grid)===before) return;
+  kg+=gained; moves++;
+  spawn(); upd();
+  if(!canMove()) boardFull();
+}
+/* A full board would end the run. Offer one Continue first: it clears the three
+   smallest tiles (the least value lost), so the player keeps everything they built. */
+function boardFull(){
+  if(!contUsed && window.LirichWallet){
+    contUsed=true; over=true;
+    LirichWallet.offerContinue({ title:'The yard is full', what:'clearing the 3 smallest piles',
+      use:()=>{
+        const cells=[]; for(let r=0;r<N;r++)for(let c=0;c<N;c++) if(grid[r][c]) cells.push([grid[r][c],r,c]);
+        cells.sort((a,b)=>a[0]-b[0]).slice(0,3).forEach(([,r,c])=>{ grid[r][c]=0; });
+        over=false; upd();
+      },
+      decline:end });
+    return;
+  }
+  end();
+}
+function canMove(){
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    if(!grid[r][c]) return true;
+    if(c<N-1 && grid[r][c]===grid[r][c+1]) return true;
+    if(r<N-1 && grid[r][c]===grid[r+1][c]) return true;
+  }
+  return false;
+}
+function fit(){
+  const box=$('board'), w=box.clientWidth-4, h=box.clientHeight-4;
+  CELL=Math.floor(Math.min(w,h)/N)-2; CELL=Math.max(56,Math.min(CELL,104));
+  const s=CELL*N+PAD*2;
+  cv.style.width=s+'px'; cv.style.height=s+'px';
+  cv.width=s*DPR; cv.height=s*DPR; cx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+function draw(){
+  const s=CELL*N+PAD*2; cx.clearRect(0,0,s,s);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const x=PAD+c*CELL, y=PAD+r*CELL, v=grid[r][c];
+    cx.fillStyle=window.LirichSprites?((r+c)%2?'rgba(255,255,255,.40)':'rgba(255,255,255,.55)'):'rgba(255,255,255,.05)';
+    rr(x+3,y+3,CELL-6,CELL-6,10); cx.fill();
+    if(!v) continue;
+    const T=TIER[v-1];
+    cx.fillStyle=T.c; rr(x+3,y+3,CELL-6,CELL-6,10); cx.fill();
+    /* Ink chosen by measured contrast against each tier colour rather than assumed.
+       These tiles used white on everything, including the gold, where white gives about
+       2.2:1 — the tile name was the least readable thing on the board. */
+    var tInk = LirichRules.inkFor(T.c);
+    if(window.LirichSprites && ART_KEY[v-1]){
+      /* 10 Oct 2026: the tier is now a picture on a white panel, framed in the tier colour
+         the board was always read by, with its name underneath. Nothing about a move changed. */
+      const inset=7, pw=CELL-6-inset*2, ph=(CELL-6)*0.66;
+      cx.fillStyle='rgba(255,255,255,.96)'; rr(x+3+inset, y+3+inset*0.8, pw, ph, 8); cx.fill();
+      const sz=Math.min(pw, ph)*1.0;
+      LirichSprites.draw(cx, ART_KEY[v-1], x+CELL/2-sz/2, y+3+inset*0.8+(ph-sz)/2, sz);
+      cx.fillStyle=tInk; cx.textAlign='center';
+      cx.font='800 '+Math.max(9.5,CELL*0.15)+'px Nunito,system-ui,sans-serif';
+      cx.fillText(T.n, x+CELL/2, y+CELL*0.89);
+    } else {
+      cx.fillStyle=tInk; cx.textAlign='center';
+      cx.font='700 '+Math.max(10,CELL*0.165)+'px system-ui,sans-serif';
+      cx.fillText(T.n, x+CELL/2, y+CELL*0.47);
+      cx.globalAlpha=0.82;
+      cx.font=Math.max(8,CELL*0.115)+'px system-ui,sans-serif';
+      cx.fillText(T.s, x+CELL/2, y+CELL*0.66);
+      cx.globalAlpha=1;
+    }
+  }
+}
+function upd(){
+  $('hKg').textContent = fmtKg(kg);
+  $('hBest').textContent = TIER[best-1].n;
+  $('hMv').textContent = moves;
+  $('chain').innerHTML = TIER.map((t,i)=>(i<best?'<b>'+t.n+'</b>':t.n)).join(' → ');
+  draw();
+}
+function end(){
+  over=true;
+  $('eTitle').textContent = best>=7 ? 'You built a shipment' : best>=5 ? 'You got to pallet scale' : 'No moves left';
+  $('eBody').textContent = 'The board filled up before the next merge was available.';
+  $('eKg').textContent = fmtKg(kg);
+  $('eBest').textContent = TIER[best-1].n;
+  $('eFact').innerHTML = best>=6
+    ? '<b>That is the whole business model.</b> Value appears at container scale, not at bottle scale. It is why a collector needs volume before it needs anything else.'
+    : '<b>Aggregation is the hard part.</b> Most recycling schemes fail not because people will not sort, but because nobody can gather enough of one clean material to be worth shipping.';
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer: records the run, offers a team name, shows the board status */
+  try { LirichLearn.run('upgrade', kg, true); } catch(e) {}
+  try { LirichScores.finish('upgrade', kg, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+/* input */
+addEventListener('keydown',e=>{
+  const m={ArrowLeft:0,ArrowRight:1,ArrowUp:2,ArrowDown:3,a:0,d:1,w:2,s:3};
+  if(m[e.key]!==undefined){ e.preventDefault(); move(m[e.key]); }
+});
+let sx=0,sy=0,sw=false;
+cv.addEventListener('pointerdown',e=>{ sx=e.clientX; sy=e.clientY; sw=true; });
+cv.addEventListener('pointerup',e=>{
+  if(!sw) return; sw=false;
+  const dx=e.clientX-sx, dy=e.clientY-sy;
+  if(Math.abs(dx)<18 && Math.abs(dy)<18) return;
+  move(Math.abs(dx)>Math.abs(dy) ? (dx>0?1:0) : (dy>0?3:2));
+});
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); reset(); };
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); reset(); };
+addEventListener('resize',fit);
+reset();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

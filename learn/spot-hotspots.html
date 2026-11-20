@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mark hazards on a photo — Lirich Learn staff tool</title>
+<meta name="theme-color" content="#0B1630">
+<link rel="stylesheet" href="lirich-learn.css">
+<style>
+ *{box-sizing:border-box}
+ html,body{margin:0;min-height:100%;color:#fff;background:linear-gradient(180deg,#13274B,#0B1630) fixed;background-color:#0B1630}
+ .wrap{max-width:1100px;margin:0 auto;padding:18px 18px 60px}
+ .top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+ .top img{height:34px}
+ .top span{font-family:Cinzel,Georgia,serif;font-weight:700;color:#D6A93A;letter-spacing:.3em;font-size:13px;border-left:1px solid rgba(214,169,58,.45);padding-left:12px}
+ .top a{margin-left:auto;color:#C9D6EE;font-weight:700;font-size:13px}
+ h1{font-family:Nunito,sans-serif;font-weight:900;font-size:28px;margin:0 0 6px;letter-spacing:-.02em}
+ .lede{color:#C9D6EE;font-weight:600;line-height:1.5;margin:0 0 18px;max-width:46em}
+ .grid{display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start}
+ @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+ .panel{background:rgba(255,255,255,.05);border:1px solid rgba(214,169,58,.22);border-radius:16px;padding:14px}
+ .panel h2{font-family:Nunito,sans-serif;font-weight:900;font-size:16px;margin:0 0 8px}
+ label{display:block;font-weight:800;font-size:12.5px;color:#C9D6EE;margin:10px 0 4px}
+ select,input[type=text]{width:100%;font:700 14px Nunito,sans-serif;padding:8px 10px;border-radius:10px;border:1px solid #3A4A6B;background:#0B1630;color:#fff}
+ input[type=file]{color:#C9D6EE;font:600 13px Nunito,sans-serif}
+ .keys{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ .keys button{border:1px solid #3A4A6B;background:#13274B;color:#fff;border-radius:10px;padding:7px 8px;font:800 12.5px Nunito,sans-serif;text-align:left;cursor:pointer}
+ .keys button[aria-pressed=true]{background:#E8772E;border-color:#E8772E}
+ .keys button:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ #stage{position:relative;background:#0B1630;border-radius:14px;min-height:240px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+ #stage p{color:#93A3C4;font-weight:700;padding:30px;text-align:center}
+ #cv{display:none;max-width:100%;cursor:crosshair;touch-action:none;border-radius:10px}
+ ol#list{margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.7;color:#E7ECF7}
+ ol#list button{margin-left:6px;border:0;background:none;color:#FF9DB0;font:800 12px Nunito,sans-serif;cursor:pointer;text-decoration:underline}
+ textarea{width:100%;min-height:150px;font:12px ui-monospace,Menlo,Consolas,monospace;border-radius:10px;border:1px solid #3A4A6B;background:#0B1630;color:#E7ECF7;padding:10px}
+ .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+ .btn2{border:0;border-radius:12px;padding:10px 14px;background:#E8772E;color:#fff;font:900 14px Nunito,sans-serif;cursor:pointer;box-shadow:0 3px 0 #B95514}
+ .btn2.alt{background:#2B4778;box-shadow:0 3px 0 #13274B}
+ .hint{font-size:12.5px;color:#93A3C4;line-height:1.5;margin:8px 0 0}
+ .warn{background:rgba(232,119,46,.14);border:1px solid rgba(232,119,46,.45);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;color:#F3D9C2;margin-top:12px}
+</style></head>
+<body><div class="wrap">
+<div class="top"><img src="assets/lirich-mark.png" alt="Lirich"><span>LEARN</span><a href="staff.html">Staff page</a></div>
+<h1>Mark the hazards on a photo</h1>
+<p class="lede">For Spot the Contaminant. Load a cleared tipping-floor photo, pick a hazard, then drag a box around it.
+  Copy the result into <b>spot-photos.js</b>. The photo stays on this computer — nothing is uploaded or saved.</p>
+
+<div class="grid">
+  <div>
+    <div id="stage"><p>Choose a photo on the right to start.</p><canvas id="cv"></canvas></div>
+    <p class="hint">Drag to draw a box around the selected hazard. Draw the box around the whole item, a little generously — the game adds another 15% when it checks a tap. Click a box to select it; press Delete to remove the selected box.</p>
+  </div>
+  <div>
+    <div class="panel">
+      <h2>1. Which load and which photo</h2>
+      <label for="load">Load</label>
+      <select id="load">
+        <option value="0">1 — Builder's skip (3 hazards)</option>
+        <option value="1">2 — Factory clear-out (5 hazards)</option>
+        <option value="2">3 — Mixed commercial load (7 hazards)</option>
+        <option value="3">4 — School science block (9 hazards)</option>
+      </select>
+      <label for="file">Photo (web copy, after clearance)</label>
+      <input type="file" id="file" accept="image/*">
+      <label for="path">Where the photo will sit in the game folder</label>
+      <input type="text" id="path" value="assets/spot/spot-01-builders-skip.jpg">
+    </div>
+    <div class="panel" style="margin-top:12px">
+      <h2>2. Pick a hazard, then drag on the photo</h2>
+      <div class="keys" id="keys"></div>
+      <ol id="list"></ol>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <h2>3. Copy into spot-photos.js</h2>
+  <p class="hint" style="margin-top:0">Replace the line for this load (for example <code>/* load 1 — builder's skip */ null,</code>) with the entry below. Then run <code>tests\runall.mjs</code>; <code>spotphoto.mjs</code> checks it.</p>
+  <textarea id="out" readonly></textarea>
+  <div class="row"><button class="btn2" id="copy">Copy entry</button><button class="btn2 alt" id="copyTable">Copy table for the photo record</button></div>
+  <div class="warn" id="count"></div>
+</div>
+</div>
+
+<script>
+"use strict";
+/* Kept in step with HAZ in Lirich_SpotTheContaminant_Game.html — the keys are the contract.
+   tests/spotphoto.mjs fails if spot-photos.js ever uses a key the game does not know. */
+const KEYS=[['lpg','LPG cylinder'],['liion','Lithium battery pack'],['carbat','Lead-acid battery'],['aero','Aerosol cans'],
+  ['paint','Solvent paint tin'],['tube','Fluorescent tubes'],['sharps','Clinical sharps bin'],['ext','Fire extinguisher'],
+  ['oil','Waste oil drum'],['asb','Suspect asbestos board']];
+const NEED=[3,5,7,9], FILES=['spot-01-builders-skip.jpg','spot-02-factory-clearout.jpg','spot-03-mixed-commercial.jpg','spot-04-school-science-block.jpg'];
+const $=id=>document.getElementById(id);
+const cv=$('cv'), g=cv.getContext('2d');
+let img=null, key='lpg', boxes=[], drag=null, selected=-1, scale=1;
+
+KEYS.forEach(([k,n])=>{ const b=document.createElement('button'); b.textContent=n; b.dataset.k=k;
+  b.setAttribute('aria-pressed', String(k===key)); b.onclick=()=>{ key=k; [...$('keys').children].forEach(x=>x.setAttribute('aria-pressed',String(x===b))); };
+  $('keys').appendChild(b); });
+
+$('load').onchange=()=>{ const i=+$('load').value; $('path').value='assets/spot/'+FILES[i]; out(); };
+$('path').oninput=out;
+$('file').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const u=URL.createObjectURL(f), im=new Image();
+  im.onload=()=>{ img=im; boxes=[]; selected=-1; fit(); draw(); out(); };
+  im.src=u;
+};
+function fit(){
+  const maxW=Math.min(window.innerWidth-40, $('stage').clientWidth||800);
+  scale=Math.min(1, maxW/img.naturalWidth, 760/img.naturalHeight);
+  cv.width=Math.round(img.naturalWidth*scale); cv.height=Math.round(img.naturalHeight*scale);
+  cv.style.display='block'; $('stage').querySelector('p').style.display='none';
+}
+addEventListener('resize',()=>{ if(img){ fit(); draw(); } });
+function pos(e){ const r=cv.getBoundingClientRect(); return {x:(e.clientX-r.left)*cv.width/r.width, y:(e.clientY-r.top)*cv.height/r.height}; }
+cv.addEventListener('pointerdown',e=>{ if(!img) return; const p=pos(e);
+  const hitI=boxes.findIndex(b=>p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h);
+  if(hitI>=0){ selected=hitI; draw(); return; }
+  drag={x0:p.x,y0:p.y,x1:p.x,y1:p.y}; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove',e=>{ if(!drag) return; const p=pos(e); drag.x1=p.x; drag.y1=p.y; draw(); });
+cv.addEventListener('pointerup',()=>{ if(!drag) return;
+  const x=Math.min(drag.x0,drag.x1), y=Math.min(drag.y0,drag.y1), w=Math.abs(drag.x1-drag.x0), h=Math.abs(drag.y1-drag.y0);
+  drag=null; if(w>6&&h>6){ boxes.push({k:key,x,y,w,h}); selected=boxes.length-1; } draw(); out(); });
+addEventListener('keydown',e=>{ if((e.key==='Delete'||e.key==='Backspace') && selected>=0 && document.activeElement.tagName!=='INPUT'){ boxes.splice(selected,1); selected=-1; draw(); out(); } });
+
+function draw(){
+  if(!img) return;
+  g.drawImage(img,0,0,cv.width,cv.height);
+  boxes.forEach((b,i)=>{
+    const sel=i===selected;
+    g.fillStyle=sel?'rgba(232,119,46,.25)':'rgba(214,169,58,.18)'; g.fillRect(b.x,b.y,b.w,b.h);
+    g.strokeStyle=sel?'#E8772E':'#F2D27A'; g.lineWidth=sel?3:2; g.strokeRect(b.x,b.y,b.w,b.h);
+    g.setLineDash([4,4]); g.strokeStyle='rgba(255,255,255,.6)'; g.lineWidth=1;
+    g.strokeRect(b.x-b.w*.075,b.y-b.h*.075,b.w*1.15,b.h*1.15); g.setLineDash([]);
+    const label=(i+1)+' '+KEYS.find(k=>k[0]===b.k)[1];
+    g.font='800 13px Nunito,sans-serif'; const tw=g.measureText(label).width+10;
+    g.fillStyle='rgba(19,33,63,.9)'; g.fillRect(b.x,b.y-18<0?b.y:b.y-18,tw,18);
+    g.fillStyle='#fff'; g.fillText(label,b.x+5,(b.y-18<0?b.y:b.y-18)+13);
+  });
+  if(drag){ g.strokeStyle='#E8772E'; g.lineWidth=2; g.setLineDash([6,4]);
+    g.strokeRect(Math.min(drag.x0,drag.x1),Math.min(drag.y0,drag.y1),Math.abs(drag.x1-drag.x0),Math.abs(drag.y1-drag.y0)); g.setLineDash([]); }
+  $('list').innerHTML=boxes.map((b,i)=>'<li>'+KEYS.find(k=>k[0]===b.k)[1]+' <button data-i="'+i+'">remove</button></li>').join('');
+}
+$('list').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; boxes.splice(+b.dataset.i,1); selected=-1; draw(); out(); });
+
+const r1=v=>Math.round(v*10)/10;
+function pct(b){ return { k:b.k, x:r1((b.x+b.w/2)/cv.width*100), y:r1((b.y+b.h/2)/cv.height*100), w:r1(b.w/cv.width*100), h:r1(b.h/cv.height*100) }; }
+function out(){
+  const i=+$('load').value, path=$('path').value.trim().replace(/'/g,'');
+  const hs=boxes.map(pct);
+  $('out').value = !img ? '' :
+    "  /* load "+(i+1)+" */ { photo: '"+path+"',\n    hotspots: [\n"+
+    hs.map(h=>"      { k:'"+h.k+"', x:"+h.x+", y:"+h.y+", w:"+h.w+", h:"+h.h+" }").join(',\n')+
+    "\n    ] },";
+  const need=NEED[i];
+  $('count').textContent = !img ? 'No photo loaded yet.' :
+    boxes.length+' of '+need+' hazards marked for this load.'+(boxes.length!==need?' The game will use however many you mark; the brief asks for '+need+'.':' Matches the brief.');
+}
+async function copy(text){ try{ await navigator.clipboard.writeText(text); }catch(e){ $('out').select(); document.execCommand('copy'); } }
+$('copy').onclick=()=>copy($('out').value);
+$('copyTable').onclick=()=>{
+  const i=+$('load').value, rows=boxes.map(pct).map(h=>'| '+$('path').value.split('/').pop()+' | '+h.k+' | '+KEYS.find(k=>k[0]===h.k)[1]+' | '+h.x+' | '+h.y+' | '+h.w+' | '+h.h+' |  |');
+  copy('| Image file | Hazard key | Visible item | Centre X % | Centre Y % | Hit width % | Hit height % | Notes |\n|---|---|---|---|---|---|---|---|\n'+rows.join('\n'));
+};
+out();
+</script>
+</body></html>

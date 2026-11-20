@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Dispatch — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Dispatch">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F;--warn:#D9A441}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:620px;height:100%;max-height:1000px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:9px 13px 3px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:10.5px;color:var(--gold)}
+ .brand b{display:block;font-size:15.5px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:9.5px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:19px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:6px;padding:5px 13px 6px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:9px;padding:5px 7px;min-width:0}
+ .stat span{display:block;font-size:8.5px;letter-spacing:.06em;color:var(--ice);text-transform:uppercase;
+   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .stat b{font-size:14.5px;font-variant-numeric:tabular-nums}
+ .stat.warn{border-color:rgba(217,164,65,.6)} .stat.warn b{color:var(--warn)}
+ .stat.bad{border-color:rgba(192,69,95,.7)} .stat.bad b{color:var(--bad)}
+ #map{flex:0 0 auto;padding:0 12px 5px}
+ canvas{width:100%;height:215px;border-radius:11px;background:rgba(255,255,255,.045);display:block}
+ #yard{display:flex;gap:6px;padding:0 12px 6px;flex:0 0 auto}
+ .yb{flex:1;background:rgba(255,255,255,.055);border:1px solid rgba(202,220,252,.14);border-radius:9px;
+   padding:5px 7px;min-width:0}
+ .yb span{display:block;font-size:8.5px;color:var(--ice);letter-spacing:.05em;text-transform:uppercase;
+   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .yb b{font-size:13.5px;font-variant-numeric:tabular-nums}
+ .yb .mini{height:5px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:4px;overflow:hidden}
+ .yb .mini i{display:block;height:100%;background:var(--orange)}
+ #tabs{display:flex;gap:6px;padding:0 12px 6px;flex:0 0 auto}
+ .tab{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);color:var(--ink2);
+   border-radius:9px;padding:10px 4px;font-size:12px;font-weight:600;cursor:pointer;
+   font-family:inherit;touch-action:manipulation}
+ .tab.on{background:rgba(224,124,46,.24);border-color:var(--orange);color:#fff}
+ #panel{flex:1 1 auto;overflow-y:auto;padding:0 12px 8px;min-height:0;display:flex;
+   flex-direction:column}
+ .job{background:rgba(255,255,255,.055);border:1px solid rgba(202,220,252,.15);border-radius:11px;
+   padding:9px 11px;margin-bottom:7px;flex:0 0 auto}
+ .job.late{border-color:rgba(192,69,95,.7)}
+ .job.out{opacity:.72}
+ .jrow{display:flex;align-items:center;gap:8px}
+ .badge{font-size:9px;font-weight:700;letter-spacing:.06em;border-radius:5px;padding:3px 6px;flex:0 0 auto}
+ .b-del{background:#4E86C8}.b-exc{background:#3FA46B}.b-col{background:#B87D22}.b-des{background:#8C6BB1}.b-mar{background:#2F7D9E}
+ .jname{font-size:13.5px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+   white-space:nowrap}
+ .jmeta{font-size:10.5px;color:var(--ink2);flex:0 0 auto;font-variant-numeric:tabular-nums}
+ .tbar{height:5px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:7px;overflow:hidden}
+ .tbar i{display:block;height:100%;background:var(--good);transition:width .2s}
+ .tbar.warn i{background:var(--warn)} .tbar.bad i{background:var(--bad)}
+ .sub{font-size:10.5px;color:var(--ink2);margin-top:5px}
+ .picks{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+ .picks .lbl{font-size:10.5px;color:var(--ink2);letter-spacing:.04em;margin-right:1px}
+ .pick{background:var(--orange);border:1px solid var(--orange);color:#fff;border-radius:9px;
+   padding:0 13px;min-height:42px;font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:600;
+   touch-action:manipulation;display:inline-flex;align-items:center;gap:5px}
+ .pick:active{transform:translateY(1px);filter:brightness(1.12)}
+ .pick.tank{background:#2F7D9E;border-color:#2F7D9E}
+ .pick.off{background:rgba(255,255,255,.06);border-color:rgba(202,220,252,.18);color:#7C8AA3}
+ .pick small{font-size:10px;opacity:.85;font-weight:400}
+ .tk{background:rgba(255,255,255,.055);border:1px solid rgba(202,220,252,.15);border-radius:11px;
+   padding:9px 11px;margin-bottom:7px}
+ .tk .d{font-size:10.5px;color:var(--ink2);margin-top:3px}
+ .buy{display:flex;align-items:center;gap:10px;touch-action:manipulation;min-height:52px;background:rgba(255,255,255,.055);
+   border:1px solid rgba(202,220,252,.15);border-radius:11px;padding:10px 11px;margin-bottom:7px;
+   width:100%;color:#fff;font-family:inherit;text-align:left;cursor:pointer}
+ .buy:disabled{opacity:.4;cursor:default}
+ .buy .t{flex:1}.buy .t b{display:block;font-size:13px}.buy .t small{font-size:10.5px;color:var(--ink2)}
+ .buy .p{font-size:12.5px;color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums}
+ #bar{display:flex;gap:6px;padding:6px 12px 10px;flex:0 0 auto}
+ .sp{flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(202,220,252,.22);color:#fff;
+   border-radius:9px;padding:12px 4px;font-size:12.5px;font-weight:600;cursor:pointer;
+   font-family:inherit;touch-action:manipulation}
+ .sp.on{background:var(--orange);border-color:var(--orange)}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:20px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:440px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:24px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .card .btn{width:100%;margin-top:10px;background:var(--orange);border:0;color:#fff;padding:13px;
+   font-size:15px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit}
+ .grid4{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+ .grid4 .cell{background:#F2F5FA;border-radius:10px;padding:9px 11px}
+ .grid4 .cell span{display:block;font-size:9px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .grid4 .cell b{font-size:17px;color:var(--navy);font-variant-numeric:tabular-nums}
+ .grid4 .cell b.neg{color:#C0455F}
+ ul.li{margin:10px 0 0;padding-left:18px;font-size:12.5px;line-height:1.6;color:#3D4A5A}
+ table.rec{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+ table.rec td{padding:5px 0;border-bottom:1px solid #E7ECF3;color:#3D4A5A}
+ table.rec td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--navy);
+   font-weight:600}
+ table.rec td.h{color:#5B6472;font-size:10px;letter-spacing:.06em;text-transform:uppercase;border:0;
+   padding-top:4px}
+ .toast{position:absolute;left:12px;right:12px;bottom:64px;border-radius:11px;padding:10px 13px;
+   font-size:12px;line-height:1.45;z-index:8;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+ .toast.hide{display:none}
+ .toast.bad{background:#C0455F}.toast.ok{background:#2E7D57}.toast.warn{background:#B07C1E}
+ .toast b{display:block;font-size:13px;margin-bottom:2px}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Dispatch</b></div><div class="spacer"></div>
+  <div class="rt" id="clockBox">DAY 1<b id="hClock">07:00</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Cash</span><b id="hCash">—</b></div>
+  <div class="stat"><span>Diverted</span><b id="hT">0 t</b></div>
+  <div class="stat" id="sBins"><span>Empty bins</span><b id="hBins">—</b></div>
+  <div class="stat" id="sAcc"><span>Accounts</span><b id="hAcc">—</b></div>
+</div>
+<div id="map"><canvas id="cv"></canvas></div>
+<div id="yard">
+  <div class="yb"><span>Waiting to tip</span><b id="yTip">0</b></div>
+  <div class="yb"><span>Floor</span><b id="yFloor">0 t</b><div class="mini"><i id="yFloorBar"></i></div></div>
+  <div class="yb"><span>Product bins</span><b id="yProd">0/0</b></div>
+  <div class="yb"><span>Trucks idle</span><b id="yIdle">0</b></div>
+</div>
+<div id="tabs">
+  <button class="tab on" data-p="jobs">Calls <span id="nJobs"></span></button>
+  <button class="tab" data-p="fleet">Fleet</button>
+  <button class="tab" data-p="shop">Buy</button>
+</div>
+<div id="panel"></div>
+<div id="bar">
+  <button class="sp" id="spP">❚❚</button>
+  <button class="sp on" id="sp1">1×</button>
+  <button class="sp" id="sp2">2×</button>
+  <button class="sp" id="sp4">4×</button>
+</div>
+<div class="toast hide" id="toast"></div>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">Lirich operations training</div><h1>Dispatch</h1>
+  <p>Lirich runs roughly <b>6 vehicles and 63 bins across 219 sites</b>. This is one round out of
+     that book — twelve sites, three hooklifts, one vacuum tanker, eleven bins, five days.</p>
+  <div class="fact"><b>Four things can sink you and they are all connected.</b> A client left
+     waiting. No empty bin to send. The floor at 23 Gul Drive full, so nothing can be tipped. And
+     the cash to fix any of it. Solving one by spending usually makes another worse.</div>
+  <p style="font-size:12.5px;color:#5B6472">Every call shows the vehicles free to take it —
+     <b>one tap sends one</b>. Tipping, sorting and
+     baling run themselves — the only decisions here are the ones a dispatcher actually makes.
+     Marine work goes in the tanker and nothing else.</p>
+  <button class="btn" id="btnStart">Start Monday</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">Advanced staff and visitor simulation — not part of pupil progression. No accounts, no login, no data collected.
+     Money figures are indicative teaching numbers; the tonnages and the mass balance are Lirich’s
+     own published ones.</p>
+</div></div>
+
+<div class="ov hide" id="ovDay"><div class="card">
+  <div class="tag" id="dTag">End of day</div><h1 id="dTitle">—</h1>
+  <p id="dBody"></p>
+  <div class="grid4">
+    <div class="cell"><span>Collected today</span><b id="dT">—</b></div>
+    <div class="cell"><span>Despatched</span><b id="dD">—</b></div>
+    <div class="cell"><span>Cash</span><b id="dC">—</b></div>
+    <div class="cell"><span>Late calls</span><b id="dL">—</b></div>
+  </div>
+  <ul class="li" id="dNotes"></ul>
+  <div class="fact" id="dFact"></div>
+  <button class="btn" id="btnNext">Start the next day</button>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Week over</div><h1 id="eTitle">—</h1>
+  <p id="eBody"></p>
+  <div class="grid4">
+    <div class="cell"><span>Across the floor</span><b id="eT">—</b></div>
+    <div class="cell"><span>Cash</span><b id="eC">—</b></div>
+    <div class="cell"><span>Accounts kept</span><b id="eA">—</b></div>
+    <div class="cell"><span>Delivery Orders</span><b id="eD2">—</b></div>
+  </div>
+  <table class="rec" id="eRec"></table>
+  <div class="fact" id="eFact"></div>
+  <p id="eDisc" style="font-size:11px;color:#5B6472;line-height:1.55"></p>
+  <button class="btn" id="btnAgain">Run the week again</button>
+</div></div>
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Dispatch — Lirich Learn.  The operator game.
+
+   GROUNDED IN LIRICH'S OWN OPERATING FACTS, none of them client-identifying:
+     · Scale. Lirich runs roughly 6 vehicles and about 63 bins across 219 sites for 107
+       customers. This game is one round out of that book — 12 sites, 3 skip trucks, one
+       vacuum tanker, 11 bins, one week.
+     · The yard is 23 Gul Drive. Everything tipped goes across the floor there.
+     · Every completed collection raises a signed Delivery Order — waste categories, bin
+       in and out, weights, photos, signature, GPS — captured on the driver app. That
+       record, not the tonnage, is what a corporate client is actually buying.
+     · Marine work is real Lirich business: MARPOL Annex I slops and sludge reception at
+       terminal berths and shipyards. It needs the vacuum tanker and nothing else, which
+       is why a specialised vehicle can sit idle and still be worth owning.
+     · The sorting mass balance is Lirich's own published RDF figure: per 100 tonnes in,
+       roughly 52 t of RDF, 5 t of metals, 25 t of rejects and 18 t lost as moisture.
+       Rejects do not disappear — they still carry a disposal cost.
+
+   ⚠ EVERY MONEY FIGURE IS AN INDICATIVE TEACHING NUMBER. Lift fees, hire rates, disposal
+   costs and the gate value are plausible for a Singapore industrial round; they are not
+   Lirich's rates. The tonnages and the mass balance are the real published ones.
+
+   ⚠ CLAIMS DISCIPLINE, carried from the marketing guardrails and enforced in the copy
+   below: none of the four withdrawn claim words appear anywhere in the player-facing copy,
+   and nothing says "measured" — until the density weighing exercise is done, tonnage from
+   a volume conversion is a conversion, not a weight. The end-of-week card says so out loud,
+   because that is the single most useful thing this game can teach an operator. A keyword
+   scan of this file for the withdrawn phrases should come back empty; keep it that way.
+   ===================================================================================== */
+
+/* =====================================================================================
+   ⚠ COMMERCIAL RATES — THE ONLY BLOCK THAT MUST BE REPLACED BEFORE THIS IS USED AS
+   TRAINING. Every figure here is an indicative teaching number, not a Lirich rate.
+   The tonnages and the mass balance elsewhere in this file ARE Lirich's real published
+   ones; these are not.
+
+   To make this a training tool rather than a demonstration:
+     1. replace every number below with the real rate
+     2. set STATUS to 'LIRICH'
+     3. change nothing else — the game reads all of them from here
+
+   The end-of-week card prints the STATUS, so a swapped-in set cannot be mistaken for
+   placeholders and placeholders cannot be mistaken for real rates.
+   ===================================================================================== */
+const RATES = {
+  STATUS: 'INDICATIVE',          // 'INDICATIVE' or 'LIRICH'
+  SOURCE: 'Plausible teaching figures. Not quotations and not to be quoted.',
+
+  LIFT_FEE: 180,                 // charged per full bin collected
+  DELIVERY_FEE: 60,              // charged per empty bin placed
+  PRODUCT_PRICE: 110,            // S$ per tonne despatched
+  RESIDUE_COST: 127,             // S$ per tonne of residue
+  TRUCK_HOUR: 62,                // driver and fuel, per working hour
+  FIXED_DAY: 1600,               // yard, plant, everything else
+  REBATE: 400,                   // handed back when a call goes late
+  HIRE_DAY: 2200,                // an extra truck, committed for the rest of the week
+  BIN_COST: 3500,
+  PRODBIN_COST: 4200,
+  CASH0: 25000,                  // opening position
+
+  MARINE_FEE: [1800, 3200],      // per job, by volume pumped
+  MARINE_DISPOSAL: 110,          // per m3 — Annex I residue is treated, not tipped
+  MARINE_REBATE: 900             // a vessel on a berth schedule is expensive to keep waiting
+};
+
+const CFG = {
+  DAYS: 5,
+  DAY_START: 7*60, DAY_END: 19*60,        // 07:00 to 19:00
+  MIN_PER_SEC: 4,                          // one real second = four minutes of the day
+
+  YARD_LOAD: 5, SITE_WORK: 10, TIP_TIME: 10,   // minutes
+  WEIGH: 4,                                // weighbridge in and out — where the DO gets its weight
+  BUYER_DIST: 34, BUYER_WORK: 15,
+
+  FLOOR_CAP: 45,                           // tonnes the tipping floor holds
+  SORT_RATE: 4.5,                          // tonnes per hour through the line
+  /* Lirich's own published RDF mass balance, per tonne in */
+  MASS: {rdf:0.52, metals:0.05, rejects:0.25, moisture:0.18},
+  BALE_RATE: 22,                           // tonnes per hour into a product bin
+  PROD_CAP: 8,                             // tonnes per product bin
+
+  /* every commercial figure comes from RATES above — do not put a number here */
+  LIFT_FEE: RATES.LIFT_FEE,           DELIVERY_FEE: RATES.DELIVERY_FEE,
+  PRODUCT_PRICE: RATES.PRODUCT_PRICE, RESIDUE_COST: RATES.RESIDUE_COST,
+  TRUCK_HOUR: RATES.TRUCK_HOUR,       FIXED_DAY: RATES.FIXED_DAY,
+  REBATE: RATES.REBATE,               HIRE_DAY: RATES.HIRE_DAY,
+  BIN_COST: RATES.BIN_COST,           PRODBIN_COST: RATES.PRODBIN_COST,
+  CASH0: RATES.CASH0,
+  MARINE_FEE: RATES.MARINE_FEE,       MARINE_DISPOSAL: RATES.MARINE_DISPOSAL,
+  MARINE_REBATE: RATES.MARINE_REBATE,
+  PATIENCE: {deliver: 6*60, exchange: 7*60, collect: 7*60, despatch: 10*60, marine: 11*60},
+  STRIKES_LOST: 3,                         // late calls before an account walks
+  ACCOUNTS_LOST_END: 3
+};
+
+/* Streams are drawn from the list Lirich actually handles: general and domestic, food,
+   plastics, cooking oil, wood, concrete and stone, e-waste, oily rags, tyres, paint. */
+const SITE_DEF = [
+  {n:'Tuas South workshop',   sh:'Tuas Sth',  d:34, r:0.42, w:'Wood & timber'},
+  {n:'Jurong food factory',   sh:'Jurong fd', d:19, r:0.62, w:'Food waste'},
+  {n:'Gul Circle yard',       sh:'Gul Cir',   d:12, r:0.34, w:'Concrete & stone'},
+  {n:'Pioneer warehouse',     sh:'Pioneer',   d:22, r:0.30, w:'General waste'},
+  {n:'Benoi shipyard',        sh:'Benoi',     d:27, r:0.56, w:'Operational waste'},
+  {n:'Boon Lay canteens',     sh:'Boon Lay',  d:31, r:0.38, w:'Food waste'},
+  {n:'Tuas Ave 8 plant',      sh:'Tuas A8',   d:38, r:0.50, w:'Plastics'},
+  {n:'Joo Koon depot',        sh:'Joo Koon',  d:24, r:0.32, w:'Tyres & rubber'},
+  {n:'Pandan logistics',      sh:'Pandan',    d:16, r:0.46, w:'General waste'},
+  {n:'Jalan Buroh cold store',sh:'Jln Buroh', d:20, r:0.36, w:'Food waste'},
+  {n:'Tuas Link site',        sh:'Tuas Link', d:41, r:0.60, w:'Wood & timber'},
+  {n:'Penjuru wharf',         sh:'Penjuru',   d:14, r:0.52, w:'Operational waste'}
+];
+/* Marine reception work. MARPOL Annex I is oily residue — slops and sludge — and it goes
+   in a vacuum tanker, never a skip. */
+const BERTH_DEF = [
+  {n:'Terminal berth — slops',  sh:'Berth W', d:29, cat:'MARPOL Annex I slops'},
+  {n:'Anchorage — sludge',      sh:'Anchor',  d:44, cat:'MARPOL Annex I sludge'},
+  {n:'Shipyard — tank cleaning',sh:'Yard E',  d:36, cat:'De-mucking & tank cleaning'}
+];
+const DAY_FACT = [
+ '<b>Bins are the constraint, not trucks.</b> A vehicle that finishes a job is free again in minutes. A bin sent out is gone for hours \u2014 filling at a client, then waiting to be collected, then waiting to be tipped. Lirich runs about 63 bins across 219 sites; the number that matters on any given morning is how many are empty and in the yard.',
+ '<b>Every collection raises a Delivery Order, and the DO is the product.</b> Categories, bin in and out, weight, photos, signature, GPS \u2014 captured on the driver app before the truck leaves. A client can buy tonnage from anybody. What they cannot get anywhere else is first-party evidence of what happened to it, one click from the figure to the signed document.',
+ '<b>The floor is a queue with a hard ceiling.</b> When it fills, tipping stops, full bins stay full, and within an hour there is nothing empty to send anybody. A yard problem always arrives dressed as a client problem.',
+ '<b>Per 100 tonnes across the floor: about 52 t of RDF, 5 t of metals, 25 t of rejects and 18 t lost as moisture.</b> That is Lirich\u2019s own published mass balance, and the line that matters is the third one. A quarter of everything received still goes to incineration and still carries a disposal cost. Any margin model that forgets the reject stream is wrong.',
+ '<b>The weighbridge ticket is the difference between a weight and a conversion.</b> Tonnage derived from volume at an assumed 1 m\u00b3 = 1,000 kg is an estimate, however confident the number looks \u2014 and until the density weighing exercise is finished, that is what it is. Recovery rate is different: it is a volume ratio from confirmed disposal routes, so it carries no density assumption at all. Know which of your numbers is which before a client asks.'
+];
+
+/* The clock is absolute minutes from midnight on day 1, so a deadline set at 18:00 on
+   Monday is still a deadline on Tuesday. Time of day is G.t % 1440. The overnight gap is
+   added back to every open deadline at the start of each day — the night does not count
+   against a client's window, because nobody promised a collection at 03:00. */
+const dayStart = d => (d-1)*1440 + CFG.DAY_START;
+const dayEnd   = d => (d-1)*1440 + CFG.DAY_END;
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+/* The map is drawn at the canvas's real displayed size rather than at a fixed internal
+   resolution scaled to fit. A fixed backing store stretched by CSS distorts every circle
+   on a narrow phone and shrinks the labels past reading. */
+let DPR=1, MW=600, MH=215;
+function fit(){
+  const r=cv.getBoundingClientRect();
+  if(!r.width) return;
+  DPR=Math.min(2, window.devicePixelRatio||1);
+  MW=r.width; MH=r.height;
+  cv.width=Math.round(MW*DPR); cv.height=Math.round(MH*DPR);
+  cx.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener('resize', fit);
+
+let G=null, tab='jobs', raf=null, lastTs=0;
+
+/* --------------------------------------------------------------------- new game ---- */
+function newGame(){
+  const bins=[], trucks=[], sites=[];
+  for(let i=0;i<11;i++) bins.push({id:'S'+(i+1), kind:'skip', cap:2.4, fill:0, state:'yard', site:null});
+  for(let i=0;i<3;i++) bins.push({id:'P'+(i+1), kind:'prod', cap:CFG.PROD_CAP, fill:0, state:'yard'});
+  ['Hooklift 1','Hooklift 2','Hooklift 3'].forEach((n,i)=>trucks.push(
+    {id:i, n, type:'skip', state:'idle', job:null, phase:null, tLeft:0, tTot:0, carry:null,
+     hired:false, hours:0}));
+  trucks.push({id:3, n:'Vacuum tanker', type:'tanker', state:'idle', job:null, phase:null,
+     tLeft:0, tTot:0, carry:null, hired:false, hours:0});
+  const berths=BERTH_DEF.map((b,i)=>({id:i, n:b.n, sh:b.sh, dist:b.d, cat:b.cat, call:null,
+    nextCall: CFG.DAY_START + 60 + i*220 + Math.random()*240, nx:0, ny:0}));
+  SITE_DEF.forEach((s,i)=>sites.push({
+    id:i, n:s.n, sh:s.sh, dist:s.d, rate:s.r, stream:s.w, bin:null, call:null, strikes:0, lost:false,
+    nextCall: CFG.DAY_START + 200 + Math.random()*300,
+    x:0, y:0
+  }));
+  layoutSites(sites, berths);
+  /* Monday 07:00 is not a blank yard. Most clients already hold a bin, part full — the
+     week starts mid-cycle, which is why the first calls arrive within the hour. Three
+     spare bins sit in the yard and four clients have none. */
+  const skips=bins.filter(b=>b.kind==='skip');
+  /* Fisher-Yates, not sort(() => Math.random() - 0.5). The comparator version is biased,
+     and the order it produces depends on which sort the browser implements — so the same
+     seed can open a different week on a different engine. Dispatch is excluded from
+     challenge mode for other reasons, but a shuffle that only works on one browser is a
+     defect either way. */
+  const order=sites.slice();
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=order[i]; order[i]=order[j]; order[j]=t; }
+  order.slice(0,8).forEach((s,i)=>{
+    const b=skips[i];
+    b.state='site'; b.site=s.id; b.fill=Math.random()*b.cap*0.72; s.bin=b;
+  });
+  order.slice(8).forEach((s,i)=>{ s.nextCall = CFG.DAY_START + 40 + i*130 + Math.random()*160; });
+  return {
+    day:1, t:CFG.DAY_START, cash:CFG.CASH0, diverted:0, despatched:0,
+    bins, trucks, sites, berths, jobs:[], nextJobId:1,
+    dos:0, marineM3:0, rdf:0, metals:0, rejects:0,
+    floorRaw:0, floorProd:0, tipping:null,
+    lateToday:0, lateTotal:0, lost:0, collectedToday:0, despatchedToday:0, cashDayStart:CFG.CASH0,
+    speed:1, paused:false, over:false, msg:null
+  };
+}
+function layoutSites(sites, berths){
+  // stored 0-1 so the map can be redrawn at any size; alternating radius keeps
+  // neighbouring nodes and their labels off each other
+  /* Two staggered rings rather than one arc: twelve nodes on a single fan collide at any
+     phone width. Distance still nudges the radius, but legibility wins — the exact drive
+     time is printed on every call anyway. */
+  sites.forEach((s,i)=>{
+    const ring=i%2, k=Math.floor(i/2);
+    const a = -0.95 + (k/5)*1.90 + (ring? 0.105 : -0.105);
+    const rad = (ring ? 1.02 : 0.66) * (0.88 + (s.dist-12)/29*0.24);
+    s.nx = 0.14 + Math.cos(a)*rad*0.72;
+    s.ny = 0.42 + Math.sin(a)*rad*0.40;
+  });
+  // the water side sits below and left of the yard, off the road network
+  berths.forEach((b,i)=>{ b.nx = 0.035 + i*0.078; b.ny = 0.72 + (i%2?0.12:0); });
+}
+
+/* ------------------------------------------------------------------------- jobs ---- */
+function addJob(kind, site, berth){
+  const j={id:G.nextJobId++, kind, site: site?site.id:null, berth: berth?berth.id:null,
+           due: G.t + CFG.PATIENCE[kind], late:false, truck:null};
+  if(kind==='marine'){
+    j.m3 = 6 + Math.random()*8;
+    j.fee = Math.round(CFG.MARINE_FEE[0] + (j.m3-6)/8*(CFG.MARINE_FEE[1]-CFG.MARINE_FEE[0]));
+  }
+  G.jobs.push(j);
+  if(site) site.call=j;
+  if(berth) berth.call=j;
+  return j;
+}
+function truckFits(j, tr){ return j.kind==='marine' ? tr.type==='tanker' : tr.type==='skip'; }
+function emptySkips(){ return G.bins.filter(b=>b.kind==='skip' && b.state==='yard'); }
+function jobNeedsEmpty(j){ return j.kind==='deliver' || j.kind==='exchange'; }
+
+function jobLabel(j){
+  if(j.kind==='despatch') return 'Recycler';
+  if(j.kind==='marine') return G.berths[j.berth].n;
+  return G.sites[j.site].n;
+}
+function jobMinutes(j){
+  if(j.kind==='despatch') return CFG.YARD_LOAD + CFG.BUYER_DIST*2 + CFG.BUYER_WORK + CFG.YARD_LOAD;
+  if(j.kind==='marine') return CFG.YARD_LOAD + G.berths[j.berth].dist*2 + 55 + CFG.WEIGH;
+  const d=G.sites[j.site].dist;
+  return CFG.YARD_LOAD + d*2 + CFG.SITE_WORK + CFG.YARD_LOAD + CFG.WEIGH;
+}
+function canAssign(j){
+  if(j.truck!==null) return 'already out';
+  if(j.kind==='marine' && !G.trucks.some(t=>t.type==='tanker')) return 'no tanker on the fleet';
+  if(jobNeedsEmpty(j) && !emptySkips().length) return 'no empty bin in the yard';
+  if(j.kind==='despatch'){
+    const b=G.bins.find(b=>b.kind==='prod' && b.state==='full');
+    if(!b) return 'nothing loaded';
+  }
+  return null;
+}
+function assign(j, truck){
+  const why=canAssign(j); if(why) { toast('Cannot send it', why, 'warn'); return; }
+  if(truck.state!=='idle') return;
+  if(!truckFits(j,truck)){
+    toast('Wrong vehicle', j.kind==='marine'
+      ? 'Annex I slops and sludge go in the vacuum tanker. A hooklift cannot take it.'
+      : 'The tanker only does marine reception. It cannot carry a skip.', 'warn');
+    return;
+  }
+  let carry=null;
+  if(jobNeedsEmpty(j)){ carry=emptySkips()[0]; carry.state='truck'; }
+  if(j.kind==='despatch'){ carry=G.bins.find(b=>b.kind==='prod' && b.state==='full'); carry.state='truck'; }
+  truck.state='working'; truck.job=j; truck.carry=carry;
+  truck.phase='load'; truck.tTot=CFG.YARD_LOAD; truck.tLeft=CFG.YARD_LOAD;
+  j.truck=truck.id;
+  render();
+}
+function phaseNext(tr){
+  const j=tr.job;
+  const out = j.kind==='despatch' ? CFG.BUYER_DIST
+            : j.kind==='marine'   ? G.berths[j.berth].dist
+            : G.sites[j.site].dist;
+  const work= j.kind==='despatch' ? CFG.BUYER_WORK
+            : j.kind==='marine'   ? 55                 // pumping out takes the best part of an hour
+            : CFG.SITE_WORK;
+  if(tr.phase==='load'){ tr.phase='out'; tr.tTot=out; }
+  else if(tr.phase==='out'){ tr.phase='work'; tr.tTot=work; doWork(tr); }
+  else if(tr.phase==='work'){ tr.phase='back'; tr.tTot=out; }
+  else if(tr.phase==='back'){ tr.phase='weigh'; tr.tTot=CFG.WEIGH; }   // weighbridge, then the DO
+  else if(tr.phase==='weigh'){ tr.phase='unload'; tr.tTot=CFG.YARD_LOAD; }
+  else { finishJob(tr); return; }
+  tr.tLeft=tr.tTot;
+}
+function doWork(tr){                       // the moment the truck is on site
+  const j=tr.job;
+  if(j.kind==='marine'){
+    /* Annex I residue is not free to take. It goes to a treatment route and that route
+       charges. The margin on marine work is real but it is not the headline fee. */
+    G.cash += j.fee - j.m3*CFG.MARINE_DISPOSAL;
+    G.marineM3 += j.m3; G.dos++;
+    return;
+  }
+  if(j.kind==='despatch'){
+    const b=tr.carry;
+    G.cash += b.fill*CFG.PRODUCT_PRICE;
+    G.despatched += b.fill; G.despatchedToday += b.fill;
+    b.fill=0;
+    return;
+  }
+  const s=G.sites[j.site];
+  if(j.kind==='deliver'){
+    const b=tr.carry; b.state='site'; b.site=s.id; s.bin=b; tr.carry=null;
+    G.cash += CFG.DELIVERY_FEE;
+  } else if(j.kind==='exchange'){
+    const empty=tr.carry, full=s.bin;
+    empty.state='site'; empty.site=s.id; s.bin=empty;
+    if(full){ full.state='truck'; full.site=null; tr.carry=full; G.cash += CFG.LIFT_FEE; }
+    else tr.carry=null;
+  } else if(j.kind==='collect'){
+    const full=s.bin;
+    if(full){ full.state='truck'; full.site=null; tr.carry=full; s.bin=null; G.cash += CFG.LIFT_FEE; }
+    s.nextCall = G.t + 90 + Math.random()*220;
+  }
+}
+function abortJob(tr){                     // 19:00 and the truck never got there
+  const j=tr.job;
+  if(tr.carry){
+    const b=tr.carry;
+    b.state = b.kind==='prod' ? (b.fill>=b.cap-0.001?'full':'yard') : (b.fill>0?'fullyard':'yard');
+    tr.carry=null;
+  }
+  j.truck=null;
+  tr.state='idle'; tr.job=null; tr.phase=null;
+}
+function finishJob(tr){
+  const j=tr.job;
+  if(tr.carry){
+    const b=tr.carry;
+    if(b.kind==='prod'){ b.state='yard'; }
+    else if(b.fill>0){ b.state='fullyard'; }
+    else b.state='yard';
+    tr.carry=null;
+  }
+  if(j.site!==null && G.sites[j.site].call===j) G.sites[j.site].call=null;
+  if(j.berth!==null && j.berth!==undefined && G.berths[j.berth].call===j){
+    G.berths[j.berth].call=null;
+    G.berths[j.berth].nextCall = G.t + 500 + Math.random()*700;
+  }
+  if(j.kind==='exchange'||j.kind==='collect') G.dos++;   // a signed DO per collection
+  G.jobs = G.jobs.filter(x=>x!==j);
+  tr.state='idle'; tr.job=null; tr.phase=null;
+}
+
+/* -------------------------------------------------------------------- the clock ---- */
+function step(dtMin){
+  const G_=G;
+  // trucks
+  G_.trucks.forEach(tr=>{
+    if(tr.state!=='working') return;
+    tr.hours += dtMin/60;
+    G_.cash -= CFG.TRUCK_HOUR*dtMin/60;
+    tr.tLeft -= dtMin;
+    let guard=0;
+    while(tr.tLeft<=0 && tr.state==='working' && guard++<6){ const over=-tr.tLeft; phaseNext(tr);
+      if(tr.state==='working') tr.tLeft-=over; }
+  });
+  // bins filling at clients
+  G_.bins.forEach(b=>{
+    if(b.kind!=='skip' || b.state!=='site') return;
+    const s=G_.sites[b.site]; if(!s) return;
+    b.fill=Math.min(b.cap, b.fill + s.rate*dtMin/60);
+    if(b.fill>=b.cap-0.001){
+      b.state='fullsite';
+      if(!s.call && !s.lost) addJob(Math.random()<0.72?'exchange':'collect', s);
+    }
+  });
+  // clients calling for a bin they do not have
+  G_.sites.forEach(s=>{
+    if(s.lost || s.bin || s.call) return;
+    if(G_.t >= s.nextCall){
+      addJob('deliver', s);
+      s.nextCall = G_.t + 120 + Math.random()*260;
+    }
+  });
+  // a berth calls when a vessel is alongside and needs its Annex I residue taken off
+  G_.berths.forEach(bt=>{
+    if(bt.call) return;
+    if(G_.t >= bt.nextCall){ addJob('marine', null, bt); bt.nextCall = G_.t + 600 + Math.random()*800; }
+  });
+  // tipping — one bin at a time, only if the floor can take it
+  if(!G_.tipping){
+    const b=G_.bins.find(x=>x.kind==='skip' && x.state==='fullyard');
+    if(b && G_.floorRaw+G_.floorProd + b.fill <= CFG.FLOOR_CAP){
+      b.state='tipping'; G_.tipping={bin:b, left:CFG.TIP_TIME};
+    }
+  } else {
+    G_.tipping.left -= dtMin;
+    if(G_.tipping.left<=0){
+      const b=G_.tipping.bin;
+      G_.floorRaw += b.fill; G_.diverted += b.fill; G_.collectedToday += b.fill;
+      b.fill=0; b.state='yard'; G_.tipping=null;
+    }
+  }
+  // the line
+  const room = CFG.FLOOR_CAP - (G_.floorRaw+G_.floorProd);
+  let sorted = Math.min(G_.floorRaw, CFG.SORT_RATE*dtMin/60);
+  if(room<=0) sorted = Math.min(sorted, 0);          // floor jammed: the line stops
+  if(sorted>0){
+    /* Lirich's published mass balance: RDF and metals become product, rejects still cost
+       money to move, and the moisture simply leaves. */
+    const M=CFG.MASS;
+    G_.floorRaw -= sorted;
+    G_.rdf += sorted*M.rdf; G_.metals += sorted*M.metals; G_.rejects += sorted*M.rejects;
+    G_.floorProd += sorted*(M.rdf+M.metals);
+    G_.cash -= sorted*M.rejects*CFG.RESIDUE_COST;
+  }
+  // baling into product bins
+  if(G_.floorProd>0){
+    const b=G_.bins.find(x=>x.kind==='prod' && (x.state==='yard') && x.fill<x.cap);
+    if(b){
+      const move=Math.min(G_.floorProd, b.cap-b.fill, CFG.BALE_RATE*dtMin/60);
+      b.fill+=move; G_.floorProd-=move;
+      if(b.fill>=b.cap-0.001){ b.state='full'; addJob('despatch', null); }
+    }
+  }
+  // late calls
+  G_.jobs.slice().forEach(j=>{
+    if(G_.t<=j.due) return;
+    /* a call left standing does not go late once and stop — it keeps going late until
+       somebody serves it or the client walks. Ignoring the board has to be fatal. */
+    j.late=true; j.breaches=(j.breaches||0)+1;
+    j.due = G_.t + CFG.PATIENCE[j.kind]*0.5;
+    G_.lateToday++; G_.lateTotal++;
+    G_.cash -= (j.kind==='marine' ? CFG.MARINE_REBATE : CFG.REBATE);
+    if(j.kind==='marine'){
+      toast('Vessel waiting', 'A berth slot is booked time. Keeping a vessel waiting costs more '+
+        'than any other late call on the board.', 'bad');
+    } else if(j.site!==null){
+      const s=G_.sites[j.site]; s.strikes++;
+      if(s.strikes>=CFG.STRIKES_LOST){
+        s.lost=true; G_.lost++;
+        if(s.bin){ const b=s.bin; b.state=b.fill>0?'fullyard':'yard'; b.site=null; s.bin=null; }
+        G_.jobs=G_.jobs.filter(x=>x!==j); s.call=null;
+        toast('Account lost', s.n+' has gone elsewhere. '+(CFG.ACCOUNTS_LOST_END-G_.lost)+' more and the week is over.', 'bad');
+      } else {
+        toast('Late', jobLabel(j)+' has been waiting past the window. S$'+CFG.REBATE+' rebate, and one more strike loses the account.', 'warn');
+      }
+    } else {
+      toast('Product sitting', 'A full product bin has been waiting to go out. It is holding a bin the yard needs.', 'warn');
+    }
+  });
+  G_.t += dtMin;
+}
+
+/* ------------------------------------------------------------------------ render ---- */
+function hhmm(m){ const h=Math.floor(m/60), mm=Math.floor(m%60);
+  return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+function money(v){ const s = v<0?'-':''; const a=Math.abs(v);
+  return s+(a>=1000? 'S$'+(a/1000).toFixed(1)+'k' : 'S$'+Math.round(a)); }
+
+/* 21 Oct 2026: the map uses the shared glossy pictures where lirich-sprites.js is loaded —
+   the yard, both truck types, the buyer's container and the vessels. Site dots keep their
+   state colours (blue idle, green bin on site, amber call, red late or full); they only gain
+   a gloss. Positions, timings and every number in the simulation are unchanged. */
+const HAS_SPR = () => !!(window.LirichSprites && LirichSprites.keys.indexOf('d_hook')>=0);
+function gloss(x,y,r,col){
+  const g=cx.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r);
+  g.addColorStop(0,'rgba(255,255,255,.55)'); g.addColorStop(.35,col); g.addColorStop(1,col);
+  cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,7); cx.fill();
+  cx.strokeStyle='rgba(255,255,255,.85)'; cx.lineWidth=1.4; cx.stroke();
+}
+function sprAt(key,x,y,size,flip){
+  if(!flip){ LirichSprites.draw(cx,key,x-size/2,y-size/2,size); return; }
+  cx.save(); cx.translate(x,y); cx.scale(-1,1); LirichSprites.draw(cx,key,-size/2,-size/2,size); cx.restore();
+}
+function placeSiteLabels(R){
+  cx.font='600 9.5px system-ui';
+  const H=11, placed=[], dots=G.sites.map(s=>({x:s.x-R-2,y:s.y-R-2,w:2*R+4,h:2*R+4}))
+    .concat([{x:MW*0.14-R*1.7,y:MH*0.42-R*1.7,w:R*3.4,h:R*3.4+12}]);
+  const ov=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
+  G.sites.forEach(s=>{
+    const w=cx.measureText(s.sh).width+2;
+    const cand=[{x:s.x-w/2,y:s.y+R+2},{x:s.x-w/2,y:s.y-R-2-H},{x:s.x+R+3,y:s.y-H/2},{x:s.x-R-3-w,y:s.y-H/2}]
+      .map(c=>({x:Math.max(1,Math.min(MW-w-1,c.x)),y:Math.max(1,Math.min(MH-H-1,c.y)),w:w,h:H}));
+    let best=cand[0], bestCost=Infinity;
+    for(const c of cand){
+      let cost=0; placed.concat(dots).forEach(o=>{ cost+=ov(c,o); });
+      if(cost<bestCost){ best=c; bestCost=cost; if(cost===0) break; }
+    }
+    placed.push(best);
+    cx.textAlign='left'; cx.textBaseline='top'; cx.lineJoin='round';
+    cx.strokeStyle='rgba(11,22,48,.85)'; cx.lineWidth=3; cx.strokeText(s.sh, best.x+1, best.y+1);
+    cx.fillStyle= s.lost?'rgba(202,220,252,.28)':'rgba(202,220,252,.9)';
+    cx.fillText(s.sh, best.x+1, best.y+1);
+    cx.textBaseline='alphabetic';
+  });
+}
+function drawMap(){
+  const r=cv.getBoundingClientRect();
+  if(Math.abs(r.width-MW)>0.5 || Math.abs(r.height-MH)>0.5) fit();
+  cx.clearRect(0,0,MW,MH);
+  cx.fillStyle='rgba(255,255,255,.03)'; cx.fillRect(0,0,MW,MH);
+  const YX=MW*0.14, YY=MH*0.42, BX=MW*0.33, BY=MH*0.85;
+  const R=Math.max(8, Math.min(14, MW*0.023));
+  G.sites.forEach(s=>{ s.x=MW*s.nx; s.y=MH*s.ny; });
+
+  G.sites.forEach(s=>{
+    cx.strokeStyle = s.lost ? 'rgba(255,255,255,.04)' : 'rgba(202,220,252,.13)';
+    cx.lineWidth=1.5; cx.beginPath(); cx.moveTo(YX,YY); cx.lineTo(s.x,s.y); cx.stroke();
+  });
+  cx.strokeStyle='rgba(140,107,177,.34)'; cx.setLineDash([6,5]); cx.lineWidth=1.5;
+  cx.beginPath(); cx.moveTo(YX,YY); cx.lineTo(BX,BY); cx.stroke(); cx.setLineDash([]);
+  if(HAS_SPR()) sprAt('container', BX, BY, R*2.6);
+  else { cx.fillStyle='#8C6BB1'; cx.beginPath(); cx.arc(BX,BY,R*0.8,0,7); cx.fill(); }
+  cx.fillStyle='rgba(202,220,252,.85)'; cx.font='700 9px system-ui'; cx.textAlign='center';
+  cx.fillText('BUYER', BX, BY+R+11);
+
+  // the water side — berths served by the tanker
+  G.berths.forEach(bt=>{
+    bt.x=MW*bt.nx; bt.y=MH*bt.ny;
+    cx.strokeStyle='rgba(78,134,200,.26)'; cx.setLineDash([3,4]); cx.lineWidth=1.4;
+    cx.beginPath(); cx.moveTo(YX,YY); cx.lineTo(bt.x,bt.y); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle = bt.call ? (bt.call.late?'#C0455F':'#D9A441') : '#2F5580';
+    if(HAS_SPR()){
+      /* the vessel picture sits on a pad in the berth's state colour */
+      cx.beginPath(); cx.ellipse(bt.x, bt.y+R*0.55, R*1.25, R*0.5, 0, 0, 7); cx.fill();
+      sprAt('ship', bt.x, bt.y, R*2.4);
+    } else {
+    cx.beginPath();
+    cx.moveTo(bt.x-R*0.9,bt.y-R*0.45); cx.lineTo(bt.x+R*0.9,bt.y-R*0.45);
+    cx.lineTo(bt.x+R*0.55,bt.y+R*0.5); cx.lineTo(bt.x-R*0.55,bt.y+R*0.5);
+    cx.closePath(); cx.fill();
+    }
+    cx.fillStyle='rgba(202,220,252,.72)'; cx.font='600 8.5px system-ui'; cx.textAlign='center';
+    { const hw=cx.measureText(bt.sh).width/2+2; cx.fillText(bt.sh, Math.max(hw, Math.min(MW-hw, bt.x)), bt.y+R+9); }
+  });
+
+  G.sites.forEach(s=>{
+    let col='#4E86C8';
+    if(s.lost) col='#3A4150';
+    else if(s.call && s.call.late) col='#C0455F';
+    else if(s.call) col='#D9A441';
+    else if(s.bin && s.bin.state==='fullsite') col='#C0455F';
+    else if(s.bin) col='#3FA46B';
+    if(HAS_SPR() && !s.lost) gloss(s.x,s.y,R,col);
+    else { cx.fillStyle=col; cx.beginPath(); cx.arc(s.x,s.y,R,0,7); cx.fill(); }
+    if(s.bin && !s.lost){
+      const f=Math.min(1, s.bin.fill/s.bin.cap);
+      cx.strokeStyle='rgba(255,255,255,.92)'; cx.lineWidth=2.5;
+      cx.beginPath(); cx.arc(s.x,s.y,R+4,-Math.PI/2,-Math.PI/2+f*Math.PI*2); cx.stroke();
+    }
+    if(s.strikes>0 && !s.lost){
+      cx.fillStyle='rgba(255,255,255,.97)'; cx.font='700 10px system-ui'; cx.textAlign='center';
+      cx.fillText('!'.repeat(s.strikes), s.x, s.y+3.5);
+    }
+  });
+  /* 22 Oct 2026: site labels are placed, not just dropped under the dot. On a phone the
+     Tuas/Jurong cluster put six names on top of each other. Each label tries below, above,
+     right, then left of its dot and takes the first spot that clears every dot and every
+     label already placed; if none is clear it keeps the least-overlapping one. A dark
+     outline keeps it readable over the road lines. Positions of the dots are unchanged. */
+  placeSiteLabels(R);
+
+  if(HAS_SPR()){
+    sprAt('d_yard', YX, YY, R*3.4);
+    cx.fillStyle='#F2D27A'; cx.font='800 10px Cinzel,Georgia,serif'; cx.textAlign='center';
+    cx.fillText('LIRICH', YX, YY+R*1.7+9);
+  } else {
+  cx.fillStyle='#C9A227'; cx.beginPath(); cx.arc(YX,YY,R*1.5,0,7); cx.fill();
+  cx.fillStyle='#1B2A4A'; cx.font='700 10px system-ui'; cx.textAlign='center';
+  cx.fillText('LIRICH', YX, YY+3.5);
+  }
+
+  G.trucks.forEach(tr=>{
+    if(tr.state!=='working') return;
+    const j=tr.job;
+    const tx = j.kind==='despatch' ? BX : j.kind==='marine' ? G.berths[j.berth].x : G.sites[j.site].x;
+    const ty = j.kind==='despatch' ? BY : j.kind==='marine' ? G.berths[j.berth].y : G.sites[j.site].y;
+    let p=0;
+    if(tr.phase==='out') p=1-tr.tLeft/tr.tTot;
+    else if(tr.phase==='work') p=1;
+    else if(tr.phase==='back') p=tr.tLeft/tr.tTot;
+    const x=YX+(tx-YX)*p, y=YY+(ty-YY)*p;
+    if(HAS_SPR()){
+      /* face the way the truck is driving: out from the yard, or back to it */
+      const headingRight = (tx>=YX) === (tr.phase!=='back');
+      sprAt(tr.type==='tanker'?'d_tanker':'d_hook', x, y-2, 30, !headingRight);
+    } else {
+    cx.fillStyle = tr.type==='tanker' ? '#4E86C8' : '#E07C2E'; cx.fillRect(x-9,y-6,18,12);
+    cx.fillStyle='#1B2A4A'; cx.fillRect(x+3,y-4.5,5,5);
+    }
+    if(tr.carry){
+      cx.fillStyle = tr.carry.kind==='prod' ? '#8C6BB1' : (tr.carry.fill>0?'#C0455F':'#54A98C');
+      cx.fillRect(x-8,y-10,11,4);
+    }
+    cx.fillStyle='rgba(202,220,252,.9)'; cx.font='700 8.5px system-ui'; cx.textAlign='center';
+    cx.fillText('T'+(tr.id+1), x, y+16);
+  });
+}
+
+/* The panel is rebuilt from scratch, so it must NOT be rebuilt on every animation frame:
+   a button destroyed between finger-down and finger-up never registers the tap. The map
+   redraws at frame rate; the panel redraws four times a second, and not at all while a
+   call is selected, so the truck buttons hold still long enough to be pressed. */
+let lastRender=0, pointerHeld=false;
+/* Never rebuild anything while a finger or mouse button is down. */
+['pointerdown','pointerup','pointercancel','pointerleave'].forEach(ev=>
+  addEventListener(ev, e=>{ pointerHeld = (ev==='pointerdown'); }, true));
+function tickRender(ts){
+  const gap = tab==='jobs' ? 250 : 900;   // fleet and shop rebuild wholesale, so slower
+  if(ts-lastRender < gap) return;
+  if(pointerHeld) return;
+  lastRender=ts;
+  renderHud();
+  renderPanel();
+}
+function render(){ renderHud(); renderPanel(); }
+function renderHud(){
+  if(!G) return;
+  $('clockBox').firstChild.textContent='DAY '+G.day+' ';
+  $('hClock').textContent=hhmm(G.t%1440);
+  $('hCash').textContent=money(G.cash);
+  $('hT').textContent=G.diverted.toFixed(1)+' t';
+  const eb=emptySkips().length;
+  $('hBins').textContent=eb+'/'+G.bins.filter(b=>b.kind==='skip').length;
+  $('sBins').className='stat'+(eb===0?' bad':eb<=1?' warn':'');
+  const live=G.sites.filter(s=>!s.lost).length;
+  $('hAcc').textContent=live+'/'+G.sites.length;
+  $('sAcc').className='stat'+(G.lost>=2?' bad':G.lost?' warn':'');
+  document.querySelectorAll('.stat')[0].className='stat'+(G.cash<0?' bad':G.cash<5000?' warn':'');
+
+  $('yTip').textContent=G.bins.filter(b=>b.kind==='skip'&&(b.state==='fullyard'||b.state==='tipping')).length;
+  const ft=G.floorRaw+G.floorProd;
+  $('yFloor').textContent=ft.toFixed(1)+' t';
+  $('yFloorBar').style.width=Math.min(100,ft/CFG.FLOOR_CAP*100)+'%';
+  $('yFloorBar').style.background = ft>CFG.FLOOR_CAP*0.85 ? '#C0455F' : ft>CFG.FLOOR_CAP*0.6 ? '#D9A441' : '#E07C2E';
+  const pb=G.bins.filter(b=>b.kind==='prod');
+  $('yProd').textContent=pb.filter(b=>b.state!=='full'&&b.state!=='truck').length+'/'+pb.length;
+  $('yIdle').textContent=G.trucks.filter(t=>t.state==='idle').length+'/'+G.trucks.length;
+  $('nJobs').textContent=G.jobs.length?'('+G.jobs.length+')':'';
+}
+function renderPanel(){
+  if(!G) return;
+  const p=$('panel');
+  if(tab==='jobs') renderJobs(p);
+  else if(tab==='fleet') renderFleet(p);
+  else renderShop(p);
+}
+/* Rows are created once per job and then updated in place. Nothing in this panel is
+   destroyed and rebuilt while it is on screen, because a button removed between
+   finger-down and finger-up swallows the tap — which is exactly what "I have to click it
+   three times" feels like. Ordering is done with CSS `order`, not by moving DOM nodes,
+   for the same reason. */
+const rowEls = new Map();
+let emptyMsg = null;
+
+function renderJobs(p){
+  if(p !== renderJobs.host){ p.innerHTML=''; rowEls.clear(); emptyMsg=null; renderJobs.host=p; }
+
+  if(!emptyMsg){
+    emptyMsg=document.createElement('div');
+    emptyMsg.className='sub'; emptyMsg.style.padding='14px 2px'; emptyMsg.style.order='-1';
+    emptyMsg.textContent='Nothing waiting. Bins are filling at the sites that have one — '+
+      'the calls come when they are full.';
+    p.appendChild(emptyMsg);
+  }
+  emptyMsg.style.display = G.jobs.length ? 'none' : 'block';
+
+  const jobs=G.jobs.slice().sort((x,y)=>(x.due - (x.late?10000:0)) - (y.due - (y.late?10000:0)));
+  const live=new Set();
+  // reorder sparingly — a row that slides while a finger is on its way down is a missed tap
+  const reorder = (performance.now() - (renderJobs.sortedAt||0)) > 2000;
+  if(reorder) renderJobs.sortedAt = performance.now();
+
+  jobs.forEach((j,idx)=>{
+    live.add(j.id);
+    let el=rowEls.get(j.id);
+    if(!el){ el=makeRow(j); rowEls.set(j.id, el); p.appendChild(el); el.style.order=idx; }
+    else if(reorder) el.style.order=idx;
+    updateRow(el, j);
+  });
+
+  rowEls.forEach((el,id)=>{ if(!live.has(id)){ el.remove(); rowEls.delete(id); } });
+}
+
+const BK={deliver:['b-del','DELIVER'],exchange:['b-exc','EXCHANGE'],collect:['b-col','COLLECT'],
+          despatch:['b-des','DESPATCH'],marine:['b-mar','MARINE']};
+
+function makeRow(j){
+  const el=document.createElement('div');
+  el.className='job';
+  el.innerHTML='<div class="jrow"><span class="badge"></span><span class="jname"></span>'+
+    '<span class="jmeta"></span></div>'+
+    '<div class="sub stream" style="margin-top:3px;color:#8C9AB4"></div>'+
+    '<div class="tbar"><i></i></div><div class="sub note"></div>'+
+    '<div class="picks"></div>';
+  el._p={ badge:el.querySelector('.badge'), name:el.querySelector('.jname'),
+          meta:el.querySelector('.jmeta'), stream:el.querySelector('.stream'),
+          bar:el.querySelector('.tbar'), fill:el.querySelector('.tbar i'),
+          note:el.querySelector('.note'), picks:el.querySelector('.picks'),
+          btns:new Map(), hint:null, lbl:null };
+  return el;
+}
+
+function updateRow(el, j){
+  const P=el._p;
+  const left=j.due-G.t, frac=Math.max(0,Math.min(1,left/CFG.PATIENCE[j.kind]));
+  const bk=BK[j.kind];
+
+  set(P.badge,'className','badge '+bk[0]); set(P.badge,'textContent',bk[1]);
+  set(P.name,'textContent',jobLabel(j));
+
+  let meta='', stream='';
+  if(j.kind==='despatch'){ meta=CFG.BUYER_DIST+' min · '+CFG.PROD_CAP+' t'; stream='RDF and metals'; }
+  else if(j.kind==='marine'){ const bt=G.berths[j.berth];
+    meta=bt.dist+' min · '+j.m3.toFixed(1)+' m³'; stream=bt.cat+' · tanker only'; }
+  else { const st=G.sites[j.site];
+    meta=st.dist+' min'+(st.bin&&st.bin.fill>0?' · '+st.bin.fill.toFixed(1)+' t':'');
+    stream=st.stream; }
+  set(P.meta,'textContent',meta); set(P.stream,'textContent',stream);
+
+  set(el,'className','job'+(j.late?' late':'')+(j.truck!==null?' out':''));
+  set(P.bar,'className','tbar '+(j.late?'bad':frac<0.35?'warn':''));
+  P.fill.style.width=(frac*100)+'%';
+
+  if(j.truck!==null){
+    const tr=G.trucks[j.truck];
+    const ph={load:'loading',out:'driving out',work:'on site',back:'driving back',
+              weigh:'on the weighbridge',unload:'unloading'}[tr.phase]||tr.phase;
+    P.note.innerHTML='<span style="color:#9FE0BC">'+tr.n+' — '+ph+', '+
+      Math.ceil(tr.tLeft)+' min left</span>';
+  } else {
+    const why=canAssign(j);
+    P.note.innerHTML = j.late
+      ? '<span style="color:#F0AEBB">Late. Rebate paid. One more and the account walks.</span>'
+      : why ? '<span style="color:#E7B36B">'+why+'</span>'
+      : 'Round trip about '+jobMinutes(j)+' min · '+Math.floor(left/60)+' h '+
+        Math.floor(left%60)+' m before it is late.';
+  }
+  updatePicks(el, j);
+}
+function set(node, prop, val){ if(node[prop]!==val) node[prop]=val; }
+
+/* One tap sends a vehicle. No select-then-confirm step — that second tap was the one
+   getting eaten, and a dispatcher pressing a truck name means "send that truck".
+
+   Every vehicle keeps a button on every row, always, in the same order. A button that
+   disappears when its truck goes out would reflow the strip and slide the next button
+   under a finger already on its way down. Unavailable vehicles dim in place and say when
+   they are free instead, which is information a dispatcher wants anyway. */
+function updatePicks(el, j){
+  const P=el._p, blocked=canAssign(j);
+
+  if(!P.lbl){
+    P.lbl=document.createElement('span'); P.lbl.className='lbl';
+    P.picks.appendChild(P.lbl);
+  }
+  if(j.truck!==null){ P.lbl.textContent='Out with'; }
+  else if(blocked){ P.lbl.textContent='Held'; }
+  else { P.lbl.textContent='Send'; }
+
+  G.trucks.forEach(tr=>{
+    let b=P.btns.get(tr.id);
+    if(!b){
+      b=document.createElement('button');
+      P.btns.set(tr.id, b); P.picks.appendChild(b);
+      b.addEventListener('click', ev=>{
+        ev.preventDefault(); ev.stopPropagation();
+        const t=G.trucks[tr.id];
+        if(!t) return;
+        if(j.truck!==null){ toast('Already out', jobLabel(j)+' is covered by '+G.trucks[j.truck].n+'.', 'warn'); return; }
+        const why=canAssign(j);
+        if(why){ toast('Cannot send it', why, 'warn'); return; }
+        if(!truckFits(j,t)){
+          toast('Wrong vehicle', j.kind==='marine'
+            ? 'Annex I slops and sludge go in the vacuum tanker. A hooklift cannot take it.'
+            : 'The tanker only does marine reception. It cannot carry a skip.', 'warn');
+          return;
+        }
+        if(t.state!=='idle'){
+          toast(t.n+' is out', 'Back at the yard in about '+Math.ceil(remaining(t))+' minutes.', 'warn');
+          return;
+        }
+        assign(j, t);
+      });
+    }
+    const short=tr.n.replace('Hooklift ','H').replace('Vacuum tanker','Tanker');
+    const fits=truckFits(j,tr);
+    const free=tr.state==='idle';
+    const usable = fits && free && j.truck===null && !blocked;
+    const cls='pick'+(tr.type==='tanker'?' tank':'')+(usable?'':' off');
+    if(b.className!==cls) b.className=cls;
+    let html;
+    if(!fits) html=short+' <small>n/a</small>';
+    else if(j.truck===tr.id) html=short+' <small>on it</small>';
+    else if(!free) html=short+' <small>'+Math.ceil(remaining(tr))+'m</small>';
+    else if(usable) html=short+' <small>'+jobMinutes(j)+'m</small>';
+    else html=short+' <small>ready</small>';
+    if(b.innerHTML!==html) b.innerHTML=html;
+  });
+}
+function remaining(tr){                    // minutes until this vehicle is back and free
+  if(tr.state!=='working') return 0;
+  const order=['load','out','work','back','weigh','unload'];
+  const j=tr.job;
+  const out = j.kind==='despatch' ? CFG.BUYER_DIST
+            : j.kind==='marine'   ? G.berths[j.berth].dist : G.sites[j.site].dist;
+  const work= j.kind==='despatch' ? CFG.BUYER_WORK : j.kind==='marine' ? 55 : CFG.SITE_WORK;
+  const dur={load:CFG.YARD_LOAD, out:out, work:work, back:out, weigh:CFG.WEIGH, unload:CFG.YARD_LOAD};
+  let t=tr.tLeft;
+  for(let i=order.indexOf(tr.phase)+1;i<order.length;i++) t+=dur[order[i]];
+  return t;
+}
+function renderFleet(p){
+  p.innerHTML='';
+  G.trucks.forEach(tr=>{
+    const el=document.createElement('div'); el.className='tk';
+    let d;
+    if(tr.state==='idle') d='In the yard, waiting.';
+    else {
+      const j=tr.job;
+      const ph={load:'loading at the yard',out:'driving out',work:'on site',
+                back:'driving back',weigh:'on the weighbridge',unload:'unloading'}[tr.phase];
+      d=j.kind.toUpperCase()+' · '+jobLabel(j)+' — '+ph+', '+Math.ceil(tr.tLeft)+' min left'+
+        (tr.carry? ' · carrying '+tr.carry.id+(tr.carry.fill>0?' ('+tr.carry.fill.toFixed(1)+' t)':' (empty)') : '');
+    }
+    el.innerHTML='<b>'+tr.n+(tr.type==='tanker'?' <span style="color:#4E86C8;font-size:10px">MARINE ONLY</span>':'')+
+      (tr.hired?' <span style="color:#C9A227;font-size:10px">HIRED</span>':'')+'</b>'+
+      '<div class="d">'+d+'</div>'+
+      '<div class="d">'+tr.hours.toFixed(1)+' h this week · '+money(tr.hours*CFG.TRUCK_HOUR)+' run cost</div>';
+    p.appendChild(el);
+  });
+  const hd=document.createElement('div'); hd.className='tk';
+  const skips=G.bins.filter(b=>b.kind==='skip');
+  const cnt=s=>skips.filter(b=>b.state===s).length;
+  hd.innerHTML='<b>Bins</b><div class="d">'+
+    'empty in the yard <b>'+cnt('yard')+'</b> · on a truck <b>'+cnt('truck')+'</b> · '+
+    'filling at a client <b>'+cnt('site')+'</b> · full at a client <b>'+cnt('fullsite')+'</b> · '+
+    'full in the yard <b>'+(cnt('fullyard')+cnt('tipping'))+'</b></div>'+
+    '<div class="d" style="margin-top:5px">Only the first number can be sent anywhere. '+
+    'Lirich runs about 63 bins across 219 sites — this round is 11 of them.</div>';
+  p.appendChild(hd);
+  const rec=document.createElement('div'); rec.className='tk';
+  rec.innerHTML='<b>The record</b>'+
+    '<div class="d"><b>'+G.dos+'</b> Delivery Orders raised this week · <b>'+
+      G.marineM3.toFixed(1)+' m³</b> of Annex I residue received</div>'+
+    '<div class="d">Every collection raises a signed DO on the driver app — categories, bin in '+
+      'and out, weight off the weighbridge, photos, signature, GPS. That is the record a client\u2019s '+
+      'Scope 3 Category 5 figure is built from.</div>'+
+    '<div class="d" style="margin-top:5px;color:#8C9AB4">The map is the same picture the telematics '+
+      'gives the office.</div>';
+  p.appendChild(rec);
+}
+function renderShop(p){
+  p.innerHTML='';
+  const days=CFG.DAYS-G.day+1;
+  const items=[
+   {t:'Hire a hooklift', s:'Another hooklift and a driver, on the yard within the hour. '+
+      money(CFG.HIRE_DAY)+' a day for the remaining '+days+' day'+(days===1?'':'s')+' \u2014 '+
+      money(CFG.HIRE_DAY*days)+' committed, used or not, charged at the end of each day.',
+    p:0, free:true, act:()=>{
+      G.trucks.push({id:G.trucks.length, n:'Hooklift '+(G.trucks.filter(t=>t.type==='skip').length+1),
+        type:'skip', state:'idle', job:null, phase:null, tLeft:0, tTot:0, carry:null,
+        hired:true, hours:0});
+      toast('Hooklift hired','On the yard now, and on the invoice every remaining day whether it '+
+        'turns a wheel or not.','ok');
+    }},
+   {t:'Buy a skip bin', s:'One more 20-yard bin. Bins are usually what runs out first.',
+    p:CFG.BIN_COST, act:()=>{
+      G.bins.push({id:'S'+(G.bins.filter(b=>b.kind==='skip').length+1), kind:'skip', cap:2.4,
+        fill:0, state:'yard', site:null});
+      G.cash-=CFG.BIN_COST; toast('Bin bought','Empty and in the yard.','ok');
+    }},
+   {t:'Buy a product bin', s:'Somewhere for sorted material to go. Without one the floor backs up and the line stops.',
+    p:CFG.PRODBIN_COST, act:()=>{
+      G.bins.push({id:'P'+(G.bins.filter(b=>b.kind==='prod').length+1), kind:'prod',
+        cap:CFG.PROD_CAP, fill:0, state:'yard'});
+      G.cash-=CFG.PRODBIN_COST; toast('Product bin bought','The line has somewhere to put its output.','ok');
+    }}
+  ];
+  items.forEach(it=>{
+    const b=document.createElement('button'); b.className='buy';
+    b.innerHTML='<span class="t"><b>'+it.t+'</b><small>'+it.s+'</small></span><span class="p">'+
+      (it.free? money(CFG.HIRE_DAY)+'/day' : money(it.p))+'</span>';
+    b.disabled = it.free ? false : (G.cash < it.p);
+    b.onclick=()=>{ it.act(); render(); };
+    p.appendChild(b);
+  });
+  const note=document.createElement('div'); note.className='sub';
+  note.style.padding='6px 2px';
+  note.innerHTML='Every one of these fixes a problem and creates a cost. The week is short enough '+
+    'that a truck hired on Monday has to earn back five days of hire.';
+  p.appendChild(note);
+}
+let toastT=null;
+function toast(t,b,k){
+  const el=$('toast'); el.className='toast '+(k||'ok');
+  el.innerHTML='<b>'+t+'</b>'+b;
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.add('hide'), 4200);
+}
+
+/* -------------------------------------------------------------------- the loop ---- */
+function loop(ts){
+  raf=requestAnimationFrame(loop);
+  if(!G || G.over) return;
+  const dt=Math.min(120, ts-lastTs); lastTs=ts;
+  if(!G.paused){
+    step(dt/1000*CFG.MIN_PER_SEC*G.speed);
+    if(G.cash < -12000){ endWeek('broke'); return; }
+    if(G.lost >= CFG.ACCOUNTS_LOST_END){ endWeek('accounts'); return; }
+    if(G.t >= dayEnd(G.day)) endDay();
+  }
+  drawMap(); tickRender(ts);
+}
+function endDay(){
+  G.paused=true;
+  // recall every bin still out on a truck — the day ends, the truck comes home
+  G.trucks.forEach(tr=>{ if(tr.state!=='working') return;
+    if(tr.phase==='load'||tr.phase==='out') abortJob(tr); else finishJob(tr); });
+  const hired=G.trucks.filter(t=>t.hired).length;
+  G.cash -= CFG.FIXED_DAY + hired*CFG.HIRE_DAY;
+  const late=G.lateToday;
+  $('dTag').textContent='End of day '+G.day;
+  $('dTitle').textContent = late===0 ? 'Nothing went late' : late<=2 ? 'A day with a couple of slips'
+    : 'The board got away from you';
+  $('dBody').textContent = 'Collected '+G.collectedToday.toFixed(1)+' t and despatched '+
+    G.despatchedToday.toFixed(1)+' t, on '+G.dos+' Delivery Orders so far this week. Anything still '+
+    'on a vehicle at 19:00 came back to the yard and its job went back on the board.';
+  $('dT').textContent=G.collectedToday.toFixed(1)+' t';
+  $('dD').textContent=G.despatchedToday.toFixed(1)+' t';
+  const dc=G.cash-G.cashDayStart;
+  $('dC').textContent=money(G.cash); $('dC').className=G.cash<0?'neg':'';
+  $('dL').textContent=late;
+  const ul=$('dNotes'); ul.innerHTML='';
+  const notes=[];
+  const ft=G.floorRaw+G.floorProd;
+  if(ft>CFG.FLOOR_CAP*0.8) notes.push('The floor finished the day at '+ft.toFixed(0)+' t of '+CFG.FLOOR_CAP+'. Close to jammed — nothing can be tipped once it is full.');
+  if(emptySkips().length===0) notes.push('No empty bin in the yard at close. Tomorrow starts with a call you cannot answer.');
+  if(G.bins.filter(b=>b.kind==='prod'&&b.state==='full').length) notes.push('A full product bin is still sitting in the yard. It is money, and it is also a bin nobody can use.');
+  if(hired) notes.push(hired+' hired vehicle'+(hired===1?'':'s')+' charged '+
+    money(hired*CFG.HIRE_DAY)+' tonight. That is charged again every day left in the week.');
+  if(dc<0) notes.push('The day cost '+money(-dc)+' more than it earned.');
+  if(!notes.length) notes.push('Nothing structural went wrong today.');
+  notes.forEach(n=>{ const li=document.createElement('li'); li.textContent=n; ul.appendChild(li); });
+  $('dFact').innerHTML=DAY_FACT[Math.min(DAY_FACT.length-1, G.day-1)];
+  $('btnNext').textContent = G.day>=CFG.DAYS ? 'Close the week' : 'Start day '+(G.day+1);
+  $('ovDay').classList.remove('hide');
+}
+function nextDay(){
+  $('ovDay').classList.add('hide');
+  if(G.day>=CFG.DAYS){ endWeek('finished'); return; }
+  const gap = dayStart(G.day+1) - dayEnd(G.day);
+  G.day++; G.t=dayStart(G.day);
+  G.jobs.forEach(j=>{ j.due += gap; });
+  G.sites.forEach(s=>{ s.nextCall += gap; });
+  G.lateToday=0; G.collectedToday=0; G.despatchedToday=0;
+  G.cashDayStart=G.cash;
+  G.paused=false;
+}
+function endWeek(how){
+  G.over=true; G.paused=true;
+  const kept=G.sites.filter(s=>!s.lost).length;
+  $('eTag').textContent = how==='broke' ? 'Out of money' : how==='accounts' ? 'Accounts gone' : 'Week closed';
+  const brokeAtEnd = how==='finished' && G.cash<0;
+  const thin = how==='finished' && G.cash>=0 && G.cash < CFG.CASH0*0.45;
+  $('eTitle').textContent = how==='broke' ? 'The overdraft went first'
+    : how==='accounts' ? 'Three clients walked'
+    : brokeAtEnd && G.lateTotal===0 ? 'Flawless, and it lost money'
+    : brokeAtEnd ? 'The week ended in the red'
+    : thin && G.lateTotal<=2 ? 'Everybody served, nothing earned'
+    : thin ? 'A week of work for very little'
+    : G.lateTotal===0 ? 'A clean week'
+    : G.diverted>=140 ? 'A good week with some noise'
+    : 'The week survived you';
+  $('eBody').textContent = how==='broke'
+    ? 'Costs ran ahead of the work. Hired capacity is charged whether it moves or not.'
+    : how==='accounts'
+    ? 'Every one of them left for the same reason: a bin that did not turn up when it was promised.'
+    : brokeAtEnd
+    ? 'Five days, '+G.diverted.toFixed(1)+' tonnes and every client kept — for '+money(-G.cash)+
+      ' less than the week started with. The capacity that made it possible cost more than the work it did.'
+    : thin
+    ? 'Five days and '+G.diverted.toFixed(1)+' tonnes for '+money(G.cash-CFG.CASH0)+
+      ' against where the week started. The work got done. The margin went on the vehicles that did it.'
+    : 'Five days, '+G.diverted.toFixed(1)+' tonnes through the gate and '+G.despatched.toFixed(1)+
+      ' tonnes out to a buyer.';
+  $('eT').textContent=G.diverted.toFixed(1)+' t';
+  $('eC').textContent=money(G.cash); $('eC').className=G.cash<0?'neg':'';
+  $('eA').textContent=kept+'/'+G.sites.length;
+  $('eD2').textContent=G.dos;
+
+  /* The week's record, in the language the guardrails allow — and no further. */
+  const proc=G.rdf+G.metals+G.rejects;
+  const route = proc>0 ? (G.rdf+G.metals)/proc*100 : 0;
+  const rows=[
+    ['h','This week\u2019s record',''],
+    ['','Across the weighbridge', G.diverted.toFixed(1)+' t'],
+    ['','Processed on the line', proc.toFixed(1)+' t'],
+    ['','\u2003RDF light fraction', G.rdf.toFixed(1)+' t'],
+    ['','\u2003Metals recovered', G.metals.toFixed(1)+' t'],
+    ['','\u2003Rejects to disposal', G.rejects.toFixed(1)+' t'],
+    ['','Route-confirmed recovery', route.toFixed(0)+'%'],
+    ['','Despatched to a buyer', G.despatched.toFixed(1)+' t'],
+    ['','Annex I residue received', G.marineM3.toFixed(1)+' m\u00b3'],
+    ['','Delivery Orders raised', String(G.dos)],
+    ['','Late calls', String(G.lateTotal)]
+  ];
+  const t=$('eRec'); t.innerHTML='';
+  rows.forEach(r=>{ const tr=document.createElement('tr');
+    tr.innerHTML='<td'+(r[0]==='h'?' class="h" colspan="2"':'')+'>'+r[1]+'</td>'+
+                 (r[0]==='h'?'':'<td>'+r[2]+'</td>');
+    t.appendChild(tr); });
+  $('eDisc').innerHTML='Prepared as GHG Protocol Scope 3 Category 5, computed on NEA-sourced SEFR '+
+    'emission factors. Recovery rate is route-confirmed per MARPOL category, so it carries no '+
+    'density assumption. Tonnage in this game is a volume conversion, not a weight \u2014 it says '+
+    'estimated, and it will keep saying estimated until the density weighing exercise is done.' +
+    (RATES.STATUS === 'INDICATIVE'
+      ? '<br><b style="color:#B4651F">Money figures in this run are indicative teaching numbers, ' +
+        'not Lirich rates.</b> Replace the RATES block at the top of this file before using it as training.'
+      : '<br>Money figures are Lirich\u2019s own rates.');
+  $('eFact').innerHTML = (brokeAtEnd || thin)
+    ? '<b>Perfect service is not the objective — it is one of four.</b> Enough trucks and enough bins will answer every call on time, and a fleet sized for the worst hour of the week is idle for most of it. The number that decides whether a round is worth running is tonnes per truck-hour, not tonnes.'
+    : how==='broke'
+    ? '<b>Capacity bought under pressure is the most expensive capacity there is.</b> A truck hired on the morning of a bad day is charged for every day left in the week. Most dispatch problems look like a shortage and are actually a sequencing problem.'
+    : how==='accounts'
+    ? '<b>Service is the product.</b> A client does not see the tipping floor, the line or the bale count. They see whether the bin turned up. Everything else in this game exists to make that one thing possible.'
+    : '<b>The four pressures are one system.</b> Bins tie up when the floor jams; the floor jams when product has nowhere to go; product has nowhere to go when the trucks are all on collections; and the collections are late because there are no bins. Whichever one is hurting, the cause is usually one of the other three.';
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer — records the run and offers a team name */
+  try { LirichLearn.run('dispatch', G.diverted, true); } catch(e) {}
+  try { LirichScores.finish('dispatch', G.diverted, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+
+/* ------------------------------------------------------------------------ input ---- */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  tab=b.dataset.p;
+  // the jobs panel owns its DOM; switching away wipes it, so drop the cache with it
+  renderJobs.host=null; rowEls.clear(); emptyMsg=null;
+  $('panel').innerHTML='';
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x===b));
+  lastRender=0; render();
+});
+function setSpeed(s,btn){
+  G.paused = s===0; if(s) G.speed=s;
+  ['spP','sp1','sp2','sp4'].forEach(id=>$(id).classList.toggle('on', id===btn));
+}
+$('spP').onclick=()=>setSpeed(0,'spP');
+$('sp1').onclick=()=>setSpeed(1,'sp1');
+$('sp2').onclick=()=>setSpeed(2,'sp2');
+$('sp4').onclick=()=>setSpeed(4,'sp4');
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); fit(); G=newGame(); lastTs=performance.now();
+  if(!raf) raf=requestAnimationFrame(loop); render(); };
+$('btnNext').onclick=nextDay;
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); G=newGame(); lastTs=performance.now();
+  setSpeed(1,'sp1'); render(); };
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

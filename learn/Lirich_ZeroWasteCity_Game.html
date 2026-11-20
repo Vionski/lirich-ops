@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zero Waste City — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="description" content="Run Singapore's waste system to 2040. Keep the landfill open. Lirich Learn.">
+<meta name="theme-color" content="#1B2A4A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zero Waste City">
+<style>
+ :root{
+   --navy:#1B2A4A; --navy2:#10192E; --surf:#16223C; --gold:#C9A227; --orange:#E07C2E;
+   --ice:#CADCFC; --ink:#FFFFFF; --ink2:#AEBCD4; --muted:#7C8AA3;
+   --sRec:#3FA46B; --sWTE:#4E86C8; --sRDF:#B87D22; --sLand:#C0455F;
+   --good:#3FA46B; --warn:#B87D22; --bad:#C0455F;
+ }
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:var(--ink);
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:560px;height:100%;max-height:1000px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 55%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;gap:10px;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}
+ .yr{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .yr b{display:block;font-size:22px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #scroll{flex:1 1 auto;overflow-y:auto;padding:0 14px 12px;min-height:0}
+ .panel{background:rgba(255,255,255,.06);border:1px solid rgba(202,220,252,.16);
+   border-radius:12px;padding:11px 12px;margin-bottom:10px}
+ .lbl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ice)}
+ .big{font-size:20px;font-variant-numeric:tabular-nums;line-height:1.2}
+ .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+ .bar{height:12px;border-radius:7px;background:rgba(255,255,255,.14);overflow:hidden;margin-top:7px}
+ .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sLand),#E07C2E);transition:width .4s}
+ .bar.ok i{background:linear-gradient(90deg,var(--sRec),#7FD0A2)}
+ .sub{font-size:11px;color:var(--ink2);margin-top:6px;line-height:1.45}
+ canvas{width:100%;display:block;border-radius:8px}
+ .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+ .lg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink2)}
+ .sw{width:9px;height:9px;border-radius:2px}
+ h3{margin:14px 0 8px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--ice)}
+ .act:focus-visible{outline:3px solid #C9A227;outline-offset:2px}
+ .act{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.055);
+   border:1px solid rgba(202,220,252,.16);border-radius:11px;padding:10px 11px;margin-bottom:8px;
+   cursor:pointer;transition:.15s}
+ .act:hover{background:rgba(255,255,255,.1)}
+ .act.no{opacity:.42;cursor:not-allowed}
+ .act .ai{width:44px;height:44px;flex:0 0 auto;background:#fff;border-radius:10px}
+ #isle{display:block;width:100%;height:96px;margin-top:8px;border-radius:12px}
+ .act .t{flex:1}
+ .act .t b{display:block;font-size:13.5px}
+ .act .t span{font-size:11px;color:var(--ink2);line-height:1.4}
+ .act .c{font-size:13px;font-variant-numeric:tabular-nums;color:var(--gold);white-space:nowrap}
+ .act.on{border-color:var(--orange);background:rgba(224,124,46,.16)}
+ #go{position:static;background:var(--orange);color:#fff;border:0;border-radius:11px;
+   padding:14px;font-size:15.5px;font-weight:600;width:100%;cursor:pointer;margin:12px 0 4px;
+   box-shadow:0 6px 20px rgba(0,0,0,.4)}
+ footer{padding:6px 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:420px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:24px;color:var(--navy)}
+ .card h2{font-family:Georgia,serif;margin:0 0 6px;font-size:20px;color:var(--navy)}
+ .card p{margin:8px 0;font-size:13.5px;line-height:1.55;color:#3D4A5A}
+ .card .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;
+   padding:3px 11px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:12px 22px;
+   font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+ .btn.alt{background:var(--navy)}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+ #tip{position:absolute;pointer-events:none;background:#fff;color:#22303F;border-radius:8px;
+   padding:8px 10px;font-size:11.5px;line-height:1.5;box-shadow:0 6px 18px rgba(0,0,0,.45);
+   opacity:0;transition:.12s;z-index:7;white-space:nowrap}
+ #tip.on{opacity:1}
+ #log{font-size:11.5px;color:var(--ink2);line-height:1.55}
+ #log b{color:#fff}
+ table.tv{width:100%;border-collapse:collapse;font-size:10.5px;color:var(--ink2);margin-top:8px}
+ table.tv th,table.tv td{text-align:right;padding:2px 4px;border-bottom:1px solid rgba(255,255,255,.08)}
+ table.tv th:first-child,table.tv td:first-child{text-align:left}
+ details summary{font-size:10.5px;color:var(--ice);cursor:pointer;margin-top:8px}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+
+<header>
+  <div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Zero Waste City</b></div>
+  <div class="spacer"></div>
+  <div class="yr">YEAR<b id="hYear">2026</b></div>
+</header>
+
+<div id="scroll">
+
+  <div class="panel">
+    <div class="lbl">Landfill airspace remaining</div>
+    <div class="big" id="hLand">—</div>
+    <canvas id="isle" height="96" aria-hidden="true"></canvas>
+    <div class="bar" id="hLandBar"><i style="width:100%"></i></div>
+    <div class="sub" id="hLandSub">—</div>
+  </div>
+
+  <div class="panel grid3">
+    <div><div class="lbl">Budget</div><div class="big" id="hCash">—</div></div>
+    <div><div class="lbl">Recycling rate</div><div class="big" id="hRate">—</div></div>
+    <div><div class="lbl">Public support</div><div class="big" id="hSup">—</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="lbl">Where the waste went — thousand tonnes a year</div>
+    <canvas id="ch" height="150"></canvas>
+    <div class="legend" id="chLeg"></div>
+    <details><summary>Show as a table</summary><div id="tv"></div></details>
+  </div>
+
+  <div class="panel"><div class="lbl">Last year</div><div id="log" style="margin-top:6px">—</div></div>
+
+  <h3>Choose what to fund this year</h3>
+  <div id="acts"></div>
+  <button id="go">Advance to 2027 →</button>
+</div>
+
+<footer>
+  Figures are simplified for teaching and are <b>not a forecast</b>. Real starting values are drawn
+  from NEA and MSE published statistics — see the note that ships with this file.
+</footer>
+
+<div id="tip"></div>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">Operator mission · Sec 2–3</div>
+  <h1>Zero Waste City</h1>
+  <p>You run the waste system of an island city of six million people. Everything that is thrown
+     away has to go somewhere, and there is <b>one landfill</b>.</p>
+  <div class="fact"><b>The real deadline.</b> Singapore's only landfill, Semakau, is expected to run
+     out of space <b>by 2035</b> at current disposal rates. You have until <b>2040</b>. Keep it open.</div>
+  <p style="font-size:12.5px;color:#5B6472">This is an advanced classroom simulation. Every year you choose what to fund. Build too little and
+     the landfill fills. Build too much and you run out of money. Push people too hard and you lose
+     public support — and support is what actually drives recycling.</p>
+  <button class="btn" id="btnStart">Take office</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Result</div>
+  <h2 id="eTitle">—</h2>
+  <p id="eBody"></p>
+  <div class="row2">
+    <div class="cell"><span>Diverted from landfill</span><b id="eDiv">—</b></div>
+    <div class="cell"><span>Landfill life left</span><b id="eLife">—</b></div>
+  </div>
+  <div class="fact" id="eFact"></div>
+  <button class="btn" id="btnAgain">Run it again</button>
+</div></div>
+
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Zero Waste City — Lirich Learn.  Game 8 of the Lirich Learn basket.
+   Vanilla JS + Canvas. No dependencies, no network, no storage, no personal data.
+   -------------------------------------------------------------------------------------
+   GROUNDING — real published figures used as starting values (see the companion note):
+     · Semakau Landfill expected to run out of space by 2035 at current disposal rates (MSE)
+     · Overall recycling rate 52%; domestic 11%; non-domestic 67%; food waste 18% (NEA)
+     · Domestic waste 0.83 kg per person per day, down from 1.06 kg in 2015 (NEA)
+     · Most recyclables are exported for further processing (NEA)
+     · Incineration ash is being trialled as reclamation fill for Tuas Port (NEA/MPA/NUS)
+   Everything downstream of those starting values is a SIMPLIFIED MODEL FOR TEACHING.
+   It is not a forecast and must never be presented as one.
+   ===================================================================================== */
+
+/* ---- chart palette: validated for dark mode, all six checks pass ------------------- */
+const SER = [
+  {k:'rec',  name:'Recycled',    col:'#3FA46B'},
+  {k:'rdf',  name:'RDF fuel',    col:'#B87D22'},
+  {k:'wte',  name:'Incinerated', col:'#4E86C8'},
+  {k:'land', name:'To landfill', col:'#C0455F'}
+];
+
+/* ---- BALANCE ------------------------------------------------------------------------
+   These two numbers decide whether the game is a game. Both were set by simulating the
+   model rather than by feel, and the strategy spread they produce is the design:
+
+       do nothing              landfill full 2037   — the threat the game is about
+       one action a year       survives to 2040     — a real but reachable win
+       incinerators only       budget collapse 2035 — "buys time, burns money"
+       behaviour drives only   landfill full 2037   — "sorting is the bottleneck"
+       spend everything        budget collapse 2039 — ambition without sequencing
+
+   ⚠ Change either number and re-run that spread. Before 18 Sep 2026 the airspace was
+     9,000 kt, which never filled in fifteen years — so the landfill, the entire premise,
+     was never the binding constraint. It is now.                                      */
+const CFG = {
+  BUDGET: 130        // annual allocation, same units as cash
+};
+
+const START = {
+  year:2026, pop:6.0, perCap:0.83, behaviour:0.30, support:70,
+  cash:900, landfill:6000,                 // kt of airspace left
+  capRec:1900, capRdf:0, capWte:7600, ashReuse:0
+};
+let S, hist, chosen, cumDiverted, lastLog, ended;
+
+/* ---- what you can fund ------------------------------------------------------------- */
+const ACTIONS = [
+  {k:'drive', n:'Recycling drive', c:8,
+   d:'Doorstep education and clearer bin labelling. Cheap, and it works — but it fades.',
+   f:s=>{ s.behaviour=Math.min(.85,s.behaviour+.05); s.support+=3; }},
+  {k:'mrf',   n:'New sorting facility', c:70,
+   d:'+150 kt a year of recycling capacity. Sorting is the bottleneck, not willingness.',
+   f:s=>{ s.capRec+=150; }},
+  {k:'rdf',   n:'RDF line', c:95,
+   d:'+120 kt a year turned into fuel instead of buried. Earns revenue per tonne.',
+   f:s=>{ s.capRdf+=120; }},
+  {k:'food',  n:'Food waste digesters', c:45,
+   d:'+80 kt a year. Food is a third of what households throw away and only 18% is recycled.',
+   f:s=>{ s.capRec+=80; s.support+=1; }},
+  {k:'wte',   n:'New incineration plant', c:850,
+   d:'+900 kt a year of disposal. Buys time, burns money, and still leaves ash.',
+   f:s=>{ s.capWte+=900; s.support-=2; }},
+  {k:'ash',   n:'Ash reuse programme', c:140,
+   d:'Turn incineration ash into reclamation fill instead of burying it. Real, and being trialled.',
+   f:s=>{ s.ashReuse=Math.min(.6,s.ashReuse+.2); }},
+  {k:'depo',  n:'Container deposit scheme', c:35,
+   d:'Pay people for bottles and cans. Strong effect on behaviour, unpopular at first.',
+   f:s=>{ s.behaviour=Math.min(.9,s.behaviour+.09); s.support-=7; }}
+];
+
+/* ---- events ------------------------------------------------------------------------ */
+const EVENTS = [
+  {p:.16, t:'Freight costs spiked. Exporting recyclables stopped paying, and the rate slipped.',
+   f:s=>{ s.behaviour=Math.max(.1,s.behaviour-.04); s.evRev=-40; }},
+  {p:.13, t:'A hot dry year. Waste arisings rose and complaints about odour went up.',
+   f:s=>{ s.evWaste=1.06; s.support-=3; }},
+  {p:.12, t:'An incineration plant went down for six months of unplanned repairs.',
+   f:s=>{ s.evWte=0.85; }},
+  {p:.12, t:'A national clean-up campaign caught on by itself. Participation jumped.',
+   f:s=>{ s.behaviour=Math.min(.9,s.behaviour+.05); s.support+=4; }},
+  {p:.10, t:'Recyclate prices rallied. The sorting facilities had a good year.',
+   f:s=>{ s.evRev=60; }},
+  {p:.10, t:'Population grew faster than projected as the economy expanded.',
+   f:s=>{ s.pop+=0.06; s.evWaste=1.04; }}
+];
+
+/* ---- helpers ----------------------------------------------------------------------- */
+const $=id=>document.getElementById(id);
+const kt=n=>Math.round(n).toLocaleString()+' kt';
+const money=n=>'S$'+Math.round(n).toLocaleString()+'m';
+
+function reset(){
+  S=Object.assign({},START); hist=[]; chosen=new Set(); cumDiverted=0; ended=false;
+  lastLog='You take office. The landfill has about nine years left at today’s rates.';
+  renderAll();
+}
+
+/* ---- one year ---------------------------------------------------------------------- */
+function stepYear(){
+  if(ended) return;
+  // pay for and apply what was chosen
+  let spend=0; chosen.forEach(k=>{ const a=ACTIONS.find(x=>x.k===k); spend+=a.c; });
+  S.cash-=spend; chosen.forEach(k=>ACTIONS.find(x=>x.k===k).f(S));
+  chosen.clear();
+
+  // event
+  S.evWaste=1; S.evWte=1; S.evRev=0;
+  let ev=null, roll=Math.random(), acc=0;
+  for(const e of EVENTS){ acc+=e.p; if(roll<acc){ ev=e; e.f(S); break; } }
+
+  // arisings, in kt
+  const domestic = S.pop*1e6*S.perCap*365/1e6;
+  const nonDom   = domestic*2.9;
+  const arising  = (domestic+nonDom)*S.evWaste;
+
+  // where it goes
+  const capturable = arising*Math.min(.72, S.behaviour*1.35);
+  const rec  = Math.min(capturable, S.capRec);
+  let rem    = arising-rec;
+  const rdf  = Math.min(rem, S.capRdf); rem-=rdf;
+  const wte  = Math.min(rem, S.capWte*S.evWte); rem-=wte;
+  const direct = Math.max(0,rem);
+  const ash = wte*0.10*(1-S.ashReuse);
+  const landUse = ash+direct;
+
+  S.landfill=Math.max(0,S.landfill-landUse);
+  cumDiverted += (rec+rdf)*1000;                    // tonnes, the shared score unit
+
+  // money
+  const rev  = rec*0.040 + rdf*0.028 + wte*0.082 + S.evRev;
+  const opex = S.capRec*0.020 + S.capRdf*0.022 + S.capWte*0.062 + 120;
+  /* ⚠ THE ANNUAL BUDGET. Added 18 Sep 2026 after the game was measured and found to be
+     unwinnable: gate revenue does not cover operating cost at any capacity mix, so the
+     city ran a deficit of about 128 a year from 2026 and hit the failure threshold around
+     2036 NO MATTER WHAT THE PLAYER DID — including doing nothing at all. Eight strategies
+     were simulated and every one ended in a budget collapse before the landfill filled,
+     which meant the game never reached the point it exists to make.
+     A city is funded; it does not live on gate fees. The allocation makes cash a
+     CONSTRAINT ON CHOICES rather than a countdown, which is the intended game. */
+  S.cash += rev - opex + CFG.BUDGET;
+
+  // mood and habits
+  if(direct>0) S.support -= Math.min(14, 3+direct/60);
+  S.support += (S.behaviour>0.5?1:0);
+  S.support = Math.max(0,Math.min(100,S.support));
+  S.behaviour = Math.max(.08, S.behaviour-0.012);    // habits decay without effort
+  S.perCap = Math.max(.62, S.perCap-0.004);
+  S.pop *= 1.007;
+
+  const rate = (rec+rdf)/arising*100;
+  hist.push({y:S.year, rec, rdf, wte, land:landUse, arising, rate});
+
+  lastLog = '<b>'+S.year+'.</b> '+kt(arising)+' arose. '+Math.round(rate)+'% diverted. '
+    + 'Budget +'+CFG.BUDGET+', operations '+(rev-opex>=0?'+':'')+Math.round(rev-opex)+'. '
+    + (direct>0 ? '<b style="color:#F09">'+kt(direct)+' went straight to the landfill uncollected.</b> '
+                : 'Nothing went to the landfill uncollected. ')
+    + (ev ? '<br>'+ev.t : '');
+
+  S.year++;
+  checkEnd();
+  renderAll();
+}
+
+function checkEnd(){
+  if(S.landfill<=0) return finish(false,'The landfill is full',
+    'It filled in '+(S.year-1)+'. Everything thrown away now has nowhere to go, and there is no second island.',
+    '<b>This is the real constraint.</b> Semakau is expected to run out of space by 2035 at current disposal rates. Extending it is not a recycling slogan — it is the whole reason the system exists.');
+  if(S.cash< -400) return finish(false,'The budget collapsed',
+    'You built faster than the city could pay for. Facilities without funding stop running.',
+    '<b>Capacity is not free.</b> An incineration plant costs more to run each year than most recycling programmes cost to build. Sequencing matters as much as ambition.');
+  if(S.support<=15) return finish(false,'You lost the public',
+    'Support fell below the point where any of it works. People stopped separating anything.',
+    '<b>78% of Singapore households recycle</b> — but the domestic recycling rate is only 11%. Willingness and result are not the same thing, and neither survives without trust.');
+  if(S.year>2040) return finish(true,'You kept it open',
+    'The city reached 2040 with landfill space still in hand.',
+    '<b>Notice what did it.</b> Every tonne recycled or turned into fuel is a tonne that never becomes ash. Disposal capacity only moves the problem; diversion is the only thing that shrinks it.');
+}
+function finish(win,title,body,fact){
+  ended=true;
+  $('eTag').textContent = win?'Success':'Game over';
+  $('eTitle').textContent=title; $('eBody').textContent=body; $('eFact').innerHTML=fact;
+  $('eDiv').textContent=Math.round(cumDiverted/1000).toLocaleString()+' kt';
+  const lastUse = hist.length? hist[hist.length-1].land : 1;
+  $('eLife').textContent = win? Math.max(0,Math.round(S.landfill/Math.max(1,lastUse)))+' yrs' : '0 yrs';
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer — records the run and offers a team name */
+  try { LirichLearn.run('zerowastecity', cumDiverted, true); } catch(e) {}
+  try { LirichScores.finish('zerowastecity', cumDiverted, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+
+/* ---- chart: stacked bars, 2px surface gaps, hover tooltip -------------------------- */
+const ch=$('ch'), cx=ch.getContext('2d');
+let bars=[];
+function drawChart(){
+  const DPR=Math.min(2,devicePixelRatio||1);
+  const w=ch.clientWidth, h=150;
+  ch.width=w*DPR; ch.height=h*DPR; cx.setTransform(DPR,0,0,DPR,0,0);
+  cx.clearRect(0,0,w,h);
+  bars=[];
+  if(!hist.length){ cx.fillStyle='#7C8AA3'; cx.font='12px system-ui';
+    cx.fillText('No years played yet.',10,h/2); return; }
+  const pad={l:6,r:6,t:8,b:16};
+  const max=Math.max.apply(null,hist.map(d=>d.rec+d.rdf+d.wte+d.land))*1.08;
+  const n=hist.length, bw=Math.min(30,(w-pad.l-pad.r)/n-4), gap=(w-pad.l-pad.r)/n;
+  // recessive baseline only
+  cx.strokeStyle='rgba(255,255,255,.14)'; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(pad.l,h-pad.b+.5); cx.lineTo(w-pad.r,h-pad.b+.5); cx.stroke();
+  hist.forEach((d,i)=>{
+    const x=pad.l+i*gap+(gap-bw)/2; let y=h-pad.b;
+    const seg=[['rec',d.rec],['rdf',d.rdf],['wte',d.wte],['land',d.land]];
+    seg.forEach(([k,v])=>{
+      const sh=(v/max)*(h-pad.t-pad.b); if(sh<=0) return;
+      cx.fillStyle=SER.find(s=>s.k===k).col;
+      const top=y-sh;
+      cx.beginPath();
+      cx.roundRect ? cx.roundRect(x,top,bw,Math.max(1,sh-2),k==='land'?[3,3,0,0]:2)
+                   : cx.rect(x,top,bw,Math.max(1,sh-2));
+      cx.fill();
+      y=top;                                   // 2px surface gap comes from sh-2
+    });
+    bars.push({x,w:bw,d});
+    if(i===0||i===n-1||n<=8){
+      cx.fillStyle='#7C8AA3'; cx.font='9px system-ui'; cx.textAlign='center';
+      cx.fillText(String(d.y).slice(2),x+bw/2,h-4);
+    }
+  });
+}
+ch.addEventListener('pointermove',e=>{
+  const b=ch.getBoundingClientRect(), px=e.clientX-b.left;
+  const hit=bars.find(v=>px>=v.x-2&&px<=v.x+v.w+2);
+  const t=$('tip');
+  if(!hit){ t.classList.remove('on'); return; }
+  t.innerHTML='<b>'+hit.d.y+'</b><br>'+SER.map(s=>s.name+': '+Math.round(hit.d[s.k]).toLocaleString()+' kt').join('<br>')
+    +'<br>Diverted: '+Math.round(hit.d.rate)+'%';
+  const ab=$('app').getBoundingClientRect();
+  t.style.left=Math.min(ab.width-150,Math.max(6,e.clientX-ab.left-70))+'px';
+  t.style.top=(b.top-ab.top-6)+'px';
+  t.classList.add('on');
+});
+ch.addEventListener('pointerleave',()=>$('tip').classList.remove('on'));
+
+function tableView(){
+  if(!hist.length) return '<div style="font-size:11px;color:#7C8AA3">No data yet.</div>';
+  let h='<table class="tv"><tr><th>Year</th>'+SER.map(s=>'<th>'+s.name+'</th>').join('')+'<th>Diverted</th></tr>';
+  hist.forEach(d=>{ h+='<tr><td>'+d.y+'</td>'+SER.map(s=>'<td>'+Math.round(d[s.k]).toLocaleString()+'</td>').join('')
+    +'<td>'+Math.round(d.rate)+'%</td></tr>'; });
+  return h+'</table>';
+}
+
+/* ---- render ------------------------------------------------------------------------ */
+function renderAll(){
+  $('hYear').textContent=S.year;
+  const lastUse = hist.length? hist[hist.length-1].land : 1000;
+  const yrsLeft = S.landfill/Math.max(1,lastUse);
+  $('hLand').textContent=kt(S.landfill);
+  const pct=Math.max(0,Math.min(100,S.landfill/START.landfill*100));
+  const bar=$('hLandBar'); bar.querySelector('i').style.width=pct+'%';
+  bar.classList.toggle('ok', yrsLeft>8);
+  $('hLandSub').textContent = hist.length
+    ? 'About '+Math.round(yrsLeft)+' years left at last year’s rate. Semakau is expected to run out by 2035 at current national rates.'
+    : 'Semakau is expected to run out of space by 2035 at current disposal rates.';
+  $('hCash').textContent=money(S.cash);
+  $('hCash').style.color = S.cash<0?'var(--bad)':'#fff';
+  const r = hist.length? hist[hist.length-1].rate : 52;
+  $('hRate').textContent=Math.round(r)+'%';
+  $('hSup').textContent=Math.round(S.support)+'%';
+  $('hSup').style.color = S.support<35?'var(--bad)':S.support<55?'var(--warn)':'#fff';
+  $('log').innerHTML=lastLog;
+  $('go').textContent='Advance to '+(S.year+1)+' →';
+  drawChart(); drawIsle(pct); $('tv').innerHTML=tableView();
+  renderActs();
+}
+/* 10 Oct 2026 — pictures. One per funding choice, and the landfill drawn as the island it is:
+   twelve cells inside a rock bund, filling with ash from the left as the airspace is used.
+   It is the same number as the bar underneath it, shown as a place. No figure changed. */
+const ACT_ART={drive:'c_drive', mrf:'c_mrf', rdf:'m_rdf', food:'c_food', wte:'c_wte', ash:'c_ash', depo:'c_depo'};
+function drawIsle(pct){
+  const cv=$('isle'); if(!cv||!cv.getContext) return;
+  const dpr=Math.min(2,window.devicePixelRatio||1), w=cv.clientWidth||320, h=96;
+  if(cv.width!==Math.round(w*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+  const g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h);
+  const sea=g.createLinearGradient(0,0,0,h); sea.addColorStop(0,'#2F78D6'); sea.addColorStop(1,'#174E9E');
+  g.fillStyle=sea; g.fillRect(0,0,w,h);
+  g.strokeStyle='rgba(255,255,255,.28)'; g.lineWidth=1.5; g.lineCap='round';
+  [[.06,.2],[.86,.3],[.1,.84],[.9,.8],[.5,.1]].forEach(p=>{ const x=p[0]*w,y=p[1]*h; g.beginPath(); g.moveTo(x-9,y); g.quadraticCurveTo(x-4.5,y-4,x,y); g.quadraticCurveTo(x+4.5,y+4,x+9,y); g.stroke(); });
+  const X=w*.14, Y=16, W2=w*.72, H2=h-32, R=18;
+  const box=(x,y,ww,hh,r)=>{ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+ww,y,x+ww,y+hh,r); g.arcTo(x+ww,y+hh,x,y+hh,r); g.arcTo(x,y+hh,x,y,r); g.arcTo(x,y,x+ww,y,r); g.closePath(); };
+  g.fillStyle='rgba(255,255,255,.35)'; box(X-9,Y-9,W2+18,H2+18,R+8); g.fill();          // surf
+  g.fillStyle='#C9B48A'; box(X-6,Y-6,W2+12,H2+12,R+5); g.fill();                         // rock bund
+  g.fillStyle='#4FB7C9'; box(X,Y,W2,H2,R); g.fill();                                     // lagoon = airspace left
+  const used=1-Math.max(0,Math.min(100,pct))/100, cols=6, rows=2, cw=W2/cols, ch=H2/rows;
+  g.save(); box(X,Y,W2,H2,R); g.clip();
+  for(let c=0;c<cols;c++) for(let r=0;r<rows;r++){
+    const i=c*rows+r, f=Math.max(0,Math.min(1,used*cols*rows-i));
+    if(f>0){ const gr=g.createLinearGradient(0,Y+r*ch,0,Y+(r+1)*ch); gr.addColorStop(0,'#9AA3AF'); gr.addColorStop(1,'#5E6672');
+      g.fillStyle=gr; g.fillRect(X+c*cw, Y+r*ch+ch*(1-f), cw, ch*f);
+      g.fillStyle='rgba(0,0,0,.18)'; for(let k=0;k<5;k++){ g.beginPath(); g.arc(X+c*cw+((k*37+i*11)%100)/100*cw, Y+r*ch+ch*(1-f)+((k*53+i*7)%100)/100*ch*f, 1.3, 0, 7); g.fill(); } }
+  }
+  g.strokeStyle='rgba(255,255,255,.55)'; g.lineWidth=1.2;
+  for(let c=1;c<cols;c++){ g.beginPath(); g.moveTo(X+c*cw,Y); g.lineTo(X+c*cw,Y+H2); g.stroke(); }
+  g.beginPath(); g.moveTo(X,Y+ch); g.lineTo(X+W2,Y+ch); g.stroke();
+  g.restore();
+  g.fillStyle='#3FA046'; [[.02,.5],[.5,-.02],[.98,.5],[.3,1.02],[.72,1.02]].forEach(p=>{ g.beginPath(); g.arc(X+p[0]*W2, Y+p[1]*H2, 5, 0, 7); g.fill(); });
+  if(window.LirichSprites){ try{ LirichSprites.draw(g,'ship', 2, h-44, 40); LirichSprites.draw(g,'c_wte', w-44, 4, 40); }catch(e){} }
+  g.fillStyle='rgba(19,33,63,.82)'; box(w/2-58,Y+H2/2-11,116,22,11); g.fill();
+  g.fillStyle='#fff'; g.font='800 12px Nunito,system-ui'; g.textAlign='center';
+  g.fillText(used>=1?'Landfill full':Math.round(100-used*100)+'% of the space left', w/2, Y+H2/2+4);
+}
+function renderActs(){
+  const box=$('acts'); box.innerHTML='';
+  let spend=0; chosen.forEach(k=>spend+=ACTIONS.find(a=>a.k===k).c);
+  ACTIONS.forEach(a=>{
+    const picked=chosen.has(a.k);
+    const afford = picked || (S.cash-spend-a.c) > -400;
+    /* A div with an onclick is invisible to the keyboard. These are the only controls in
+       the game, so without this the whole thing was unplayable without a pointer. A role,
+       a tab stop, a pressed state and Enter/Space is the whole fix. */
+    const el=document.createElement('div');
+    el.className='act'+(picked?' on':'')+(afford?'':' no');
+    el.setAttribute('role','button');
+    el.setAttribute('tabindex', (afford||picked) ? '0' : '-1');
+    el.setAttribute('aria-pressed', picked ? 'true' : 'false');
+    el.setAttribute('aria-disabled', (afford||picked) ? 'false' : 'true');
+    el.innerHTML=(window.LirichSprites?'<canvas class="ai" width="88" height="88" aria-hidden="true"></canvas>':'')+'<div class="t"><b>'+a.n+'</b><span>'+a.d+'</span></div><div class="c">'+money(a.c)+'</div>';
+    const toggle=()=>{ if(!afford&&!picked) return;
+      picked?chosen.delete(a.k):chosen.add(a.k); renderActs();
+      const again=document.querySelectorAll('#acts .act')[ACTIONS.indexOf(a)];
+      if(again) again.focus(); };
+    const ai=el.querySelector('.ai');
+    if(ai){ try{ LirichSprites.draw(ai.getContext('2d'), ACT_ART[a.k], 0, 0, 88); }catch(e){} }
+    el.onclick=toggle;
+    el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){ e.preventDefault(); toggle(); } };
+    box.appendChild(el);
+  });
+  const el=document.createElement('div');
+  el.className='sub';
+  el.textContent = chosen.size ? 'Committing '+money(spend)+' this year.' : 'Nothing funded this year.';
+  box.appendChild(el);
+}
+
+SER.forEach(s=>{ const d=document.createElement('div'); d.className='lg';
+  d.innerHTML='<span class="sw" style="background:'+s.col+'"></span>'+s.name; $('chLeg').appendChild(d); });
+
+$('go').onclick=stepYear;
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); reset(); };
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); reset(); };
+addEventListener('resize',()=>{ if(S) drawChart(); });
+reset();
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script></body></html>

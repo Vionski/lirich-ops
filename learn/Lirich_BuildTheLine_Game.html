@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Build the Line — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Build the Line">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:600px;height:100%;max-height:980px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ .stat.warn b{color:var(--bad)}
+ #stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;min-height:0}
+ canvas{touch-action:manipulation;border-radius:12px;background:rgba(255,255,255,.05);max-width:100%;
+   max-height:100%;box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer}
+ #shop{padding:6px 12px 4px;flex:0 0 auto}
+ .shoprow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+ .m{border:1px solid rgba(202,220,252,.22);background:rgba(255,255,255,.07);color:#fff;border-radius:10px;
+   padding:8px 4px 7px;font-size:11px;font-weight:600;cursor:pointer;line-height:1.2;text-align:center}
+ .m small{display:block;font-size:9px;opacity:.75;font-weight:400;margin-top:2px}
+ .m.on{background:rgba(224,124,46,.28);border-color:var(--orange)}
+ .m:disabled{opacity:.35;cursor:default}
+ .m .mi{display:block;width:44px;height:44px;margin:0 auto 4px;background:#fff;border-radius:9px;border-bottom:4px solid transparent}
+ .m .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:1px}
+ #act{display:flex;gap:8px;padding:8px 12px 10px;flex:0 0 auto}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:14px;
+   font-weight:600;cursor:pointer;flex:1}
+ .btn.ghost{background:rgba(255,255,255,.10);border:1px solid rgba(202,220,252,.25);flex:0 0 auto}
+ .btn:disabled{opacity:.45;cursor:default}
+ footer{padding:0 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:430px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .card .btn{width:100%;margin-top:10px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+ ul.notes{margin:10px 0 0;padding-left:18px;font-size:12.5px;line-height:1.6;color:#3D4A5A}
+ ul.notes li{margin-bottom:5px}
+ ul.notes li.bad::marker{color:#C0455F}
+ ul.notes li.ok::marker{color:#3FA46B}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Build the Line</b></div><div class="spacer"></div>
+  <div class="rt">RECOVERY<b id="hRec">—</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Level</span><b id="hLvl">1</b></div>
+  <div class="stat"><span>Budget left</span><b id="hBud">—</b></div>
+  <div class="stat"><span>Diverted</span><b id="hKg">0 kg</b></div>
+</div>
+<div id="stage"><canvas id="cv" width="540" height="310"></canvas></div>
+<div id="shop"><div class="shoprow" id="shoprow"></div></div>
+<div id="act">
+  <button class="btn ghost" id="btnClear">Clear</button>
+  <button class="btn" id="btnRun">Run the wave</button>
+</div>
+<footer id="foot">Tap a slot on the belt, then tap a machine to install it. Tap an installed slot to
+  refund it. Material flows left to right — order is the whole game.</footer>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">A line-builder</div><h1>Build the Line</h1>
+  <p>You are laying out a materials recovery line. Six slots, a fixed budget, and a mixed load
+     arriving at the tipping end.</p>
+  <div class="fact"><b>Order is not a detail — it is the process.</b> An eddy current separator put
+     ahead of the magnet spends its day throwing steel around. A trommel put last has nothing to
+     screen. The plant only works read left to right.</div>
+  <p style="font-size:12.5px;color:#5B6472">Hit the recovery target to clear the level. Score is
+     kilograms diverted, the same unit as every other game in the set.</p>
+  <button class="btn" id="btnStart">Start level 1</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Wave complete</div><h1 id="eTitle">—</h1>
+  <p id="eBody"></p>
+  <div class="row2"><div class="cell"><span>Recovery</span><b id="eRec">—</b></div>
+    <div class="cell"><span>Diverted</span><b id="eKg">—</b></div></div>
+  <ul class="notes" id="eNotes"></ul>
+  <div class="fact" id="eFact"></div>
+  <button class="btn" id="btnNext">—</button>
+</div></div>
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Build the Line — Lirich Learn.  Game 2 of the basket.
+
+   The machine list and the ordering rules follow standard materials-recovery practice:
+   bag opener, trommel screen, overband magnet, eddy current separator, air classifier
+   (windshifter), NIR optical sorter, robotic picker. Capture rates below are INDICATIVE
+   TEACHING FIGURES chosen to make the ordering lesson legible — they are not Lirich's
+   commissioned throughput figures and must not be quoted as performance data.
+   ===================================================================================== */
+
+/* ---- MACHINES: edit here. cost is S$ thousand capex, purely for the budget mechanic ---- */
+const MACH = {
+  bag : {n:'Bag opener',  s:'opens sacks',     c:'#8C93A0', cost:60},
+  trom: {n:'Trommel',     s:'screens fines',   c:'#C08A4A', cost:120},
+  mag : {n:'Magnet',      s:'ferrous',         c:'#8C6BB1', cost:70},
+  eddy: {n:'Eddy current',s:'aluminium',       c:'#4E86C8', cost:150},
+  air : {n:'Air classifier',s:'light → RDF',   c:'#3FA46B', cost:140},
+  nir : {n:'Optical (NIR)',s:'plastics',       c:'#C9A227', cost:230},
+  robot:{n:'Robot picker',s:'whatever is left',c:'#E07C2E', cost:300}
+};
+/* ---- MATERIAL: what arrives, per wave, in kg ---- */
+const MATN = {fines:'Fines & grit', ferrous:'Steel', alu:'Aluminium', film:'Film & paper',
+              pet:'PET', hdpe:'HDPE', wood:'Wood', resid:'Residue'};
+const MATC = {fines:'#7C6A55', ferrous:'#8C6BB1', alu:'#4E86C8', film:'#3FA46B',
+              pet:'#C9A227', hdpe:'#C08A4A', wood:'#8A6A3E', resid:'#5A6376'};
+
+/* ---- LEVELS: title, budget (S$k), slots available, target recovery, incoming mix (kg) ---- */
+const LEVELS = [
+  {t:'A starter line', sub:'Mixed commercial waste, nothing exotic', budget:400, slots:4, target:0.50,
+   mix:{fines:180, ferrous:120, film:220, wood:90, resid:150},
+   fact:'<b>Screen first, then separate.</b> Fines \u2014 grit, broken glass, food residue \u2014 are roughly a fifth of a mixed commercial load. Take them out at the front and every machine behind runs cleaner. Leave them in and they blind the optical sorter and abrade everything. And nothing works at all until the bags are open.'},
+  {t:'The metals', sub:'A construction and industrial mix', budget:560, slots:5, target:0.52,
+   mix:{fines:150, ferrous:210, alu:90, film:180, wood:110, resid:160},
+   fact:'<b>Magnet before eddy current, always.</b> An eddy current separator induces a current in non-ferrous metal to fling it off the belt. Steel arriving at it does not fly \u2014 it sticks, heats and jams. Every line in the world puts the magnet first, and it is the cheaper of the two.'},
+  {t:'The RDF line', sub:'What 23 Gul Drive is being built toward', budget:900, slots:6, target:0.58,
+   mix:{fines:170, ferrous:150, alu:80, film:300, pet:110, hdpe:90, wood:120, resid:180},
+   fact:'<b>The light fraction is the product.</b> An air classifier lifts film and paper off the belt \u2014 low density, high calorific value. That light fraction is what refuse-derived fuel actually is. Everything the line pulls out before it is a recyclable sold; everything after it is residue.'},
+  {t:'Tight capital', sub:'The same load, S$260k less', budget:640, slots:6, target:0.55,
+   mix:{fines:170, ferrous:150, alu:80, film:300, pet:110, hdpe:90, wood:120, resid:180},
+   fact:'<b>This is the real question in front of an investor.</b> Not \u201cwhat is the best line\u201d \u2014 what is the best line for the money available. There are 200 kg of plastics in this load and 80 kg of aluminium, so the optical sorter earns its place and the eddy current waits for Stage 2. And the robot picker costs more than the trommel, magnet and air classifier put together while recovering less than any of them.'},
+  {t:'The long tail', sub:'A mixed municipal load with no dominant stream', budget:480, slots:5, target:0.37,
+   mix:{fines:120, ferrous:40, alu:40, film:60, pet:45, hdpe:35, wood:90, resid:150},
+   fact:'<b>The robot picker is not always the wrong answer.</b> Level 4 said it recovers less than the three cheap machines it displaces, and on that load it did. Here there is no stream big enough to pay for its own dedicated machine \u2014 45 kg of aluminium will never justify a S$150k eddy current. A picker that takes a little of everything beats a separator that takes all of almost nothing. There are two lines here that clear the target and the picker is the better of them \u2014 compare the recovery, not just the pass. The machine is not good or bad; the load decides.'},
+  {t:'Commissioning day', sub:'Every rule on one line, and the budget stops at six machines', budget:800, slots:6, target:0.62,
+   mix:{fines:190, ferrous:160, alu:95, film:310, pet:130, hdpe:100, wood:110, resid:170},
+   fact:'<b>Every rule on this line at once.</b> Bags open first or half the load is invisible. Fines out second or the air classifier makes ash and the optical sorter reads through grit. Steel before aluminium or the eddy current jams. Light fraction to fuel, plastics to the optical sorter, and whatever is left is residue \u2014 which is the number a plant is actually judged on.'}
+];
+/* LEVEL CALIBRATION \u2014 targets were set by BRUTE FORCE, not by feel.
+   Every affordable permutation of machines was simulated for each level (see btlbot) and
+   the target set below the best achievable recovery with margin. A target above what the
+   simulation can produce is an unwinnable level, and an unwinnable level ends the run
+   before the score layer ever sees a number. Re-run the optimiser if a mix or budget
+   changes \u2014 the two are coupled and neither can be edited alone. */
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+const W=540,H=310;
+const SLOTW=80, GAP=6, MARG=15;
+const BELT_Y=178, BELT_H=26;
+
+let lvl=0, slots=[], sel=-1, pick=null, spent=0, totalKg=0, running=false, chips=[], result=null;
+
+function slotX(i){ return MARG + i*(SLOTW+GAP); }
+function budgetLeft(){ return LEVELS[lvl].budget - spent; }
+function nSlots(){ return LEVELS[lvl].slots; }
+
+/* ---------------------------------------------------------------- the simulation ---- */
+function simulate(order){
+  const L = LEVELS[lvl];
+  const rem = Object.assign({}, L.mix);
+  const inTotal = Object.values(L.mix).reduce((a,b)=>a+b,0);
+  const caught = {};              // per slot index -> {kg, by}
+  const notes = [];
+  let opened=false, finesOut=false, ferrousOut=false;
+
+  const take = (k, frac, slot) => {
+    if(!rem[k]) return 0;
+    const kg = rem[k]*frac; rem[k]-=kg;
+    caught[slot] = caught[slot] || {kg:0};
+    caught[slot].kg += kg;
+    return kg;
+  };
+
+  order.forEach((m, i) => {
+    if(!m) return;
+    const bagPen = opened ? 1 : 0.55;   // still-bagged material is invisible to a separator
+    if(m==='bag'){ opened=true; return; }
+    if(m==='trom'){ take('fines', 0.90*bagPen, i); finesOut=true; return; }
+    if(m==='mag'){  take('ferrous', 0.95*bagPen, i); ferrousOut=true; return; }
+    if(m==='eddy'){
+      const pen = ferrousOut ? 1 : 0.45;
+      if(!ferrousOut) notes.push(['bad','The eddy current separator ran with steel still on the belt. It under-performed and in a real plant it would be jamming.']);
+      take('alu', 0.85*pen*bagPen, i); return;
+    }
+    if(m==='air'){
+      const pen = finesOut ? 1 : 0.60;
+      if(!finesOut) notes.push(['bad','The air classifier lifted fines along with the light fraction. Grit in the RDF is ash — the fuel spec drops.']);
+      take('film', 0.80*pen*bagPen, i); return;
+    }
+    if(m==='nir'){
+      const pen = finesOut ? 1 : 0.55;
+      if(!finesOut) notes.push(['bad','The optical sorter was reading through a layer of fines. Detection accuracy fell sharply.']);
+      take('pet', 0.90*pen*bagPen, i); take('hdpe', 0.85*pen*bagPen, i); return;
+    }
+    if(m==='robot'){
+      // rate-limited: picks whatever recoverable material is still there, up to a cap
+      let cap = 130;
+      ['pet','hdpe','alu','ferrous','film'].forEach(k=>{
+        if(cap<=0 || !rem[k]) return;
+        const want = Math.min(cap, rem[k]*0.60);
+        rem[k]-=want; cap-=want;
+        caught[i]=caught[i]||{kg:0}; caught[i].kg += want;
+      });
+      return;
+    }
+  });
+
+  const recovered = inTotal - Object.values(rem).reduce((a,b)=>a+b,0);
+  const rate = recovered/inTotal;
+
+  /* coaching notes */
+  if(!opened && order.some(Boolean))
+    notes.push(['bad','No bag opener. Roughly half the load went past every machine still inside a sack.']);
+  if(order.filter(m=>m==='trom').length===0 && L.mix.fines)
+    notes.push(['bad','No trommel. The fines stayed on the belt the whole way down the line.']);
+  const iTrom=order.indexOf('trom'), iAir=order.indexOf('air'), iNir=order.indexOf('nir');
+  if(iTrom>-1 && iAir>-1 && iTrom>iAir)
+    notes.push(['bad','The trommel sits behind the air classifier. Screening after the light fraction has already gone is screening nothing.']);
+  if(order.indexOf('mag')>-1 && ferrousOut && order.indexOf('eddy')>order.indexOf('mag'))
+    notes.push(['ok','Magnet ahead of the eddy current — steel off the belt before the non-ferrous stage. Correct.']);
+  if(iTrom>-1 && (iNir>iTrom || iAir>iTrom))
+    notes.push(['ok','Fines screened at the front, so the separators behind it saw clean material.']);
+  if(order.indexOf('robot')>-1 && budgetLeft()<0.06*L.budget)
+    notes.push(['bad','Nearly the whole budget went on the robot picker. It recovers less than the three cheap machines it displaced.']);
+
+  /* always say what the biggest loss was — otherwise a merely-incomplete line gets no feedback */
+  const RECOVERABLE = ['fines','ferrous','alu','film','pet','hdpe'];
+  const lost = RECOVERABLE.filter(k=>rem[k]>1).sort((a,b)=>rem[b]-rem[a]);
+  if(lost.length){
+    const k=lost[0];
+    const NEED={fines:'a trommel', ferrous:'a magnet', alu:'an eddy current separator',
+                film:'an air classifier', pet:'an optical sorter', hdpe:'an optical sorter'};
+    notes.push(['bad', Math.round(rem[k])+' kg of '+MATN[k].toLowerCase()+
+      ' went out the residue end. That stream needs '+NEED[k]+
+      (order.indexOf(({fines:'trom',ferrous:'mag',alu:'eddy',film:'air',pet:'nir',hdpe:'nir'})[k])>-1
+        ? ' \u2014 you have one, but it is not working properly where it sits.'
+        : ' \u2014 there is none on the line.')]);
+  }
+  if(!notes.length) notes.push(['ok','Nothing on this line is out of order. To recover more, you need another machine.']);
+
+  return {rate, recovered, inTotal, caught, notes, rem};
+}
+
+/* --------------------------------------------------------------------- rendering ---- */
+function draw(){
+  cx.clearRect(0,0,W,H);
+  const L=LEVELS[lvl];
+  /* 21 Oct 2026: the shared sorting-hall scene when lirich-sprites.js is loaded; text on
+     the canvas switches to dark ink to suit the lit hall. Nothing else changes. */
+  const SC = window.LirichSprites && LirichSprites.scene;
+  const INK = SC ? 'rgba(19,33,63,' : 'rgba(202,220,252,';
+  if(SC) SC.hall(cx,W,H);
+
+  // tipping end + despatch end labels
+  cx.fillStyle=INK+'.70)'; cx.font='700 9.5px system-ui'; cx.textAlign='left';
+  cx.fillText('TIPPING FLOOR →', MARG, 20);
+  cx.textAlign='right'; cx.fillText('→ RESIDUE', W-MARG, 20);
+
+  // belt
+  const off = running ? (performance.now()*0.05)%30 : 0;
+  if(SC) SC.belt(cx,0,BELT_Y,W,BELT_H,off);
+  else {
+  cx.fillStyle='#232F45'; cx.fillRect(0,BELT_Y,W,BELT_H);
+  cx.strokeStyle='rgba(255,255,255,.09)'; cx.lineWidth=2;
+  for(let x=-30;x<W+30;x+=30){ cx.beginPath(); cx.moveTo(x-off,BELT_Y); cx.lineTo(x-off-12,BELT_Y+BELT_H); cx.stroke(); }
+  cx.fillStyle='rgba(0,0,0,.20)'; cx.fillRect(0,BELT_Y+BELT_H,W,4);
+  }
+
+  // slots
+  for(let i=0;i<nSlots();i++){
+    const x=slotX(i), y=88, h=84;
+    const m=slots[i];
+    cx.beginPath(); rr(x,y,SLOTW,h,10);
+    if(m){ cx.fillStyle=MACH[m].c; cx.globalAlpha=0.88; cx.fill(); cx.globalAlpha=1; }
+    else { cx.fillStyle=SC?'rgba(255,255,255,.55)':'rgba(255,255,255,.05)'; cx.fill(); }
+    cx.strokeStyle = sel===i ? '#E07C2E' : (SC?'rgba(19,33,63,.35)':'rgba(202,220,252,.30)');
+    cx.lineWidth = sel===i ? 3 : 1.5; cx.stroke();
+
+    cx.textAlign='center';
+    if(m && window.LirichSprites){
+      /* 10 Oct 2026: the machine is drawn, on a white panel inside the colour the slot always
+         had, with its name under it. The slot's position, size and tap area are unchanged. */
+      cx.fillStyle='rgba(255,255,255,.96)'; cx.beginPath(); rr(x+5,y+5,SLOTW-10,56,7); cx.fill();
+      LirichSprites.draw(cx, 'm_'+m, x+SLOTW/2-28, y+5, 56);
+      cx.fillStyle=LirichRules.inkFor(MACH[m].c); cx.font='800 10px Nunito,system-ui';
+      if(cx.measureText(MACH[m].n).width>SLOTW-8) cx.font='800 9px Nunito,system-ui';
+      cx.fillText(MACH[m].n, x+SLOTW/2, y+h-9);
+    } else if(m){
+      cx.fillStyle='rgba(255,255,255,.98)'; cx.font='600 11px system-ui';
+      wrap(MACH[m].n, x+SLOTW/2, y+30, SLOTW-12);
+      cx.fillStyle='rgba(255,255,255,.75)'; cx.font='9px system-ui';
+      cx.fillText(MACH[m].s, x+SLOTW/2, y+h-14);
+    } else {
+      cx.fillStyle=INK+'.70)'; cx.font='700 11px system-ui';
+      cx.fillText('slot '+(i+1), x+SLOTW/2, y+h/2+2);
+      cx.font='9px system-ui'; cx.fillStyle=INK+'.50)';
+      cx.fillText('empty', x+SLOTW/2, y+h/2+16);
+    }
+    // leg down to belt
+    cx.fillStyle=SC?'#8E99A6':'rgba(255,255,255,.10)';
+    cx.fillRect(x+SLOTW/2-4, y+h, 8, BELT_Y-(y+h));
+
+    // capture bin under the belt
+    if(result && result.caught[i]){
+      const kg = result.caught[i].kg;
+      cx.fillStyle='rgba(63,164,107,.20)'; cx.beginPath(); rr(x+8, BELT_Y+16, SLOTW-16, 34, 8); cx.fill();
+      cx.strokeStyle='rgba(63,164,107,.65)'; cx.lineWidth=1.5; cx.stroke();
+      if(SC){ cx.fillStyle='rgba(255,255,255,.9)'; cx.beginPath(); rr(x+8, BELT_Y+16, SLOTW-16, 34, 8); cx.fill(); }
+      cx.fillStyle=SC?'#1F7A4D':'#7FD3A4'; cx.font='800 13px system-ui';
+      cx.fillText(Math.round(kg)+' kg', x+SLOTW/2, BELT_Y+38);
+    }
+  }
+
+  // chips on the belt
+  chips.forEach(c=>{
+    const s=18;
+    cx.fillStyle=MATC[c.k]||'#5A6376'; cx.globalAlpha=c.a;
+    cx.beginPath(); rr(c.x-s/2, c.y-s/2, s, s, 5); cx.fill();
+    cx.fillStyle='rgba(255,255,255,.38)'; cx.beginPath(); rr(c.x-s/2+2.5, c.y-s/2+2.5, s-5, 4, 2); cx.fill();   // gloss
+    cx.fillStyle='rgba(0,0,0,.16)'; cx.beginPath(); rr(c.x-s/2+2, c.y+s/2-5, s-4, 3, 1.5); cx.fill();
+    cx.globalAlpha=1;
+  });
+
+  // incoming mix legend
+  cx.textAlign='left'; cx.font='9px system-ui';
+  let lx=MARG, ly=H-14;
+  Object.keys(L.mix).forEach(k=>{
+    cx.fillStyle=MATC[k]; cx.fillRect(lx,ly-7,8,8);
+    cx.fillStyle=INK+'.80)';
+    const label=MATN[k]+' '+L.mix[k];
+    cx.fillText(label, lx+11, ly);
+    lx += 11 + cx.measureText(label).width + 12;
+    if(lx>W-70){ lx=MARG; ly-=13; }
+  });
+
+  if(running) requestAnimationFrame(step);
+}
+function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+function wrap(t,x,y,max){
+  const w=t.split(' ');
+  if(w.length===1||cx.measureText(t).width<=max){ cx.fillText(t,x,y); return; }
+  cx.fillText(w[0],x,y-6); cx.fillText(w.slice(1).join(' '),x,y+7);
+}
+
+/* ------------------------------------------------------------------- the wave run ---- */
+let runT0=0;
+function runWave(){
+  if(running) return;
+  const order = slots.slice(0, nSlots());
+  if(!order.some(Boolean)) return;
+  result = simulate(order);
+  chips=[];
+  const L=LEVELS[lvl];
+  const keys=Object.keys(L.mix);
+  let t=0;
+  keys.forEach(k=>{
+    const n = Math.max(2, Math.round(L.mix[k]/26));
+    for(let i=0;i<n;i++){ chips.push({k, x:-30-t*9, y:BELT_Y+BELT_H/2, a:1, off:t*9}); t++; }
+  });
+  chips.sort(()=>0); // deterministic order kept
+  running=true; runT0=performance.now();
+  $('btnRun').disabled=true; $('btnClear').disabled=true;
+  requestAnimationFrame(step);
+}
+function step(now){
+  const dt = Math.min(50, now-(step.last||now)); step.last=now;
+  let live=0;
+  chips.forEach(c=>{
+    c.x += dt*0.30;
+    // fade out when passing a slot that caught anything of its kind
+    for(let i=0;i<nSlots();i++){
+      const m=slots[i]; if(!m) continue;
+      if(catches(m,c.k) && c.a===1 && c.x > slotX(i)+SLOTW/2){ c.a=0.999; c.up=i; }
+    }
+    if(c.up!==undefined && c.a<1){ c.y -= dt*0.22; c.a=Math.max(0, c.a-dt*0.0022); }
+    if(c.x < W+40 && c.a>0.02) live++;
+  });
+  draw();
+  if(live===0 || now-runT0>7000){ running=false; $('btnRun').disabled=false; $('btnClear').disabled=false; finish(); }
+}
+function catches(m,k){
+  return (m==='trom'&&k==='fines') || (m==='mag'&&k==='ferrous') || (m==='eddy'&&k==='alu') ||
+         (m==='air'&&k==='film') || (m==='nir'&&(k==='pet'||k==='hdpe')) ||
+         (m==='robot'&&['pet','hdpe','alu','ferrous','film'].indexOf(k)>-1);
+}
+function finish(){
+  const L=LEVELS[lvl], r=result;
+  totalKg += r.recovered;
+  upd(); draw();
+  const pass = r.rate >= L.target;
+  $('eTag').textContent = pass ? 'Target met' : 'Below target';
+  $('eTitle').textContent = pass ? (r.rate>=L.target+0.10 ? 'A well-ordered line' : 'It clears — just')
+                                 : 'Too much went to residue';
+  $('eBody').textContent = pass
+    ? 'Recovery target was '+Math.round(L.target*100)+'%. The line made '+Math.round(r.rate*100)+'%.'
+    : 'The target was '+Math.round(L.target*100)+'% and the line made '+Math.round(r.rate*100)+'%. Reorder it, or spend the remaining budget.';
+  $('eRec').textContent = Math.round(r.rate*100)+'%';
+  $('eKg').textContent = Math.round(r.recovered)+' kg';
+  const ul=$('eNotes'); ul.innerHTML='';
+  r.notes.slice(0,4).forEach(([cls,txt])=>{
+    const li=document.createElement('li'); li.className=cls; li.textContent=txt; ul.appendChild(li);
+  });
+  $('eFact').innerHTML = L.fact;
+  $('btnNext').textContent = pass
+    ? (lvl < LEVELS.length-1 ? 'Next level' : 'Play it again')
+    : 'Rebuild the line';
+  $('btnNext').dataset.pass = pass ? '1' : '0';
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer — records the run and offers a team name */
+  try { LirichLearn.run('buildtheline', r.recovered, true); } catch(e) {}
+  try { LirichScores.finish('buildtheline', r.recovered, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+
+/* ------------------------------------------------------------------------ the shop ---- */
+function buildShop(){
+  const row=$('shoprow'); row.innerHTML='';
+  Object.keys(MACH).forEach(k=>{
+    const m=MACH[k];
+    const b=document.createElement('button');
+    b.className='m'; b.dataset.k=k;
+    b.innerHTML=(window.LirichSprites ? '<canvas class="mi" width="88" height="88" style="border-color:'+m.c+'" aria-hidden="true"></canvas>'
+                                      : '<span class="dot" style="background:'+m.c+'"></span>')+m.n+
+                '<small>'+m.s+' · S$'+m.cost+'k</small>';
+    const ic=b.querySelector('.mi');
+    if(ic){ try{ LirichSprites.draw(ic.getContext('2d'), 'm_'+k, 0, 0, 88); }catch(e){} }
+    b.onclick=()=>choose(k);
+    row.appendChild(b);
+  });
+  syncShop();
+}
+function choose(k){
+  if(sel<0){ flashFoot('Tap a slot on the belt first, then pick a machine.'); return; }
+  const cur=slots[sel];
+  if(cur===k){ return; }
+  const refund = cur ? MACH[cur].cost : 0;
+  if(MACH[k].cost - refund > budgetLeft()){ flashFoot('Not enough budget for the '+MACH[k].n+'.'); return; }
+  spent += MACH[k].cost - refund;
+  slots[sel]=k;
+  result=null; upd(); syncShop(); draw();
+}
+function syncShop(){
+  document.querySelectorAll('.m').forEach(b=>{
+    const k=b.dataset.k;
+    const cur = sel>=0 ? slots[sel] : null;
+    b.classList.toggle('on', cur===k);
+    const refund = cur ? MACH[cur].cost : 0;
+    b.disabled = (MACH[k].cost - refund) > budgetLeft() && cur!==k;
+  });
+}
+let footT=null;
+function flashFoot(msg){
+  const f=$('foot'); f.textContent=msg; f.style.color='#E07C2E';
+  clearTimeout(footT);
+  footT=setTimeout(()=>{ f.style.color=''; f.textContent=
+    'Tap a slot on the belt, then tap a machine to install it. Tap an installed slot to refund it. Material flows left to right — order is the whole game.'; }, 2600);
+}
+
+/* ------------------------------------------------------------------------ plumbing ---- */
+cv.addEventListener('click', e=>{
+  if(running) return;
+  const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
+  for(let i=0;i<nSlots();i++){
+    if(x>=slotX(i) && x<=slotX(i)+SLOTW && y>=88 && y<=172){
+      if(sel===i && slots[i]){ spent -= MACH[slots[i]].cost; slots[i]=null; result=null; }
+      else sel=i;
+      upd(); syncShop(); draw(); return;
+    }
+  }
+  sel=-1; syncShop(); draw();
+});
+function upd(){
+  const L=LEVELS[lvl];
+  $('hLvl').textContent=(lvl+1)+' / '+LEVELS.length;
+  $('hBud').textContent='S$'+budgetLeft()+'k';
+  $('hKg').textContent = totalKg>=1000 ? (totalKg/1000).toFixed(1)+' t' : Math.round(totalKg)+' kg';
+  $('hRec').textContent = result ? Math.round(result.rate*100)+'%' : '—';
+  document.querySelectorAll('.stat')[1].classList.toggle('warn', budgetLeft()<40);
+}
+function loadLevel(i){
+  lvl=i; slots=new Array(LEVELS[i].slots).fill(null); sel=-1; spent=0; result=null; chips=[];
+  const L=LEVELS[i];
+  $('foot').textContent = L.t+' — '+L.sub+'. Target '+Math.round(L.target*100)+'% recovery.';
+  setTimeout(()=>flashFoot('Tap a slot, then a machine.'),10);
+  upd(); syncShop(); draw();
+}
+$('btnRun').onclick=runWave;
+$('btnClear').onclick=()=>{ slots=slots.map(()=>null); spent=0; sel=-1; result=null; upd(); syncShop(); draw(); };
+
+/* ---- KEYBOARD ----------------------------------------------------------------------
+   The machines were already buttons and reachable by tab. The SLOTS were not — they are
+   drawn on the canvas and picked by clicking, so without a pointer there was nowhere to
+   put a machine and the game could not be played at all.
+   Arrow keys or the number keys move the slot selection; Backspace or Delete empties the
+   selected slot; Enter runs the wave. The machines stay where they were. */
+addEventListener('keydown', e=>{
+  const overlayUp = [...document.querySelectorAll('.ov')].some(o=>!o.classList.contains('hide'));
+  if(overlayUp || running) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(e.key==='ArrowLeft' || e.key==='ArrowRight'){
+    e.preventDefault();
+    const n=nSlots();
+    sel = sel<0 ? (e.key==='ArrowRight'?0:n-1)
+                : Math.max(0, Math.min(n-1, sel + (e.key==='ArrowRight'?1:-1)));
+    syncShop(); draw(); return;
+  }
+  if(/^[1-9]$/.test(e.key)){
+    const i=parseInt(e.key,10)-1;
+    if(i<nSlots()){ e.preventDefault(); sel=i; syncShop(); draw(); }
+    return;
+  }
+  if((e.key==='Backspace'||e.key==='Delete') && tag!=='INPUT'){
+    e.preventDefault();
+    if(sel>=0 && slots[sel]){ spent -= MACH[slots[sel]].cost; slots[sel]=null; result=null; upd(); syncShop(); draw(); }
+    return;
+  }
+  if(e.key==='Enter' && tag!=='BUTTON'){ e.preventDefault(); $('btnRun').click(); }
+});
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); loadLevel(0); };
+$('btnNext').onclick=()=>{
+  $('ovEnd').classList.add('hide');
+  if($('btnNext').dataset.pass==='1') loadLevel(lvl < LEVELS.length-1 ? lvl+1 : 0);
+  else { result=null; upd(); draw(); }
+};
+buildShop(); loadLevel(0); draw();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

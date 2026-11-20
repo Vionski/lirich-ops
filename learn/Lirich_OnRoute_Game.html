@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>On Route — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="On Route">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:520px;height:100%;max-height:960px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ .stat.warn b{color:var(--bad)}
+ #road{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;min-height:0}
+ canvas{touch-action:none;border-radius:12px;max-width:100%;max-height:100%;
+   box-shadow:0 10px 30px rgba(0,0,0,.35)}
+ #ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px;flex:0 0 auto}
+ .btn{background:rgba(255,255,255,.10);border:1px solid rgba(202,220,252,.25);color:#fff;border-radius:12px;
+   padding:16px 4px;font-size:18px;font-weight:600;cursor:pointer}
+ .btn:active{transform:translateY(2px)}
+ footer{padding:0 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:410px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .card .btn{width:100%;margin-top:10px;background:var(--orange);border:0;color:#fff;padding:13px;font-size:15px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+ #countdown{position:absolute;inset:0;display:none;place-items:center;background:rgba(9,14,26,.72);
+   z-index:8;font-size:clamp(72px,24vw,132px);font-weight:900;color:#F2D27A;text-shadow:0 8px 30px #000}
+ #countdown.on{display:grid}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>On Route</b></div><div class="spacer"></div>
+  <div class="rt">ROUND<b id="hDist">0 m</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Collected</span><b id="hKg">0 kg</b></div>
+  <div class="stat"><span>Clean streak</span><b id="hSt">0</b></div>
+  <div class="stat" id="mBox"><span>Contamination</span><b id="hMiss">0/4</b></div>
+</div>
+<div id="road"><canvas id="cv" width="440" height="620"></canvas></div>
+<div id="ctl">
+  <button class="btn" id="bL">◀ left</button>
+  <button class="btn" id="bR">right ▶</button>
+</div>
+<footer>Each lane takes one stream. Drive over a bin only if it is in the lane its material belongs
+  in. Anything in the wrong lane is contamination — go round it.</footer>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">A driving game</div><h1>On Route</h1>
+  <p>Three lanes, three streams. Bins are already out on the kerb — some of them in the wrong place.</p>
+  <div class="fact"><b>Collect what belongs, drive round what does not.</b> A paper bin in the paper
+     lane is a collection. A paper bin in the plastics lane is contamination, and picking it up is
+     how a clean load stops being clean.</div>
+  <p style="font-size:12.5px;color:#5B6472">Arrow keys, on-screen buttons, or swipe. A 3–2–1 countdown
+     gives you time to find the controls. Lane changes are announced before the next collection.
+     Four contaminated pickups and the load is rejected.</p>
+  <button class="btn" id="btnStart">Start the round</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag">Round over</div><h1 id="eTitle">—</h1>
+  <p id="eBody"></p>
+  <div class="row2"><div class="cell"><span>Collected</span><b id="eKg">—</b></div>
+    <div class="cell"><span>Distance</span><b id="eD">—</b></div></div>
+  <div class="fact" id="eFact"></div>
+  <button class="btn" id="btnAgain">Run it again</button>
+</div></div>
+<div id="countdown" aria-live="assertive"></div>
+</div>
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+if (!window.LirichRules) {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.innerHTML =
+      '<div style="font:16px/1.6 system-ui,sans-serif;max-width:34em;margin:12vh auto;padding:0 6vw;color:#2B3B55">' +
+      '<h1 style="font-size:1.3em">Missing file</h1>' +
+      '<p><b>lirich-rules.js</b> is not in this folder. Every Lirich Learn game reads its sorting ' +
+      'rules from that one file, so it will not run without it.</p>' +
+      '<p>Copy <b>lirich-rules.js</b> next to this game and reload.</p></div>';
+  });
+  throw new Error('lirich-rules.js not loaded');
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================================
+   On Route — Lirich Learn.  Game 6 of the basket.
+
+   Streams follow NEA's blue-bin categories plus a general-waste lane. Item weights are
+   INDICATIVE and used only for scoring in the shared unit (kg diverted).
+
+   The roadmap notes real route data could drive the levels later — the LANE_SETS block
+   is where that would plug in: each entry is one section of a round.
+   ===================================================================================== */
+
+/* Streams and bin contents come from lirich-rules.js — the shared file.
+   LANE_SETS stays here: it is this game's level design, not a sorting rule. */
+const STREAM = LirichRules.views.onRouteStreams();
+const ITEMS  = LirichRules.views.onRouteItems();
+/* sections of the round: which three streams the lanes take, and for how many metres */
+const LANE_SETS = [
+  {lanes:['paper','plastic','general'], m:260},
+  {lanes:['plastic','metal','general'], m:260},
+  {lanes:['paper','glass','plastic'],   m:280},
+  {lanes:['glass','metal','paper'],     m:300},
+  {lanes:['metal','general','plastic'], m:320}
+];
+const HAZARD = {n:'Contaminated bin', c:'#C0455F'};   // always dodge, whatever the lane
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+const W=440,H=620, LANES=3, LW=W/LANES;
+const TRUCK_Y=H-108, TRUCK_W=76, TRUCK_H=96;
+
+let lane=1, targetX=0, truckX=0, bins=[], kg=0, streak=0, best=0, miss=0, dist=0,
+    speed=0, running=false, last=0, spawnT=0, section=0, flash=0, flashCol='#3FA46B', msg=null, hudT=0;
+let announcedSection=-1;
+let contUsed=false;   // one Continue per round — lirich-wallet.js (21 Nov 2026)
+
+function lanes(){ return LANE_SETS[section % LANE_SETS.length].lanes; }
+function laneX(i){ return i*LW + LW/2; }
+
+function reset(){
+  lane=1; truckX=laneX(1); targetX=truckX; bins=[]; kg=0; streak=0; best=0; miss=0; dist=0;
+  contUsed=false; speed=0.16; running=true; last=performance.now(); spawnT=0; section=0; announcedSection=-1; flash=0; msg=null;
+  upd(); requestAnimationFrame(loop);
+}
+function spawn(){
+  const L=lanes();
+  const l=Math.floor(Math.random()*LANES);
+  if(Math.random()<0.15){ bins.push({haz:true, l, y:-60, kg:0}); return; }
+  // 55% of bins belong where they are; the rest are misplaced and must be driven round
+  const right = Math.random()<0.55;
+  const want = L[l];
+  let pool = right ? ITEMS.filter(i=>i.s===want) : ITEMS.filter(i=>i.s!==want);
+  const it = pool[Math.floor(Math.random()*pool.length)];
+  bins.push({it, l, y:-60, ok: it.s===want});
+}
+function loop(now){
+  if(!running) return;
+  const dt=Math.min(50, now-last); last=now;
+  dist += speed*dt*0.30;
+  speed = 0.16 + dist*0.00010;
+  // section changes as the round goes on
+  let acc=0, sec=0;
+  for(let i=0;i<LANE_SETS.length*4;i++){ acc+=LANE_SETS[i%LANE_SETS.length].m;
+    if(dist<acc){ sec=i; break; } sec=i; }
+  section=sec;
+  if(section!==announcedSection){
+    announcedSection=section;
+    const names=lanes().map(k=>STREAM[k].n).join(' · ');
+    msg={t:section===0?'Round lanes':'Lane change', b:names+'. Read the signs before collecting.',
+      until:performance.now()+2200, bad:false};
+  }
+
+  spawnT-=dt;
+  if(spawnT<=0){ spawn(); spawnT = Math.max(360, 900 - dist*0.30); }
+
+  truckX += (targetX-truckX)*Math.min(1, dt*0.018);
+
+  bins.forEach(b=>{ b.y += speed*dt*1.6; });
+  bins = bins.filter(b=>{
+    if(b.hit) return b.y<H+60;
+    const overlap = b.y > TRUCK_Y-34 && b.y < TRUCK_Y+TRUCK_H-20;
+    if(overlap && b.l===lane){
+      b.hit=true;
+      if(b.haz || !b.ok){
+        miss++; streak=0; flash=1; flashCol='#C0455F';
+        msg={t: b.haz ? 'Contaminated bin' : (b.it.n+' in the '+STREAM[lanes()[b.l]].n.toLowerCase()+' lane'),
+             b: b.haz ? 'That bin was already rejected at the kerb. Taking it puts the whole load out of spec.'
+                      : 'Wrong stream. One bin like this in a load is how a clean collection stops being clean.',
+             until: performance.now()+2000, bad:true};
+        if(miss>=4){ upd(); lose(); return true; }
+      } else {
+        kg += b.it.kg*(1+Math.min(1.5, streak*0.05));
+        streak++; best=Math.max(best,streak); flash=1; flashCol='#3FA46B';
+      }
+      upd();
+    }
+    return b.y < H+60;
+  });
+  if(flash>0) flash-=dt*0.004;
+  hudT-=dt; if(hudT<=0){ hudT=200; upd(); }
+  draw();
+  requestAnimationFrame(loop);
+}
+function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+function draw(){
+  const L=lanes();
+  cx.fillStyle='#232A38'; cx.fillRect(0,0,W,H);
+  // lane fills, tinted by the stream they take
+  for(let i=0;i<LANES;i++){
+    cx.fillStyle=STREAM[L[i]].c; cx.globalAlpha=0.10; cx.fillRect(i*LW,0,LW,H); cx.globalAlpha=1;
+  }
+  // lane markings scrolling
+  cx.strokeStyle='rgba(255,255,255,.28)'; cx.lineWidth=3; cx.setLineDash([26,22]);
+  cx.lineDashOffset = -(dist*2.2)%48;
+  for(let i=1;i<LANES;i++){ cx.beginPath(); cx.moveTo(i*LW,0); cx.lineTo(i*LW,H); cx.stroke(); }
+  cx.setLineDash([]);
+  // lane headers
+  /* Header ink comes from the shared file, which picks it by measured contrast rather
+     than assuming white reads on everything. White on the paper, metal and glass
+     colours sat at about 3:1 — a lane label some players simply could not read, on a
+     game whose entire instruction is "read the lane". */
+  for(let i=0;i<LANES;i++){
+    cx.fillStyle=STREAM[L[i]].c; rr(i*LW+8, 8, LW-16, 26, 7); cx.fill();
+    cx.fillStyle=LirichRules.ink(L[i]); cx.font='700 12.5px system-ui'; cx.textAlign='center';
+    cx.fillText(STREAM[L[i]].n.toUpperCase(), laneX(i), 26);
+  }
+  // bins
+  bins.forEach(b=>{
+    if(b.hit && b.y<TRUCK_Y) return;
+    const x=laneX(b.l), w=64, h=52;
+    cx.globalAlpha = b.hit?0.3:1;
+    cx.fillStyle = b.haz ? HAZARD.c : STREAM[b.it.s].c;
+    rr(x-w/2, b.y, w, h, 7); cx.fill();
+    cx.fillStyle='rgba(0,0,0,.22)'; cx.fillRect(x-w/2, b.y, w, 9);
+    /* same again for the bin label, which is drawn on the stream colour */
+    cx.fillStyle = b.haz ? '#FFFFFF' : LirichRules.ink(b.it.s);
+    cx.font='700 10px system-ui'; cx.textAlign='center';
+    const sk = !b.haz && window.LirichSprites && LirichSprites.forItem(b.it.n);
+    if(b.haz){ cx.font='700 20px system-ui'; cx.fillText('✕', x, b.y+36); }
+    else if(sk){ cx.fillStyle='rgba(255,255,255,.92)'; rr(x-17, b.y+11, 34, 34, 8); cx.fill();
+      LirichSprites.draw(cx, sk, x-16, b.y+12, 32);
+      cx.fillStyle = LirichRules.ink(b.it.s); cx.font='800 9px Nunito,system-ui'; cx.fillText(b.it.n, x, b.y+h+10); }
+    else wrap(b.it.n, x, b.y+26, w-8);
+    cx.globalAlpha=1;
+  });
+  // truck
+  const tx=truckX;
+  cx.fillStyle='rgba(0,0,0,.25)';
+  cx.beginPath(); cx.ellipse(tx, TRUCK_Y+TRUCK_H, TRUCK_W*0.5, 9, 0,0,7); cx.fill();
+  cx.fillStyle='#E07C2E'; rr(tx-TRUCK_W/2, TRUCK_Y, TRUCK_W, TRUCK_H, 10); cx.fill();
+  cx.fillStyle='#1B2A4A'; rr(tx-TRUCK_W/2+9, TRUCK_Y+8, TRUCK_W-18, 26, 5); cx.fill();
+  cx.fillStyle='rgba(255,255,255,.85)'; cx.font='700 9px system-ui'; cx.textAlign='center';
+  cx.fillText('LIRICH', tx, TRUCK_Y+62);
+  cx.fillStyle='#1C222E';
+  cx.fillRect(tx-TRUCK_W/2-4, TRUCK_Y+18, 6, 20); cx.fillRect(tx+TRUCK_W/2-2, TRUCK_Y+18, 6, 20);
+  cx.fillRect(tx-TRUCK_W/2-4, TRUCK_Y+64, 6, 20); cx.fillRect(tx+TRUCK_W/2-2, TRUCK_Y+64, 6, 20);
+  // pickup flash
+  if(flash>0){
+    cx.strokeStyle=flashCol; cx.globalAlpha=Math.min(1,flash); cx.lineWidth=4;
+    rr(tx-TRUCK_W/2-7, TRUCK_Y-6, TRUCK_W+14, TRUCK_H+12, 12); cx.stroke(); cx.globalAlpha=1;
+  }
+  // teaching toast
+  if(msg && performance.now()<msg.until){
+    cx.fillStyle= msg.bad ? 'rgba(192,69,95,.95)' : 'rgba(63,164,107,.95)';
+    rr(12, H-64, W-24, 52, 10); cx.fill();
+    cx.fillStyle='#fff'; cx.textAlign='left';
+    cx.font='700 12px system-ui'; cx.fillText(msg.t, 22, H-44);
+    cx.font='11px system-ui'; wrapLeft(msg.b, 22, H-28, W-44);
+  }
+}
+function wrap(t,x,y,max){
+  const w=t.split(' ');
+  if(w.length===1||cx.measureText(t).width<=max){ cx.fillText(t,x,y); return; }
+  cx.fillText(w[0],x,y-5); cx.fillText(w.slice(1).join(' '),x,y+7);
+}
+function wrapLeft(t,x,y,max){
+  const words=t.split(' '); let line='', yy=y;
+  words.forEach(w=>{
+    const test=line?line+' '+w:w;
+    if(cx.measureText(test).width>max){ cx.fillText(line,x,yy); line=w; yy+=13; }
+    else line=test;
+  });
+  cx.fillText(line,x,yy);
+}
+function upd(){
+  $('hKg').textContent=Math.round(kg)+' kg';
+  $('hSt').textContent=streak;
+  $('hMiss').textContent=miss+'/4';
+  $('mBox').classList.toggle('warn', miss>=2);
+  $('hDist').textContent=Math.round(dist)+' m';
+}
+/* Four strikes would end the round. Offer one Continue first: back to three strikes,
+   with the road ahead cleared so the truck does not drive straight into the next bin. */
+function lose(){
+  running=false;
+  if(!contUsed && window.LirichWallet){
+    contUsed=true;
+    LirichWallet.offerContinue({ title:'Load nearly rejected', what:'one more chance (back to 3 of 4 strikes)',
+      use:()=>{ miss=3; bins=[]; msg=null; running=true; last=performance.now(); upd(); requestAnimationFrame(loop); },
+      decline:end });
+    return;
+  }
+  end();
+}
+function end(){
+  running=false;
+  const clean = best>=12;
+  $('eTitle').textContent = miss>=4 ? 'The load was rejected'
+    : clean ? 'A clean round' : 'Round over';
+  $('eBody').textContent = 'Best clean streak: '+best+' bins. '+
+    (miss>=4 ? 'Four contaminated pickups and the whole load goes to disposal — including everything that was collected properly.'
+             : 'Every bin taken from the right lane stayed in a clean stream.');
+  $('eKg').textContent=Math.round(kg)+' kg';
+  $('eD').textContent=Math.round(dist)+' m';
+  $('eFact').innerHTML = clean
+    ? '<b>This is why kerbside separation is worth the argument.</b> A stream that arrives clean needs almost no sorting. A stream that arrives mixed has to be sorted twice — once by the machine and once by a person — and it still sells for less.'
+    : '<b>Contamination is not a small percentage problem.</b> A load is priced on its worst material, not its average. One wrong bin in a paper collection can move the whole load from a sale to a disposal cost.';
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer: records the run, offers a team name, shows the board status */
+  try { LirichLearn.run('onroute', kg, true); } catch(e) {}
+  try { LirichScores.finish('onroute', kg, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+/* ------------------------------------------------------------------------- input --- */
+function go(d){ lane=Math.max(0,Math.min(LANES-1,lane+d)); targetX=laneX(lane); }
+$('bL').onclick=()=>go(-1); $('bR').onclick=()=>go(1);
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft'){ e.preventDefault(); go(-1); }
+  if(e.key==='ArrowRight'){ e.preventDefault(); go(1); }
+});
+let sx=null;
+cv.addEventListener('pointerdown',e=>{ sx=e.clientX; });
+cv.addEventListener('pointerup',e=>{
+  if(sx===null) return;
+  const d=e.clientX-sx;
+  if(Math.abs(d)>24) go(d>0?1:-1);
+  else { const r=cv.getBoundingClientRect(); go(e.clientX-r.left < r.width/2 ? -1 : 1); }
+  sx=null;
+});
+function countedStart(){
+  running=false;
+  const el=$('countdown'); let n=3;
+  el.textContent=n; el.classList.add('on');
+  const tick=setInterval(()=>{
+    n--;
+    if(n>0){ el.textContent=n; return; }
+    clearInterval(tick); el.textContent='DRIVE';
+    setTimeout(()=>{ el.classList.remove('on'); reset(); },420);
+  },650);
+}
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); countedStart(); };
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); countedStart(); };
+truckX=laneX(1); targetX=truckX; draw();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Load the Container — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Load It">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:560px;height:100%;max-height:980px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 6px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:16px;font-variant-numeric:tabular-nums}
+ .bars{padding:0 14px 6px;flex:0 0 auto}
+ .bar{height:9px;border-radius:5px;background:rgba(255,255,255,.09);overflow:hidden;margin-bottom:5px;
+   position:relative}
+ .bar i{display:block;height:100%;border-radius:5px;transition:width .25s}
+ .bar .lab{position:absolute;right:6px;top:-13px;font-size:9px;color:var(--ice);letter-spacing:.05em}
+ .barwrap{position:relative;padding-top:12px}
+ #stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;min-height:0}
+ canvas{touch-action:manipulation;border-radius:12px;max-width:100%;max-height:100%;
+   box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer}
+ #next{display:flex;align-items:center;gap:10px;padding:6px 14px;flex:0 0 auto;
+   background:rgba(255,255,255,.05);margin:0 12px;border-radius:12px;
+   border:1px solid rgba(202,220,252,.16)}
+ #swatch{width:34px;height:34px;border-radius:7px;flex:0 0 auto}
+ #nextTxt{font-size:12px;line-height:1.35}
+ #nextTxt b{display:block;font-size:13.5px}
+ #nextTxt small{color:var(--ink2);font-size:10.5px}
+ #ctl{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 12px 4px;flex:0 0 auto}
+ .btn{background:rgba(255,255,255,.10);border:1px solid rgba(202,220,252,.25);color:#fff;border-radius:10px;
+   padding:12px 4px;font-size:13px;font-weight:600;cursor:pointer}
+ .btn.go{background:var(--orange);border-color:var(--orange)}
+ .btn.bale{background:rgba(201,162,39,.25);border-color:var(--gold)}
+ .btn:disabled{opacity:.4;cursor:default}
+ .btn small{display:block;font-size:9px;font-weight:400;opacity:.75}
+ footer{padding:6px 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:420px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .card .btn{width:100%;margin-top:10px;background:var(--orange);border:0;color:#fff;padding:13px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+ table.dens{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+ table.dens td{padding:4px 0;border-bottom:1px solid #E7ECF3;color:#3D4A5A}
+ table.dens td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--navy);font-weight:600}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Load the Container</b></div><div class="spacer"></div>
+  <div class="rt">LOADED<b id="hKg">0 kg</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Level</span><b id="hLvl">1</b></div>
+  <div class="stat"><span>Minimum load</span><b id="hTgt">—</b></div>
+  <div class="stat"><span>Bales left</span><b id="hBale">—</b></div>
+  <div class="stat"><span>Refusals</span><b id="hSkip">—</b></div>
+</div>
+<div class="bars">
+  <div class="barwrap"><span class="lab" id="labW">weight 0%</span>
+    <div class="bar"><i id="barW" style="width:0;background:#4E86C8"></i></div></div>
+  <div class="barwrap"><span class="lab" id="labV">space 0%</span>
+    <div class="bar"><i id="barV" style="width:0;background:#B87D22"></i></div></div>
+</div>
+<div id="stage"><canvas id="cv" width="440" height="560"></canvas></div>
+<div id="next"><div id="swatch"></div><div id="nextTxt"><b id="nName">—</b><small id="nMeta">—</small></div></div>
+<div id="ctl">
+  <button class="btn" id="bL">◀</button>
+  <button class="btn" id="bR">▶</button>
+  <button class="btn bale" id="bB">Bale<small id="bBs">—</small></button>
+  <button class="btn" id="bS">Refuse</button>
+  <button class="btn go" id="bD">Load it</button>
+</div>
+<footer>Tap a column to drop the load there, or use the arrows. Baling does not change what a load
+  weighs — only the space it takes.</footer>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">A stacking game</div><h1>Load the Container</h1>
+  <p>One 20-foot container. <b>28 tonnes of payload, 33 cubic metres of space.</b> You will almost
+     never run out of both at the same time.</p>
+  <div class="fact"><b>Only water weighs a tonne per cubic metre.</b> Loose film is closer to
+     20 kg/m³. Bale it and it is 400. The container has not changed size — the material has.</div>
+  <p style="font-size:12.5px;color:#5B6472">The level target is the <b>minimum useful shipment</b>,
+     not the container's 28-tonne maximum. Reach it before space or payload runs out. You get a
+     limited number of bales and a limited number of refusals.</p>
+  <button class="btn" id="btnStart">Open the doors</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Container closed</div><h1 id="eTitle">—</h1>
+  <p id="eBody"></p>
+  <div class="row2"><div class="cell"><span>Loaded</span><b id="eKg">—</b></div>
+    <div class="cell"><span>Space used</span><b id="eV">—</b></div></div>
+  <div class="fact" id="eFact"></div>
+  <table class="dens" id="eDens"></table>
+  <button class="btn" id="btnNext">—</button>
+</div></div>
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Load the Container — Lirich Learn.  Game 4 of the basket.
+
+   The whole game exists to kill one assumption: that a cubic metre of anything weighs
+   a tonne. Densities below are published typical ranges for loose and baled recyclables
+   and are INDICATIVE TEACHING FIGURES — real bale densities vary with baler, moisture
+   and material grade, and Lirich's own weighed figures should replace them once the
+   density weighing programme is done.
+
+   Container figures: a standard 20ft dry box is about 33 m3 internal with roughly
+   28,000 kg of payload under a 30,480 kg gross limit. Road weight limits usually bite
+   before the container's own payload rating does.
+   ===================================================================================== */
+
+const COLS=8, ROWS=12;
+const CAP_M3 = 33.0;                     // internal volume
+const CELL_M3 = CAP_M3/(COLS*ROWS);      // ≈ 0.344 m3 per cell
+const PAYLOAD = 28000;                   // kg
+
+/* ---- MATERIALS: kg per load, loose density, baled density (kg/m3) ---- */
+const MATS = [
+ {n:'PET bottles',    c:'#C9A227', kg:120, dL:25,   dB:350},
+ {n:'Cardboard',      c:'#B98A52', kg:172, dL:50,   dB:500},
+ {n:'Aluminium cans', c:'#8C93A0', kg:86,  dL:30,   dB:250},
+ {n:'Plastic film',   c:'#3FA46B', kg:138, dL:20,   dB:400},
+ {n:'EPS foam',       c:'#D6D2C4', kg:103, dL:10,   dB:300},
+ {n:'Mixed plastics', c:'#4E86C8', kg:110, dL:35,   dB:320},
+ {n:'Timber offcuts', c:'#8A6A3E', kg:344, dL:250,  dB:0},
+ {n:'Scrap steel',    c:'#6E747F', kg:825, dL:1200, dB:0},
+ {n:'Glass cullet',   c:'#54A98C', kg:516, dL:1500, dB:0}
+];
+/* ---- LEVELS: target kg, bales allowed, refusals allowed, how light the queue runs ---- */
+const LEVELS = [
+ {t:'A clean load', target:8000, bales:10, skips:6, light:0.35,
+  fact:'<b>You ran out of space, not weight.</b> That is the normal outcome and it has a name — the load <i>cubed out</i>. The container was full and the truck was nowhere near its weight limit, so you paid to move air.'},
+ {t:'Mostly light material', target:7500, bales:14, skips:5, light:0.60,
+  fact:'<b>This is what a baler buys.</b> It does not create material and it does not change a single kilogram. It changes density — and density is what decides how many containers a given tonnage needs.'},
+ {t:'The economics', target:9000, bales:12, skips:4, light:0.55,
+  fact:'<b>Freight is priced per container, not per tonne.</b> So the number that matters is not what you recovered — it is what you recovered per container shipped. A light load baled well and a dense load stacked badly can cost exactly the same to move.'},
+ {t:'The heavy end', target:17000, bales:4, skips:5, light:0.10,
+  fact:'<b>The other way a container ends.</b> The first three levels all ran out of space. This one runs out of weight — cullet, steel and timber hit 28 tonnes with the box still visibly empty, and no baler helps because there is nothing to compress. <b>A load either cubes out or weighs out, and which one it does is a property of the material, not of the packing.</b> Quoting a job without knowing which is how a haulage price goes wrong in both directions: too high on dense material, and ruinous on light.'}
+];
+/* LEVEL CALIBRATION — measured, see tests/loadbot.mjs.
+   A bot that bales whatever compresses, refuses anything under 60 kg per cell while it
+   has refusals left, and otherwise drops each piece at its deepest landing, was run six
+   times through the ladder. That is a competent player, not an optimal one.
+
+   Twelve trials, because the draw has enough variance that six were not stable:
+
+       L1  target  8000   median 16237   met 12/12
+       L2  target  7500   median 10175   met 10/12   — was 10000, met 1 in 6
+       L3  target  9000   median  8875   — was 11500, met 2 in 12
+       L4  target 17000   median 19843   met  9/12   — was 19000, met 3 in 6
+
+   ⚠ THREE targets were LOWERED as a result, including one that had shipped. A target a
+     competent player misses ten times in twelve is not difficulty, it is a level that
+     reads as broken — and the player is sent back to replay the same level on a fail, so
+     an unreachable target is a loop with no exit.
+   ⚠ Under challenge mode the queue is seeded, so every player gets the same draw that
+     week. That removes the unfairness and concentrates the risk: one bad weekly seed is
+     bad for everyone at once. Check a new challenge seed before publicising it.
+   ⚠ Level 4 exists to WEIGH OUT rather than cube out. Its ceiling is the 28-tonne payload,
+     not the 96 cells, so its target must sit below what dense material delivers before the
+     weight limit stops the level. Raise it and the level stops being winnable at all. */
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+const W=440,H=560;
+const PADX=26, PADY=26;
+const CW=(W-PADX*2)/COLS, CH=(H-PADY*2)/ROWS;
+
+let grid, lvl=0, kg=0, cells=0, bales=0, skips=0, cur=null, curX=0, curBaled=false,
+    live=false, loaded=[], anim=null;
+
+function blank(){ return Array.from({length:ROWS},()=>new Array(COLS).fill(null)); }
+
+/* --------------------------------------------------------------- piece geometry ---- */
+function rectFor(n){                       // cells -> a rectangle no wider than 4
+  const w=Math.max(1, Math.min(4, Math.round(Math.sqrt(n))));
+  return [w, Math.max(1, Math.ceil(n/w))];
+}
+function shape(mat, baled){
+  const d = baled ? mat.dB : mat.dL;
+  const n = Math.max(1, Math.round(mat.kg/(d*CELL_M3)));
+  return rectFor(n);
+}
+function makePiece(){
+  const L=LEVELS[lvl];
+  // `light` biases the queue toward low-density material as the levels go on
+  const light = MATS.filter(m=>m.dL<=50), heavy = MATS.filter(m=>m.dL>50);
+  const pool = Math.random()<L.light ? light : heavy;
+  const m = pool[Math.floor(Math.random()*pool.length)];
+  const [w,h]=shape(m,false);
+  return {m, w, h, baled:false};
+}
+function density(p){ return Math.round(p.m.kg/(p.w*p.h*CELL_M3)); }
+
+/* ------------------------------------------------------------------- placement ---- */
+function topOf(c){                       // first filled row in a column, ROWS if empty
+  for(let r=0;r<ROWS;r++) if(grid[r][c]) return r;
+  return ROWS;
+}
+function canPlace(x,w,h){                 // landing row, or -1 if it will not fit
+  if(x<0 || x+w>COLS) return -1;
+  let lowest=ROWS;
+  for(let c=x;c<x+w;c++) lowest=Math.min(lowest, topOf(c));
+  const y=lowest-h;
+  return y>=0 ? y : -1;
+}
+function anyFit(p){
+  for(let x=0;x<=COLS-p.w;x++) if(canPlace(x,p.w,p.h)>=0) return true;
+  return false;
+}
+function drop(){
+  if(!live || !cur || anim) return;
+  const y=canPlace(curX, cur.w, cur.h);
+  if(y<0) return;
+  anim={p:cur, x:curX, y0:-cur.h*CH, y1:y, t:0};
+  const p=cur, px=curX;
+  setTimeout(()=>{
+    for(let r=y;r<y+p.h;r++) for(let c=px;c<px+p.w;c++) grid[r][c]={c:p.m.c, top:r===y, left:c===px, pc:(r===y&&c===px)?{w:p.w,h:p.h,m:p.m,baled:p.baled}:null};
+    kg+=p.m.kg; cells+=p.w*p.h;
+    loaded.push({n:p.m.n, kg:p.m.kg, m3:+(p.w*p.h*CELL_M3).toFixed(2), baled:p.baled});
+    anim=null; next();
+  }, 240);
+}
+function next(){
+  upd();
+  if(kg>=PAYLOAD){ finish('weighed'); return; }
+  cur=makePiece(); curBaled=false; curX=Math.max(0,Math.min(COLS-cur.w, Math.floor((COLS-cur.w)/2)));
+  showNext();
+  if(!anyFit(cur)){
+    // one automatic escape: if it would bale down to something that fits, say so
+    if(cur.m.dB && bales>0){
+      const [w,h]=shape(cur.m,true);
+      const t={w,h}; if(anyFit(t)) { flash('Too big for the space left — bale it.'); return; }
+    }
+    finish('cubed');
+  }
+}
+function bale(){
+  if(!live || !cur || cur.baled || !cur.m.dB || bales<=0) return;
+  const [w,h]=shape(cur.m,true);
+  cur.w=w; cur.h=h; cur.baled=true; bales--;
+  curX=Math.min(curX, COLS-cur.w);
+  showNext(); upd();
+}
+function skip(){
+  if(!live || !cur || skips<=0) return;
+  skips--; next();
+}
+
+/* ------------------------------------------------------------------- rendering ---- */
+function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+/* One load, drawn as a thing rather than a block of colour: a strapped bale when it has been
+   baled, a loose heap when it has not, in the colour the material always had, with the
+   material's picture on it. Purely a drawing — sizes, weights and landing rows are untouched. */
+const ART_OK = !!window.LirichSprites;
+const MAT_ART = {'PET bottles':'pet','Cardboard':'card','Aluminium cans':'can','Plastic film':'pfilm','EPS foam':'foam',
+                 'Mixed plastics':'hdpe','Timber offcuts':'timber','Scrap steel':'scrap','Glass cullet':'cullet'};
+function shade(hex, k){                    // k>0 lighter, k<0 darker
+  const n=parseInt(hex.slice(1),16), f=v=>Math.max(0,Math.min(255,Math.round(k>0 ? v+(255-v)*k : v*(1+k))));
+  return 'rgb('+f(n>>16)+','+f((n>>8)&255)+','+f(n&255)+')';
+}
+function piece(x,y,w,h,m,baled,alpha){
+  cx.save(); cx.globalAlpha=alpha;
+  const gr=cx.createLinearGradient(x,y,x,y+h); gr.addColorStop(0,shade(m.c,.22)); gr.addColorStop(1,shade(m.c,-.28));
+  cx.fillStyle=gr; rr(x,y,w,h,baled?3:7); cx.fill();
+  cx.save(); rr(x,y,w,h,baled?3:7); cx.clip();
+  if(baled){
+    cx.strokeStyle='rgba(0,0,0,.14)'; cx.lineWidth=1;                       // pressed layers
+    for(let yy=y+6; yy<y+h-2; yy+=6){ cx.beginPath(); cx.moveTo(x,yy); cx.lineTo(x+w,yy); cx.stroke(); }
+    const n=Math.max(2,Math.round(w/CW)+1);                                   // steel straps
+    for(let i=1;i<n;i++){ const sx=x+w*i/n;
+      cx.fillStyle='rgba(20,30,50,.35)'; cx.fillRect(sx-1.2,y,4,h);
+      cx.fillStyle='#E3E7ED'; cx.fillRect(sx-2,y,3.2,h); }
+  } else {
+    let seed=(Math.round(x)*31+Math.round(w)*7+m.kg)|0; const rnd=()=>{ seed=(seed*16807+11)%2147483647; return seed/2147483647; };
+    const n=Math.round(w*h/240);                                              // loose lumps
+    for(let i=0;i<n;i++){ const px=x+rnd()*w, py=y+rnd()*h, r=4+rnd()*7;
+      cx.fillStyle = i%2 ? 'rgba(255,255,255,.20)' : 'rgba(0,0,0,.15)';
+      cx.beginPath(); cx.ellipse(px,py,r,r*.65,rnd()*3,0,7); cx.fill(); }
+  }
+  cx.fillStyle='rgba(255,255,255,.30)'; cx.fillRect(x,y,w,3);
+  cx.fillStyle='rgba(0,0,0,.20)'; cx.fillRect(x,y+h-3,w,3);
+  cx.restore();
+  const k=ART_OK && MAT_ART[m.n], s=Math.min(w,h,46)-6;
+  if(k && s>=16){
+    cx.fillStyle='rgba(255,255,255,.94)'; rr(x+w/2-s/2-2, y+h/2-s/2-2, s+4, s+4, 6); cx.fill();
+    LirichSprites.draw(cx,k,x+w/2-s/2,y+h/2-s/2,s);
+  }
+  cx.restore();
+}
+function draw(){
+  cx.clearRect(0,0,W,H);
+  const g=cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#243049'); g.addColorStop(1,'#161E2E');
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+
+  // container shell
+  cx.fillStyle='rgba(140,107,177,.16)'; rr(PADX-9, PADY-9, COLS*CW+18, ROWS*CH+18, 8); cx.fill();      // the box, in container purple
+  cx.strokeStyle='#A58BD0'; cx.lineWidth=5;
+  rr(PADX-9, PADY-9, COLS*CW+18, ROWS*CH+18, 8); cx.stroke();
+  cx.strokeStyle='rgba(255,255,255,.35)'; cx.lineWidth=1.2; rr(PADX-10.5, PADY-10.5, COLS*CW+21, ROWS*CH+21, 9); cx.stroke();
+  cx.strokeStyle='rgba(202,220,252,.10)'; cx.lineWidth=1;
+  for(let c=0;c<=COLS;c++){ cx.beginPath(); cx.moveTo(PADX+c*CW,PADY); cx.lineTo(PADX+c*CW,PADY+ROWS*CH); cx.stroke(); }
+  for(let r=0;r<=ROWS;r++){ cx.beginPath(); cx.moveTo(PADX,PADY+r*CH); cx.lineTo(PADX+COLS*CW,PADY+r*CH); cx.stroke(); }
+  cx.fillStyle='rgba(202,220,252,.45)'; cx.font='600 9px system-ui'; cx.textAlign='left';
+  cx.fillText('20FT DRY BOX · 33 m³ · 28 t PAYLOAD', PADX-8, PADY+ROWS*CH+22);
+
+  // stacked loads — drawn one whole piece at a time (10 Oct 2026), not cell by cell
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const cell=grid[r][c]; if(!cell) continue;
+    if(cell.pc) piece(PADX+c*CW+1, PADY+r*CH+1, cell.pc.w*CW-2, cell.pc.h*CH-2, cell.pc.m, cell.pc.baled, 1);
+    else if(!ART_OK){ cx.fillStyle=cell.c; cx.globalAlpha=.92; cx.fillRect(PADX+c*CW+1, PADY+r*CH+1, CW-2, CH-2); cx.globalAlpha=1; }
+  }
+
+  // ghost of where the current piece would land
+  if(live && cur && !anim){
+    const y=canPlace(curX,cur.w,cur.h);
+    if(y>=0){
+      cx.strokeStyle='rgba(224,124,46,.55)'; cx.lineWidth=2; cx.setLineDash([5,4]);
+      cx.strokeRect(PADX+curX*CW+1, PADY+y*CH+1, cur.w*CW-2, cur.h*CH-2);
+      cx.setLineDash([]);
+    }
+    // the piece waiting above the doors
+    cx.fillStyle=cur.m.c; cx.globalAlpha=.95;
+    rr(PADX+curX*CW+1, 2, cur.w*CW-2, Math.min(cur.h*CH, PADY-8)-2, 4); cx.fill(); cx.globalAlpha=1;
+    cx.fillStyle='rgba(255,255,255,.35)'; rr(PADX+curX*CW+4, 4, cur.w*CW-8, 3, 1.5); cx.fill();
+  }
+  if(anim){
+    anim.t=Math.min(1,anim.t+0.14);
+    const y=anim.y0+(PADY+anim.y1*CH-anim.y0)*anim.t;
+    if(ART_OK) piece(PADX+anim.x*CW+1, y+1, anim.p.w*CW-2, anim.p.h*CH-2, anim.p.m, anim.p.baled, 1);
+    else { cx.fillStyle=anim.p.m.c; cx.fillRect(PADX+anim.x*CW+1, y+1, anim.p.w*CW-2, anim.p.h*CH-2); }
+  }
+  if(flash.msg && performance.now()<flash.until){
+    cx.fillStyle='rgba(224,124,46,.96)'; rr(PADX, H/2-16, COLS*CW, 32, 8); cx.fill();
+    /* white on this orange is about 2.9:1 — under the floor for body text. The ink is
+       picked by contrast instead, which puts navy on the orange and keeps the message
+       readable at the moment it matters, which is the moment something went wrong. */
+    cx.fillStyle=LirichRules.inkFor('#E07C2E'); cx.font='700 13px system-ui'; cx.textAlign='center';
+    cx.fillText(flash.msg, W/2, H/2+5);
+  }
+  requestAnimationFrame(draw);
+}
+function flash(m){ flash.msg=m; flash.until=performance.now()+2200; }
+
+/* ------------------------------------------------------------------------- HUD ---- */
+function showNext(){
+  if(!cur) return;
+  $('swatch').style.background=cur.m.c;
+  if(ART_OK && MAT_ART[cur.m.n]){                       // the material's picture in the "next load" chip
+    const sw=$('swatch'); let ic=sw.firstChild;
+    if(!ic){ ic=document.createElement('canvas'); ic.width=ic.height=60; ic.setAttribute('aria-hidden','true');
+      ic.style.cssText='display:block;width:30px;height:30px;margin:2px;background:rgba(255,255,255,.94);border-radius:6px'; sw.appendChild(ic); }
+    const ig=ic.getContext('2d'); ig.clearRect(0,0,60,60); try{ LirichSprites.draw(ig, MAT_ART[cur.m.n], 0, 0, 60); }catch(e){}
+  }
+  $('nName').textContent=cur.m.n+(cur.baled?' — baled':' — loose');
+  $('nMeta').textContent=cur.m.kg+' kg · '+(cur.w*cur.h*CELL_M3).toFixed(1)+' m³ · '+density(cur)+' kg/m³';
+  $('bB').disabled = cur.baled || !cur.m.dB || bales<=0;
+  $('bBs').textContent = cur.m.dB ? (bales+' left') : 'n/a';
+  $('bS').disabled = skips<=0;
+}
+function upd(){
+  const L=LEVELS[lvl];
+  $('hLvl').textContent=(lvl+1)+' / '+LEVELS.length;
+  $('hTgt').textContent=(L.target/1000).toFixed(0)+' t';
+  $('hBale').textContent=bales;
+  $('hSkip').textContent=skips;
+  $('hKg').textContent = kg>=1000 ? (kg/1000).toFixed(1)+' t' : kg+' kg';
+  const wp=Math.min(100, kg/PAYLOAD*100), vp=Math.min(100, cells/(COLS*ROWS)*100);
+  $('barW').style.width=wp+'%'; $('barV').style.width=vp+'%';
+  $('labW').textContent='weight '+Math.round(wp)+'% of 28 t';
+  $('labV').textContent='space '+Math.round(vp)+'% of 33 m³';
+  $('barW').style.background = kg>=L.target ? '#3FA46B' : '#4E86C8';
+}
+
+/* ---------------------------------------------------------------------- endgame ---- */
+function finish(how){
+  live=false;
+  const L=LEVELS[lvl];
+  const vp=cells/(COLS*ROWS), wp=kg/PAYLOAD;
+  const pass = kg>=L.target;
+  $('eTag').textContent = how==='weighed' ? 'Weighed out' : how==='cubed' ? 'Cubed out' : 'Doors closed';
+  $('eTitle').textContent = how==='weighed' ? 'You hit the weight limit'
+    : pass ? 'Target met — but it cubed out'
+    : 'Full of air';
+  $('eBody').textContent = how==='weighed'
+    ? 'The container reached 28 tonnes with '+Math.round((1-vp)*100)+'% of the space still empty. Dense material weighs out; that is the good problem.'
+    : 'The space ran out at '+Math.round(wp*100)+'% of the weight limit. You moved '+
+      (kg/1000).toFixed(1)+' tonnes in a box rated for 28.';
+  $('eKg').textContent=(kg/1000).toFixed(1)+' t';
+  $('eV').textContent=Math.round(vp*100)+'%';
+  $('eFact').innerHTML=L.fact;
+
+  // what actually went in, densest first — the table is the lesson
+  const byMat={};
+  loaded.forEach(l=>{ const k=l.n+(l.baled?' (baled)':''); byMat[k]=byMat[k]||{kg:0,m3:0};
+    byMat[k].kg+=l.kg; byMat[k].m3+=l.m3; });
+  const rows=Object.keys(byMat).map(k=>[k, byMat[k].kg, byMat[k].m3, byMat[k].kg/byMat[k].m3])
+    .sort((a,b)=>b[3]-a[3]);
+  const t=$('eDens'); t.innerHTML='<tr><td colspan="2" style="color:#5B6472;font-size:10.5px;'+
+    'letter-spacing:.06em;text-transform:uppercase;border:0">What was in it</td></tr>';
+  rows.forEach(r=>{ const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+r[0]+' — '+Math.round(r[1])+' kg</td><td>'+Math.round(r[3])+' kg/m³</td>';
+    t.appendChild(tr); });
+
+  const last = lvl>=LEVELS.length-1;
+  $('btnNext').textContent = pass ? (last?'Play it again':'Next level') : 'Load it again';
+  $('btnNext').dataset.next = pass ? (last?'0':String(lvl+1)) : String(lvl);
+  $('ovEnd').classList.remove('hide');
+  /* shared score layer — records the run and offers a team name */
+  try { LirichLearn.run('loadcontainer', kg, true); } catch(e) {}
+  try { LirichScores.finish('loadcontainer', kg, $('ovEnd').querySelector('.card')||$('ovEnd')); } catch(e) {}
+}
+
+/* ----------------------------------------------------------------------- input ---- */
+cv.addEventListener('click', e=>{
+  if(!live||!cur||anim) return;
+  const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(W/r.width);
+  const c=Math.floor((x-PADX)/CW);
+  const nx=Math.max(0, Math.min(COLS-cur.w, c - Math.floor(cur.w/2)));
+  if(nx===curX) drop(); else { curX=nx; }
+});
+$('bL').onclick=()=>{ if(cur) curX=Math.max(0,curX-1); };
+$('bR').onclick=()=>{ if(cur) curX=Math.min(COLS-cur.w,curX+1); };
+$('bD').onclick=drop; $('bB').onclick=bale; $('bS').onclick=skip;
+addEventListener('keydown',e=>{
+  if(!live) return;
+  if(e.key==='ArrowLeft'){ e.preventDefault(); $('bL').click(); }
+  if(e.key==='ArrowRight'){ e.preventDefault(); $('bR').click(); }
+  if(e.key==='ArrowDown'||e.key===' '){ e.preventDefault(); drop(); }
+  if(e.key==='b'||e.key==='B'){ bale(); }
+  if(e.key==='s'||e.key==='S'){ skip(); }
+});
+function start(i){
+  lvl=i; grid=blank(); kg=0; cells=0; loaded=[]; anim=null;
+  bales=LEVELS[i].bales; skips=LEVELS[i].skips; live=true;
+  cur=makePiece(); curX=Math.floor((COLS-cur.w)/2);
+  showNext(); upd();
+}
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); start(0); };
+$('btnNext').onclick=()=>{ $('ovEnd').classList.add('hide'); start(parseInt($('btnNext').dataset.next,10)); };
+grid=blank(); upd(); draw();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

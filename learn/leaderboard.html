@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lirich Learn — leaderboard</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#0B1630">
+<link rel="stylesheet" href="lirich-learn.css">
+<style>
+ *{box-sizing:border-box}
+ html,body{margin:0;color:#fff;min-height:100%;
+   background:radial-gradient(90% 50% at 70% -5%,rgba(214,169,58,.18),transparent 60%),
+              linear-gradient(180deg,#13274B 0%,#0F2040 45%,#0B1630 100%) fixed;background-color:#0B1630}
+ .wrap{max-width:860px;margin:0 auto;padding:18px 16px 60px}
+ a{color:#C9D6EE}
+ .top{display:flex;align-items:center;gap:10px}
+ .lock{display:flex;align-items:center;gap:10px;text-decoration:none}
+ .lock img{height:34px;width:auto;display:block}
+ .lock span{font-family:Cinzel,Georgia,serif;font-weight:700;color:#D6A93A;font-size:13px;letter-spacing:.3em;
+   border-left:1px solid rgba(214,169,58,.45);padding-left:10px}
+ h1{font-weight:900;font-size:clamp(30px,6vw,44px);letter-spacing:-.02em;margin:22px 0 4px}
+ .sub{color:#C9D6EE;font-size:15px;line-height:1.5;margin:0 0 14px;font-weight:600;max-width:40em}
+ .you{background:rgba(255,255,255,.05);border:1px solid rgba(214,169,58,.3);border-radius:18px;padding:14px 16px;margin:14px 0}
+ .you small{display:block;font-weight:800;font-size:12px;color:#B8C6E2}
+ .you b.nick{display:block;font-size:21px;font-weight:900;color:#F2D27A;margin:2px 0}
+ .you .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+ .you input{flex:1 1 180px;min-width:0;font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:1px solid rgba(202,220,252,.35);
+   background:rgba(255,255,255,.08);color:#fff}
+ .sug{display:flex;flex-direction:column;margin-top:6px;border-radius:12px;overflow:hidden;border:1px solid rgba(202,220,252,.3)}
+ .sug button{font:inherit;font-size:14px;text-align:left;padding:10px 12px;border:0;border-top:1px solid rgba(202,220,252,.12);
+   background:#162B52;color:#fff;cursor:pointer}
+ .sug button:first-child{border-top:0}.sug button:hover,.sug button:focus-visible{background:#20396A}
+ .btn2{font:900 14px Nunito,system-ui,sans-serif;border:0;border-radius:12px;padding:10px 14px;cursor:pointer;color:#fff;
+   background:#E8772E;box-shadow:0 3px 0 #B95514}
+ .btn2.alt{background:rgba(255,255,255,.1);box-shadow:none;border:1px solid rgba(202,220,252,.3)}
+ .why{color:#F5A3B3;font-weight:700;font-size:13.5px;margin-top:6px}
+ .bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px;align-items:center}
+ .seg{display:flex;border:1px solid rgba(202,220,252,.3);border-radius:12px;overflow:hidden}
+ .seg button{font:800 14px Nunito,system-ui,sans-serif;border:0;background:transparent;color:#C9D6EE;padding:9px 14px;cursor:pointer}
+ .seg button[aria-pressed="true"]{background:#D6A93A;color:#13213F}
+ .seg button:focus-visible,.btn2:focus-visible,.sug button:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ .note{background:rgba(232,119,46,.13);border:1px solid rgba(232,119,46,.4);border-radius:14px;padding:14px 16px;margin:14px 0;
+   font-size:14px;line-height:1.55;color:#F3D9C2}
+ .note .lead{display:block;color:#fff;font-weight:900;font-size:15px;margin-bottom:4px}
+ .note code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:rgba(0,0,0,.28);padding:1px 5px;border-radius:5px}
+ .note.calm{background:rgba(202,220,252,.08);border-color:rgba(202,220,252,.25);color:#D6DEEC}
+ table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;color:#13213F;border-radius:16px;overflow:hidden}
+ th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #E6EAF2}
+ th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#56627C;background:#F1F4FA}
+ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+ td.rank{font-weight:900;color:#B88A1E;width:2.4em}
+ td.name b{display:block;font-weight:900}
+ td.name small{color:#56627C;font-weight:700}
+ tr.me td{background:#FFF4DA}
+ .empty{padding:24px 14px;text-align:center;color:#56627C;line-height:1.6}
+ .tablewrap{overflow-x:auto;border-radius:16px}
+ h2{font-weight:900;font-size:21px;margin:30px 0 8px}
+ .pts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;font-size:13.5px;color:#C9D6EE}
+ .pts div{background:rgba(255,255,255,.05);border-radius:12px;padding:9px 12px;display:flex;justify-content:space-between;gap:8px}
+ footer{margin-top:34px;font-size:12px;color:#93A3C4;line-height:1.7;border-top:1px solid rgba(214,169,58,.2);padding-top:14px}
+</style></head>
+<body><div class="wrap">
+
+<div class="top">
+  <a class="lock" href="index.html"><img src="assets/lirich-mark.png" alt="Lirich — back to the games"><span>LEARN</span></a>
+</div>
+
+<h1>Leaderboard</h1>
+<p class="sub">Every game turns your score into points on the same scale, so players and schools can be
+  compared across all eleven games. The board resets every week and every month.</p>
+
+<div class="you" id="you"></div>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Board">
+    <button id="bPlayers" aria-pressed="true">Players</button>
+    <button id="bSchools" aria-pressed="false">Schools</button>
+  </div>
+  <div class="seg" role="group" aria-label="Period">
+    <button id="pWeek" aria-pressed="true">This week</button>
+    <button id="pMonth" aria-pressed="false">This month</button>
+  </div>
+  <button id="refresh" class="btn2 alt" type="button">Refresh</button>
+</div>
+
+<div id="status"></div>
+<div class="tablewrap" id="tblwrap"><table>
+  <thead id="head"></thead>
+  <tbody id="rows"></tbody>
+</table></div>
+
+<h2>How points work</h2>
+<p class="sub">100 points is a good run in any game, up to 150 for a great one. A school's total counts each
+  player's points up to 3,000 a period, so one player alone cannot carry a school.</p>
+<div class="pts" id="pts"></div>
+
+<h2>Your own results</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Game</th><th class="n">Your best on this device</th></tr></thead>
+  <tbody id="mine"></tbody>
+</table></div>
+
+<footer id="foot"></footer>
+</div>
+
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   The leaderboard (rewritten 21 Nov 2026 for players and schools).
+   Reads the two aggregated views and nothing else — the public key cannot read the
+   table (lirich-competition.sql, checked against Postgres 16).
+
+   ⚠ This page RANKS. It does not pick winners, and it must not be used to. A prize
+   distributed by chance at any stage — including a random tie-break — is a lottery
+   under the Gambling Control Act 2022.
+   ===================================================================================== */
+var $ = function (id) { return document.getElementById(id); };
+var period = 'week', board = 'players';
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/* ---- who you are on the board ---------------------------------------------------- */
+function renderYou() {
+  var pl = LirichScores.getPlayer(), el = $('you');
+  if (pl) {
+    el.innerHTML = '<small>You play as</small><b class="nick">' + esc(pl.nick) + '</b>' +
+      '<span>' + (pl.school ? esc(LirichScores.schoolName(pl.school)) : 'No school chosen') + '</span>' +
+      '<div class="row"><button id="chg" class="btn2 alt" type="button">Change name or school</button></div>';
+    $('chg').onclick = function () { joinForm(pl.school); };
+    return;
+  }
+  joinForm(null);
+}
+function joinForm(school) {
+  var el = $('you'), nick = LirichScores.newNick(), chosen = school || null;
+  el.innerHTML = '<small>Your leaderboard name</small><b class="nick" id="nk">' + esc(nick) + '</b>' +
+    '<button id="re" class="btn2 alt" type="button">New name</button>' +
+    '<div class="row"><input id="sc" autocomplete="off" placeholder="Your school (optional)" aria-label="Your school" value="' +
+    esc(school ? LirichScores.schoolName(school) : '') + '"><button id="go" class="btn2" type="button">Join</button></div>' +
+    '<div class="sug" id="sg" role="listbox" hidden></div><div class="why" id="wy" hidden></div>' +
+    '<p style="margin:8px 0 0;font-size:13px;color:#B8C6E2">A made-up name and your school. No real names, no sign-up, nothing personal.</p>';
+  $('re').onclick = function () { nick = LirichScores.newNick(); $('nk').textContent = nick; };
+  $('sc').addEventListener('input', function () {
+    chosen = null;
+    var hits = LirichSchools.search($('sc').value, 6);
+    $('sg').innerHTML = hits.map(function (h) { return '<button type="button" role="option" data-c="' + esc(h.code) + '">' + esc(h.name) + '</button>'; }).join('');
+    $('sg').hidden = !hits.length;
+  });
+  $('sg').addEventListener('click', function (e) {
+    var o = e.target.closest('button'); if (!o) return;
+    chosen = o.getAttribute('data-c'); $('sc').value = LirichScores.schoolName(chosen); $('sg').hidden = true;
+  });
+  var go = function () {
+    if ($('sc').value.trim() && !chosen) { $('wy').textContent = 'Choose your school from the list, or leave it empty.'; $('wy').hidden = false; return; }
+    var v = LirichScores.setPlayer(nick, chosen);
+    if (!v.ok) { $('wy').textContent = v.why; $('wy').hidden = false; return; }
+    renderYou(); load();
+  };
+  $('go').onclick = go;
+  $('sc').addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+}
+
+/* ---- points table ------------------------------------------------------------------ */
+(function () {
+  var ref = LirichScores.pointsRef, g = LirichScores.games;
+  $('pts').innerHTML = Object.keys(ref).map(function (k) {
+    return '<div><span>' + esc(g[k] ? g[k].name : k) + '</span><b>100 pts = ' + Number(ref[k]).toLocaleString() + ' ' + (g[k] ? g[k].unit : '') + '</b></div>';
+  }).join('');
+})();
+
+/* ---- your own results, which work with no backend at all --------------------------- */
+function renderMine() {
+  var html = '', any = false;
+  Object.keys(LirichScores.games).forEach(function (k) {
+    var best = LirichScores.localBest(k); if (!best) return; any = true;
+    var g = LirichScores.games[k];
+    html += '<tr><td>' + esc(g.name) + '</td><td class="n">' + (Math.round(best * 100) / 100).toLocaleString() + ' ' + g.unit + '</td></tr>';
+  });
+  $('mine').innerHTML = any ? html : '<tr><td colspan="2" class="empty">Nothing yet. Play a game and your best lands here — on this device, not on a server.</td></tr>';
+}
+
+/* ---- the board ------------------------------------------------------------------- */
+function load() {
+  var key = period === 'week' ? LirichScores.weekKey() : LirichScores.monthKey();
+  var rows = $('rows'), status = $('status'), schools = board === 'schools';
+  $('head').innerHTML = schools
+    ? '<tr><th>#</th><th>School</th><th class="n">Points</th><th class="n">Players</th></tr>'
+    : '<tr><th>#</th><th>Player</th><th class="n">Points</th><th class="n">Runs</th></tr>';
+  $('tblwrap').hidden = false; status.innerHTML = '';
+  rows.innerHTML = '<tr><td colspan="4" class="empty">Loading…</td></tr>';
+
+  if (!LirichScores.configured()) {
+    rows.innerHTML = ''; $('tblwrap').hidden = true;
+    status.innerHTML = '<div class="note"><span class="lead">The leaderboard is not switched on yet.</span>' +
+      'Everything else works, and your results are saved on this device. To switch it on: run ' +
+      '<code>lirich-competition.sql</code> in the Supabase project, then fill in the address and the public ' +
+      '(anon) key in the CONFIG block of <code>lirich-scores.js</code> and set <code>enabled: true</code>.</div>';
+    return;
+  }
+  LirichScores.top(board, key, 50).then(function (res) {
+    if (!res.ok) {
+      rows.innerHTML = ''; $('tblwrap').hidden = true;
+      status.innerHTML = '<div class="note"><span class="lead">Could not reach the leaderboard.</span>' +
+        'Your scores are safe — they are queued on this device and send themselves next time there is a connection. (' + esc(res.reason) + ')</div>';
+      return;
+    }
+    if (!res.rows.length) {
+      rows.innerHTML = '<tr><td colspan="4" class="empty">No ' + board + ' on the board this ' + period + ' yet. Be the first.</td></tr>';
+      return;
+    }
+    var me = LirichScores.getPlayer() || {}, html = '';
+    res.rows.forEach(function (r, i) {
+      var mine = schools ? (me.school && r.school === me.school) : (r.player === me.nick && (r.school || null) === (me.school || null));
+      html += '<tr class="' + (mine ? 'me' : '') + '"><td class="rank">' + (i + 1) + '</td>' +
+        (schools
+          ? '<td class="name"><b>' + esc(LirichScores.schoolName(r.school) || r.school) + '</b></td>'
+          : '<td class="name"><b>' + esc(r.player) + '</b><small>' + esc(r.school ? LirichScores.schoolName(r.school) : '') + '</small></td>') +
+        '<td class="n">' + Number(r.points).toLocaleString() + '</td>' +
+        '<td class="n">' + (schools ? r.players : r.runs) + '</td></tr>';
+    });
+    rows.innerHTML = html;
+    if (schools) status.innerHTML = '<div class="note calm"><span class="lead">A friendly ranking.</span>' +
+      'Players choose their own school, so this board is for fun and pride, not for prizes.</div>';
+  });
+}
+
+/* ---- wiring ----------------------------------------------------------------------- */
+function seg(on, off) { on.setAttribute('aria-pressed', 'true'); off.setAttribute('aria-pressed', 'false'); }
+$('bPlayers').onclick = function () { board = 'players'; seg($('bPlayers'), $('bSchools')); load(); };
+$('bSchools').onclick = function () { board = 'schools'; seg($('bSchools'), $('bPlayers')); load(); };
+$('pWeek').onclick = function () { period = 'week'; seg($('pWeek'), $('pMonth')); load(); };
+$('pMonth').onclick = function () { period = 'month'; seg($('pMonth'), $('pWeek')); load(); };
+$('refresh').onclick = function () { LirichScores.flush(); load(); };
+
+$('foot').innerHTML = 'Made-up names and school names only. No real names, no accounts, no analytics — by design, ' +
+  'because the players are children.<br>' + LirichRules.disclaimer() + '<br>' +
+  '<b>This board ranks. It does not draw.</b> No prize on this page is allocated by chance.';
+
+renderYou(); renderMine(); load();
+</script>
+</body></html>

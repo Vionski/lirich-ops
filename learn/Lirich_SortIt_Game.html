@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Sort It! — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="description" content="A match-3 sorting game built on real Singapore recycling rules. Lirich Learn.">
+<meta name="theme-color" content="#1B2A4A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sort It!">
+<!-- Installable without any extra file. Drop sw.js alongside for full offline PWA. -->
+<style>
+ :root{
+   --navy:#1B2A4A; --navy2:#10192E; --gold:#C9A227; --orange:#E07C2E;
+   --ice:#CADCFC; --paper:#F4F5F7; --muted:#5B6472; --ok:#3F9142; --bad:#C0392B;
+ }
+ *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;overscroll-behavior:none}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:520px;height:100%;max-height:940px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A 0%,#16223C 60%,#10192E 100%);position:relative;overflow:hidden}
+ header{padding:10px 14px 6px;display:flex;align-items:center;gap:10px;flex:0 0 auto}
+ .brand{font-family:Georgia,"Times New Roman",serif;letter-spacing:.14em;font-size:12px;color:var(--gold)}
+ .brand b{display:block;font-size:17px;letter-spacing:.06em;color:#fff;font-weight:600}
+ .spacer{flex:1}
+ .lvl{font-size:11px;color:var(--ice);text-align:right;line-height:1.35}
+ .lvl b{display:block;font-size:14px;color:#fff}
+ #hud{display:flex;gap:8px;padding:0 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:10px;letter-spacing:.06em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ .stat.warn b{color:var(--orange)}
+ #goalbar{margin:0 14px 8px;height:7px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;flex:0 0 auto}
+ #goalfill{height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--gold));transition:width .3s}
+ #goaltxt{padding:0 14px 8px;font-size:11.5px;color:var(--ice);flex:0 0 auto}
+ #board{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 10px 6px;min-height:0}
+ canvas{touch-action:none;border-radius:14px;background:rgba(255,255,255,.05);
+   box-shadow:0 10px 30px rgba(0,0,0,.35);max-width:100%;max-height:100%}
+ footer{padding:6px 14px 10px;font-size:10px;color:#8792A6;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.93);display:flex;flex-direction:column;
+   align-items:center;justify-content:center;padding:26px;text-align:center;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:400px;width:100%;
+   box-shadow:0 18px 44px rgba(0,0,0,.5)}
+ .card h1{font-family:Georgia,serif;margin:0 0 4px;font-size:25px;color:var(--navy)}
+ .card h2{font-family:Georgia,serif;margin:0 0 8px;font-size:20px;color:var(--navy)}
+ .card p{margin:8px 0;font-size:13.5px;line-height:1.55;color:#3D4A5A}
+ .card .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;
+   padding:3px 11px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   text-align:left;margin:12px 0}
+ .fact b{color:#8A4B12}
+ .btn{display:inline-block;margin-top:12px;background:var(--orange);color:#fff;border:0;border-radius:10px;
+   padding:12px 26px;font-size:15px;font-weight:600;cursor:pointer;width:100%}
+ .btn.alt{background:var(--navy)}
+ .btn:active{transform:translateY(1px)}
+ .mini{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+ input[type=text]{width:100%;padding:11px 12px;border:1px solid #CBD3DE;border-radius:9px;font-size:14px;
+   margin-top:6px;color:#22303F}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:10px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+ .row2 .cell b{font-size:19px;color:var(--navy);font-variant-numeric:tabular-nums}
+ #toast{position:absolute;left:12px;right:12px;bottom:64px;background:rgba(255,255,255,.97);color:#22303F;
+   border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.4);
+   opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none;z-index:8;text-align:left}
+ #toast.on{opacity:1;transform:none}
+ #toast b{color:#8A4B12}
+ .legend{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;justify-content:center}
+ .lg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#3D4A5A;background:#F2F5FA;
+   border-radius:999px;padding:3px 9px}
+ .sw{width:10px;height:10px;border-radius:3px}
+ /* level path on the intro card */
+ .path{display:flex;justify-content:center;gap:6px;margin:4px 0 10px;flex-wrap:wrap}
+ .path .stop{width:40px;text-align:center;font-size:10px;font-weight:800;color:#8A93A8}
+ .path .dot{width:30px;height:30px;margin:0 auto 3px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+   background:#EEF1F7;color:#8A93A8;font-weight:900;font-size:13px;border:2px solid #DCE1EC}
+ .path .stop.done .dot{background:#FFF4DA;border-color:#D6A93A;color:#7A5A12}
+ .path .stop.now .dot{background:#E8772E;border-color:#B95514;color:#fff;transform:scale(1.12)}
+ .path .st{letter-spacing:-1px;color:#D6A93A;font-size:10px;height:12px}
+ #goaltxt{font-weight:700}
+ #goalbar{height:10px}
+ .legend .lg{font-weight:700}
+ /* the board sits in a bright yard-and-sky panel; the Lirich navy frames it */
+ #board canvas{background:linear-gradient(180deg,#BFE6FF 0%,#E4F5FF 55%,#D7F0D2 100%);
+   border:4px solid #fff;border-radius:22px;box-shadow:0 0 0 2px rgba(214,169,58,.55),0 16px 40px rgba(0,0,0,.45)}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+
+<header>
+  <div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Sort It!</b></div>
+  <div class="spacer"></div>
+  <div class="lvl" id="lvlLabel">LEVEL<b>1</b></div>
+</header>
+
+<div id="hud">
+  <div class="stat"><span>Diverted</span><b id="sKg">0 kg</b></div>
+  <div class="stat"><span>CO₂e avoided</span><b id="sCo">0 kg</b></div>
+  <div class="stat" id="mvBox"><span>Moves left</span><b id="sMv">20</b></div>
+</div>
+<div id="goalbar"><div id="goalfill"></div></div>
+<div id="goaltxt">—</div>
+
+<div id="board"><canvas id="cv"></canvas></div>
+
+
+<div id="toast"></div>
+
+<!-- ============ START ============ -->
+<div class="ov" id="ovStart">
+  <div class="card">
+    <div class="tag">Six levels, from kerb to Semakau</div>
+    <h1>Sort It!</h1>
+    <p>Swap two items to line up three of the same. Matched items go to the right stream.
+       Dirty items like a <b>greasy pizza box</b> jam the line — match next to them to clear them.</p>
+    <div class="legend" id="legend"></div>
+    <input type="text" id="classCode" placeholder="Class code (optional — e.g. 3E2)" maxlength="12">
+    <button class="btn" id="btnStart">Start sorting</button>
+    <p class="mini">Sorting rules follow NEA's list of what is recyclable and what is not. CO₂e figures are
+       indicative for now. No accounts and nothing personal is saved. A class code is a label only and is never sent
+       anywhere. Your stars stay on this device.</p>
+  </div>
+</div>
+
+<!-- ============ LEVEL INTRO ============ -->
+<div class="ov hide" id="ovIntro">
+  <div class="card">
+    <div class="path" id="inPath" aria-hidden="true"></div>
+    <div class="tag" id="inTag">Level 1</div>
+    <h2 id="inTitle">Kerbside collection</h2>
+    <p id="inSub"></p>
+    <div class="fact"><b>Goal:</b> <span id="inGoal"></span></div>
+    <button class="btn" id="btnGo">Go</button>
+  </div>
+</div>
+
+<!-- ============ LEVEL END ============ -->
+<div class="ov hide" id="ovEnd">
+  <div class="card">
+    <div class="tag" id="enTag">Level complete</div>
+    <h2 id="enTitle">Nice sorting</h2>
+    <div class="row2">
+      <div class="cell"><span>Diverted</span><b id="enKg">0 kg</b></div>
+      <div class="cell"><span>CO₂e avoided</span><b id="enCo">0 kg</b></div>
+    </div>
+    <div class="fact" id="enFact"></div>
+    <button class="btn" id="btnNext">Next level</button>
+    <button class="btn alt" id="btnRetry" style="display:none">Try again</button>
+  </div>
+</div>
+
+<!-- ============ FINISH ============ -->
+<div class="ov hide" id="ovFin">
+  <div class="card">
+    <div class="tag">Programme complete</div>
+    <h2>That is the whole chain</h2>
+    <p>From the truck at the kerb to what is left at the end. Every stream you sorted is one Lirich
+       actually collects, weighs and reports.</p>
+    <div class="row2">
+      <div class="cell"><span>Total diverted</span><b id="fiKg">0 kg</b></div>
+      <div class="cell"><span>Total CO₂e</span><b id="fiCo">0 kg</b></div>
+    </div>
+    <div class="fact">
+      <b>The real question:</b> what does your school's bin actually weigh, and where does it
+      actually go? That is measurable — and it is what a waste audit answers.
+    </div>
+    <button class="btn" id="btnAgain">Play again</button>
+  </div>
+</div>
+
+</div>
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+if (!window.LirichRules) {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.innerHTML =
+      '<div style="font:16px/1.6 system-ui,sans-serif;max-width:34em;margin:12vh auto;padding:0 6vw;color:#2B3B55">' +
+      '<h1 style="font-size:1.3em">Missing file</h1>' +
+      '<p><b>lirich-rules.js</b> is not in this folder. Every Lirich Learn game reads its sorting ' +
+      'rules from that one file, so it will not run without it.</p>' +
+      '<p>Copy <b>lirich-rules.js</b> next to this game and reload.</p></div>';
+  });
+  throw new Error('lirich-rules.js not loaded');
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================================
+   Sort It! — Lirich Learn
+   Vanilla JS + Canvas. No dependencies, no network, no storage, no personal data.
+   -------------------------------------------------------------------------------------
+   CONTENT ACCURACY: every sorting rule and every fact card below is taken from NEA's
+   published "List of items that are recyclable and not". Do not edit a fact without
+   re-checking it against the current NEA list — wrong rules taught at scale are worse
+   than no game at all.
+   ===================================================================================== */
+
+/* ---- RULES, FACTORS AND LEVELS ---------------------------------------------------
+   Item masses, CO2e figures, stream colours and every sorting rule now come from
+   lirich-rules.js, the one file the whole basket shares. Editing a rule there fixes
+   it in every game at once. Level design stays here, because it is this game only. */
+const TYPES  = LirichRules.views.sortItTypes();
+const NT     = TYPES.length;
+const CONTAM = LirichRules.views.sortItContaminants();
+const F      = LirichRules.facts;
+
+/* ---- LEVELS ------------------------------------------------------------------------ */
+const LEVELS = [
+  {t:'Kerbside collection', s:'The truck brings in a mixed load. Sort it into the right streams.',
+   moves:22, goalKg:35, goalC:0, seed:3, crate:0,    fact:F.rinse},
+  {t:'Materials recovery',  s:'Contamination jams a real sorting line. Clear it by matching alongside it.',
+   moves:26, goalKg:0,  goalC:4, seed:5, crate:0.07, fact:F.film},
+  {t:'The RDF line',        s:'Paper and plastic become fuel. Keep the stream clean and the fuel is worth more.',
+   moves:28, goalKg:75, goalC:2, seed:4, crate:0.04, fact:F.chlorine},
+  {t:'Recovery routes',     s:'Everything left has somewhere to go. Find it.',
+   moves:30, goalKg:110,goalC:4, seed:5, crate:0.05, fact:F.ewaste},
+  {t:'The glass batch',     s:'One wrong piece of glass spoils a whole melt. Keep the stream clean while the load keeps coming.',
+   moves:30, goalKg:140,goalC:6, seed:6, crate:0.06, fact:F.glassNo},
+  {t:'Back of house',       s:'A food court load. Most of what looks like paper here has touched food, and food is what decides.',
+   moves:32, goalKg:170,goalC:8, seed:7, crate:0.07, fact:F.paperNo}
+];
+/* LEVEL CALIBRATION — these numbers were set by PLAYING, not by guessing.
+   A greedy bot that always takes the largest available match was run through the full
+   ladder (see sortbot). It met every goal with roughly half the move budget unspent:
+       L1 35.9/35 kg (16 of 22 moves left)      L4 118.6/110 kg (15 of 30 left)
+       L5 and L6 were then set so the same bot still clears them with margin, because a
+       level a strong player cannot finish is a level that stops the run — and the run,
+       not the level, is what the score layer submits.
+   ⚠ If a goal is raised, run the bot again. A goal that cannot be met silently ends
+     every player's session at that level and no score is ever recorded. */
+
+/* ---- STATE ------------------------------------------------------------------------- */
+const R = 8, C = 8;                 // rows, cols
+let grid = [];                      // {t:0..NT-1} | {c:idx} contaminant | {t, baler:true}
+let lv = 0, moves = 0, kg = 0, co2 = 0, contamCleared = 0, totKg = 0, totCo = 0;
+let busy = false, sel = null, anim = [], className = '', seenType = {};
+/* one Continue per level (lirich-wallet.js, 21 Nov 2026); a continued level earns one star at most */
+let contUsed = false;
+
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let CELL = 44, PAD = 6, DPR = Math.min(2, window.devicePixelRatio || 1);
+
+/* ---- HELPERS ----------------------------------------------------------------------- */
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random() * n);
+const isTile = c => c && c.t !== undefined;          // sorting line has no .t, so it never matches
+const isCon  = c => c && c.c !== undefined;
+
+function toast(html, ms){
+  const t = $('toast'); t.innerHTML = html; t.classList.add('on');
+  clearTimeout(toast._h); toast._h = setTimeout(()=>t.classList.remove('on'), ms || 3600);
+}
+
+/* ---- BOARD ------------------------------------------------------------------------- */
+function newBoard(nContam){
+  do {
+    grid = [];
+    for(let r=0;r<R;r++){ grid.push([]); for(let c=0;c<C;c++) grid[r].push({t:rnd(NT)}); }
+    // remove any starting matches
+    let guard=0;
+    while(findMatches().length && guard++ < 400){
+      findMatches().forEach(m=>m.cells.forEach(p=>{ grid[p.r][p.c] = {t:rnd(NT)}; }));
+    }
+    // scatter contaminants
+    let placed=0, tries=0;
+    while(placed<nContam && tries++<300){
+      const r=rnd(R), c=rnd(C);
+      if(isTile(grid[r][c])){ grid[r][c] = {c:rnd(CONTAM.length)}; placed++; }
+    }
+  } while(!hasMove());
+}
+
+function findMatches(){
+  const out=[];
+  for(let r=0;r<R;r++){
+    let run=1;
+    for(let c=1;c<=C;c++){
+      const a=grid[r][c-1], b=(c<C?grid[r][c]:null);
+      if(b && isTile(a) && isTile(b) && a.t===b.t){ run++; }
+      else { if(run>=3){ const cells=[]; for(let k=c-run;k<c;k++) cells.push({r,c:k});
+               out.push({cells, t:grid[r][c-1].t, len:run, dir:'h'}); } run=1; }
+    }
+  }
+  for(let c=0;c<C;c++){
+    let run=1;
+    for(let r=1;r<=R;r++){
+      const a=grid[r-1][c], b=(r<R?grid[r][c]:null);
+      if(b && isTile(a) && isTile(b) && a.t===b.t){ run++; }
+      else { if(run>=3){ const cells=[]; for(let k=r-run;k<r;k++) cells.push({r:k,c});
+               out.push({cells, t:grid[r-1][c].t, len:run, dir:'v'}); } run=1; }
+    }
+  }
+  return out;
+}
+
+function hasMove(){
+  const swap=(a,b)=>{ const t=grid[a.r][a.c]; grid[a.r][a.c]=grid[b.r][b.c]; grid[b.r][b.c]=t; };
+  for(let r=0;r<R;r++) for(let c=0;c<C;c++){
+    for(const d of [{r:0,c:1},{r:1,c:0}]){
+      const r2=r+d.r, c2=c+d.c; if(r2>=R||c2>=C) continue;
+      if(!isTile(grid[r][c]) || !isTile(grid[r2][c2])) continue;
+      swap({r,c},{r:r2,c:c2});
+      const ok = findMatches().length>0;
+      swap({r,c},{r:r2,c:c2});
+      if(ok) return true;
+    }
+  }
+  return false;
+}
+
+/* ---- SPECIALS ------------------------------------------------------------------------
+   Baler      (match 4)      clears the whole row or column it lies in
+   Compactor  (L or T shape) clears the 3x3 around it
+   Sorting line (match 5)    the special attack - clears EVERY tile of one stream
+   Swapping two specials together combines them. See combo() below.                     */
+const isSp = c => c && c.sp;
+
+function cellsForSpecial(r,c){
+  const cell = grid[r][c], out = [];
+  if(!cell || !cell.sp) return out;
+  if(cell.sp==='baler'){
+    if(cell.dir==='v'){ for(let i=0;i<R;i++) out.push(i+','+c); }
+    else              { for(let i=0;i<C;i++) out.push(r+','+i); }
+  } else if(cell.sp==='compact'){
+    for(let i=r-1;i<=r+1;i++) for(let j=c-1;j<=c+1;j++)
+      if(i>=0&&j>=0&&i<R&&j<C) out.push(i+','+j);
+  } else if(cell.sp==='sortline'){
+    const tt = (cell.target!==undefined) ? cell.target : null;
+    for(let i=0;i<R;i++) for(let j=0;j<C;j++){
+      const q=grid[i][j];
+      if(isTile(q) && (tt===null || q.t===tt)) out.push(i+','+j);
+    }
+  }
+  return out;
+}
+
+/* expand a set of cleared cells: every special caught in the blast fires too */
+function detonate(cleared){
+  const fired = new Set();
+  let changed = true, guard = 0;
+  while(changed && guard++ < 40){
+    changed = false;
+    Array.from(cleared).forEach(key=>{
+      if(fired.has(key)) return;
+      const [r,c] = key.split(',').map(Number);
+      if(isSp(grid[r][c])){
+        fired.add(key);
+        cellsForSpecial(r,c).forEach(k=>{ if(!cleared.has(k)){ cleared.add(k); changed=true; } });
+      }
+    });
+  }
+  return fired.size;
+}
+
+/* which special should a match group spawn, and where */
+function planSpawns(ms, at){
+  const spawns = [];
+  const key = p => p.r+','+p.c;
+  const hCells = new Set(), vCells = new Set();
+  ms.forEach(m=>m.cells.forEach(p=>(m.dir==='h'?hCells:vCells).add(key(p))));
+  const used = new Set();
+  // 5+ in a line -> sorting line
+  ms.forEach(m=>{
+    if(m.len>=5){
+      const p = m.cells.find(q=>at && q.r===at.r && q.c===at.c) || m.cells[Math.floor(m.len/2)];
+      if(!used.has(key(p))){ used.add(key(p)); spawns.push({p, sp:'sortline'}); }
+    }
+  });
+  // L or T -> compactor at the intersection
+  ms.forEach(m=>m.cells.forEach(p=>{
+    const k = key(p);
+    if(hCells.has(k) && vCells.has(k) && !used.has(k)){
+      used.add(k); spawns.push({p, sp:'compact', t:m.t});
+    }
+  }));
+  // exactly 4 -> baler
+  ms.forEach(m=>{
+    if(m.len===4){
+      const p = m.cells.find(q=>at && q.r===at.r && q.c===at.c) || m.cells[1];
+      if(!used.has(key(p))){ used.add(key(p)); spawns.push({p, sp:'baler', dir:m.dir, t:m.t}); }
+    }
+  });
+  return spawns;
+}
+
+/* ---- RESOLVE (clear -> contaminants -> gravity -> refill -> cascade) ---------------- */
+let swapAt = null;                       // where the player's swap landed, for spawn placement
+
+function clearCells(cleared, chain){
+  const hit = new Set();
+  detonate(cleared);
+  cleared.forEach(key=>{
+    const [r,c] = key.split(',').map(Number);
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(d=>{
+      const r2=r+d[0], c2=c+d[1];
+      if(r2<0||c2<0||r2>=R||c2>=C) return;
+      if(isCon(grid[r2][c2])) hit.add(r2+','+c2);
+    });
+  });
+  let gainKg=0, gainCo=0, sx=0, sy=0, sn=0;
+  const box=cv.getBoundingClientRect(), sc=box.width/(CELL*C+PAD*2);
+  cleared.forEach(key=>{
+    const [r,c]=key.split(',').map(Number); const cell=grid[r][c];
+    if(isTile(cell)){ const T=TYPES[cell.t]; gainKg+=T.kg*10; gainCo+=T.co2*10;
+      const px=box.left+(PAD+c*CELL+CELL/2)*sc, py=box.top+(PAD+r*CELL+CELL/2)*sc;
+      sx+=px; sy+=py; sn++;
+      try { LirichLearn.fx.burst(px,py,T.col,5); } catch(e) {}
+      if(!seenType[cell.t]){ seenType[cell.t]=1; try { LirichLearn.learn(T.name,true,{cat:'item'}); } catch(e) {} } }
+    if(cell && !isCon(cell)) grid[r][c]=null;
+  });
+  let factShown=null;
+  hit.forEach(key=>{
+    const [r,c]=key.split(',').map(Number);
+    if(isCon(grid[r][c])){ factShown = CONTAM[grid[r][c].c]; contamCleared++; grid[r][c]=null;
+      try { const px=box.left+(PAD+c*CELL+CELL/2)*sc, py=box.top+(PAD+r*CELL+CELL/2)*sc;
+        LirichLearn.fx.burst(px,py,'#E8772E',16);
+        LirichLearn.learn(factShown.label==='Styrofoam'?'Styrofoam box':factShown.label,true,{cat:'item'}); } catch(e) {} }
+  });
+  const mult = 1 + (chain||0)*0.25;
+  kg += gainKg*mult; co2 += gainCo*mult;
+  if(sn) try {
+    LirichLearn.fx.pop('+'+Math.max(1,Math.round(gainKg*mult))+' kg'+(chain?'  ×'+(1+chain):''), sx/sn, sy/sn);
+    LirichLearn.sfx('match', chain||0);
+  } catch(e) {}
+  if(factShown) toast(factShown.fact, 5000);
+  return cleared.size;
+}
+
+function resolve(cb, chain){
+  chain = chain || 0;
+  const ms = findMatches();
+  if(!ms.length){
+    if(!hasMove()){ toast('No moves left — reshuffling the load.'); newBoard(countContam()); draw(); }
+    busy=false; swapAt=null; if(cb) cb(); return;
+  }
+  const spawns = planSpawns(ms, swapAt);
+  const keep = new Set(spawns.map(s=>s.p.r+','+s.p.c));
+  const cleared = new Set();
+  ms.forEach(m=>m.cells.forEach(p=>cleared.add(p.r+','+p.c)));
+  // a spawned special is not itself cleared
+  keep.forEach(k=>cleared.delete(k));
+  const spCount = detonate(cleared);
+  clearCells(cleared, chain);
+
+  spawns.forEach(sp=>{
+    const {r,c} = sp.p;
+    if(sp.sp==='sortline') grid[r][c] = {sp:'sortline'};
+    else if(sp.sp==='compact') grid[r][c] = {t:sp.t, sp:'compact'};
+    else grid[r][c] = {t:sp.t, sp:'baler', dir:(sp.dir==='h'?'h':'v')};
+  });
+  if(spawns.length){
+    const n = spawns[0].sp;
+    toast(n==='sortline' ? '<b>Sorting line ready.</b> Swap it with any item to pull that whole stream off the board.'
+        : n==='compact'  ? '<b>Compactor ready.</b> It crushes everything around it.'
+        :                  '<b>Baler ready.</b> It bales a whole line.', 3200);
+  } else if(chain>0) toast('Cascade ×'+(1+chain)+' — clean streaks pay.', 1500);
+  if(spCount) toast('Booster fired.', 1400);
+
+  swapAt = null;
+  gravity(); refill(); updHUD(); draw();
+  setTimeout(()=>resolve(cb, chain+1), 210);
+}
+
+/* ---- COMBOS: two specials swapped together ---------------------------------------- */
+function combo(a,b){
+  const A=grid[a.r][a.c], B=grid[b.r][b.c];
+  const sA=A&&A.sp, sB=B&&B.sp;
+  if(!sA && !sB) return false;
+  const cleared = new Set();
+  const addRow=r=>{ for(let c=0;c<C;c++) cleared.add(r+','+c); };
+  const addCol=c=>{ for(let r=0;r<R;r++) cleared.add(r+','+c); };
+  const addBox=(r,c,k)=>{ for(let i=r-k;i<=r+k;i++) for(let j=c-k;j<=c+k;j++)
+      if(i>=0&&j>=0&&i<R&&j<C) cleared.add(i+','+j); };
+  const addType=t=>{ for(let r=0;r<R;r++) for(let c=0;c<C;c++)
+      if(isTile(grid[r][c]) && grid[r][c].t===t) cleared.add(r+','+c); };
+  let msg='';
+
+  if(sA==='sortline' && sB==='sortline'){
+    for(let r=0;r<R;r++) for(let c=0;c<C;c++) cleared.add(r+','+c);
+    msg='<b>Full line purge.</b> Two sorting lines together clear the whole board.';
+  } else if(sA==='sortline' || sB==='sortline'){
+    const other = sA==='sortline' ? B : A;
+    if(other && other.t!==undefined){ addType(other.t);
+      msg='<b>Sorting line.</b> Every '+TYPES[other.t].name.toLowerCase()+' pulled off the board.'; }
+    else { addBox(a.r,a.c,1); msg='<b>Sorting line.</b>'; }
+    cleared.add(a.r+','+a.c); cleared.add(b.r+','+b.c);
+  } else if(sA==='baler' && sB==='baler'){
+    addRow(b.r); addCol(b.c); msg='<b>Double baler.</b> A full cross through the board.';
+  } else if((sA==='baler'&&sB==='compact')||(sA==='compact'&&sB==='baler')){
+    addRow(b.r-1); addRow(b.r); addRow(b.r+1); addCol(b.c-1); addCol(b.c); addCol(b.c+1);
+    msg='<b>Baler + compactor.</b> Three lines each way.';
+  } else if(sA==='compact' && sB==='compact'){
+    addBox(b.r,b.c,2); msg='<b>Double compactor.</b> A five-by-five crush.';
+  } else return false;
+
+  // strip out-of-range rows added by the +/-1 shorthand
+  Array.from(cleared).forEach(k=>{ const [r,c]=k.split(',').map(Number);
+    if(r<0||c<0||r>=R||c>=C) cleared.delete(k); });
+
+  busy=true; moves--; updHUD();
+  clearCells(cleared, 0);
+  if(msg) toast(msg, 3400);
+  gravity(); refill(); updHUD(); draw();
+  setTimeout(()=>resolve(checkEnd), 220);
+  return true;
+}
+
+function countContam(){ let n=0; for(let r=0;r<R;r++) for(let c=0;c<C;c++) if(isCon(grid[r][c])) n++; return n; }
+
+function gravity(){
+  for(let c=0;c<C;c++){
+    let w=R-1;
+    for(let r=R-1;r>=0;r--) if(grid[r][c]){ const v=grid[r][c]; grid[r][c]=null; grid[w][c]=v; w--; }
+  }
+}
+function refill(){
+  // Contamination keeps arriving with every new load - that is the point of the level.
+  const rate = (LEVELS[lv] && LEVELS[lv].crate) || 0;
+  let live = countContam();
+  for(let c=0;c<C;c++) for(let r=0;r<R;r++) if(!grid[r][c]){
+    if(rate>0 && live<12 && Math.random()<rate){ grid[r][c]={c:rnd(CONTAM.length)}; live++; }
+    else grid[r][c]={t:rnd(NT)};
+  }
+}
+
+/* ---- DRAW -------------------------------------------------------------------------- */
+function fit(){
+  const box=$('board'), w=box.clientWidth-4, h=box.clientHeight-4;
+  CELL = Math.floor(Math.min(w, h) / C) - 1;
+  CELL = Math.max(26, Math.min(CELL, 58));
+  const size = CELL*C + PAD*2;
+  cv.style.width=size+'px'; cv.style.height=size+'px';
+  cv.width=size*DPR; cv.height=size*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+function glyph(k,x,y,s){
+  ctx.save(); ctx.translate(x,y); ctx.strokeStyle='rgba(255,255,255,.92)';
+  ctx.lineWidth=Math.max(1.4,s*0.075); ctx.lineJoin='round'; ctx.lineCap='round'; ctx.fillStyle='rgba(255,255,255,.92)';
+  const u=s*0.30;
+  if(k==='pet'){ ctx.beginPath(); ctx.moveTo(-u*0.4,-u*1.25); ctx.lineTo(u*0.4,-u*1.25);
+    ctx.lineTo(u*0.4,-u*0.7); ctx.lineTo(u*0.75,-u*0.15); ctx.lineTo(u*0.75,u*1.2);
+    ctx.lineTo(-u*0.75,u*1.2); ctx.lineTo(-u*0.75,-u*0.15); ctx.lineTo(-u*0.4,-u*0.7); ctx.closePath(); ctx.stroke(); }
+  else if(k==='can'){ ctx.beginPath(); ctx.ellipse(0,-u*1.05,u*0.72,u*0.26,0,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-u*0.72,-u*1.05); ctx.lineTo(-u*0.72,u*1.05);
+    ctx.moveTo(u*0.72,-u*1.05); ctx.lineTo(u*0.72,u*1.05); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0,u*1.05,u*0.72,u*0.26,0,0,7); ctx.stroke(); }
+  else if(k==='card'){ ctx.strokeRect(-u,-u*0.85,u*2,u*1.75);
+    ctx.beginPath(); ctx.moveTo(-u,-u*0.2); ctx.lineTo(u,-u*0.2);
+    ctx.moveTo(0,-u*0.85); ctx.lineTo(0,-u*0.2); ctx.stroke(); }
+  else if(k==='glass'){ ctx.beginPath(); ctx.moveTo(-u*0.3,-u*1.3); ctx.lineTo(u*0.3,-u*1.3);
+    ctx.lineTo(u*0.3,-u*0.5); ctx.lineTo(u*0.7,u*0.1); ctx.lineTo(u*0.7,u*1.25);
+    ctx.lineTo(-u*0.7,u*1.25); ctx.lineTo(-u*0.7,u*0.1); ctx.lineTo(-u*0.3,-u*0.5); ctx.closePath(); ctx.stroke();
+    ctx.globalAlpha=.55; ctx.fillRect(-u*0.55,u*0.35,u*1.1,u*0.7); ctx.globalAlpha=1; }
+  else if(k==='food'){ ctx.beginPath(); ctx.arc(0,u*0.15,u*0.95,Math.PI,0,true); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-u*1.15,u*0.15); ctx.lineTo(u*1.15,u*0.15); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,-u*0.75,u*0.30,0,7); ctx.stroke(); }
+  else if(k==='ewst'){ ctx.strokeRect(-u*0.95,-u*0.75,u*1.9,u*1.5);
+    ctx.beginPath(); for(let i=-1;i<=1;i++){ ctx.moveTo(i*u*0.6,-u*0.75); ctx.lineTo(i*u*0.6,-u*1.2);
+      ctx.moveTo(i*u*0.6,u*0.75); ctx.lineTo(i*u*0.6,u*1.2); } ctx.stroke(); }
+  ctx.restore();
+}
+
+/* Contamination tiles: a drawn item on a hazard-striped tile, so every tile on the board
+   is a picture. Before 4 Oct 2026 these were text boxes (PIZZA, CUP), the only words on
+   a board of icons. The name still appears in the toast when one is cleared. */
+function conTile(k,x,y,w){
+  ctx.save();
+  rr(x,y,w,w,9); ctx.fillStyle='#3B3127'; ctx.fill(); ctx.clip();
+  ctx.strokeStyle='rgba(232,119,46,.55)'; ctx.lineWidth=w*0.09;
+  for(let i=-w;i<w*2;i+=w*0.28){ ctx.beginPath(); ctx.moveTo(x+i,y+w); ctx.lineTo(x+i+w*0.22,y+w*0.78); ctx.stroke(); }
+  ctx.restore();
+  ctx.save(); rr(x,y,w,w,9); ctx.strokeStyle='#E8772E'; ctx.lineWidth=2; ctx.stroke(); ctx.restore();
+  const cx0=x+w/2, cy0=y+w*0.44, u=w*0.30;
+  ctx.save(); ctx.translate(cx0,cy0); ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.lineWidth=Math.max(1.4,w*0.06); ctx.strokeStyle='#F6DEC0'; ctx.fillStyle='#F6DEC0';
+  if(k==='pizza'){ ctx.strokeRect(-u,-u*0.8,u*2,u*1.6);
+    ctx.fillStyle='rgba(214,140,60,.85)'; ctx.beginPath(); ctx.moveTo(-u*0.55,-u*0.45); ctx.lineTo(u*0.6,-u*0.3); ctx.lineTo(-u*0.2,u*0.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#8B3A1E'; [[-0.2,-0.2],[0.15,-0.15],[-0.15,0.15]].forEach(p=>{ctx.beginPath();ctx.arc(p[0]*u,p[1]*u,u*0.09,0,7);ctx.fill();}); }
+  else if(k==='cup'){ ctx.beginPath(); ctx.moveTo(-u*0.75,-u*0.75); ctx.lineTo(u*0.75,-u*0.75); ctx.lineTo(u*0.5,u*1.05); ctx.lineTo(-u*0.5,u*1.05); ctx.closePath(); ctx.stroke();
+    ctx.fillRect(-u*0.85,-u*1.0,u*1.7,u*0.22); ctx.beginPath(); ctx.moveTo(-u*0.62,u*0.05); ctx.lineTo(u*0.62,u*0.05); ctx.stroke(); }
+  else if(k==='foam'){ ctx.beginPath(); ctx.moveTo(-u,-u*0.05); ctx.lineTo(u,-u*0.05); ctx.lineTo(u*0.82,u*0.8); ctx.lineTo(-u*0.82,u*0.8); ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-u,-u*0.05); ctx.lineTo(-u*0.82,-u*0.85); ctx.lineTo(u*0.82,-u*0.85); ctx.lineTo(u,-u*0.05); ctx.stroke(); }
+  else if(k==='straw'){ ctx.lineWidth=Math.max(2.4,w*0.11); ctx.beginPath(); ctx.moveTo(-u*0.55,u*1.1); ctx.lineTo(u*0.15,-u*0.45); ctx.lineTo(u*0.75,-u*0.95); ctx.stroke();
+    ctx.strokeStyle='#E8772E'; ctx.lineWidth=Math.max(1,w*0.035); ctx.beginPath(); ctx.moveTo(-u*0.3,u*0.55); ctx.lineTo(-u*0.1,u*0.1); ctx.stroke(); }
+  else { ctx.beginPath(); ctx.moveTo(-u*1.05,-u*0.25); ctx.lineTo(u*1.05,-u*0.25); ctx.lineTo(u*0.85,u*0.6); ctx.lineTo(-u*0.85,u*0.6); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle='#C9A227'; [[-0.4,0.15,0.16],[0.25,0.05,0.12],[0.5,0.35,0.09]].forEach(p=>{ctx.beginPath();ctx.ellipse(p[0]*u,p[1]*u,p[2]*u*1.4,p[2]*u,0,0,7);ctx.fill();}); }
+  ctx.restore();
+  ctx.fillStyle='#F6DEC0'; ctx.font='800 '+Math.max(7,w*0.15)+'px Nunito,system-ui,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('DIRTY', x+w/2, y+w*0.86);
+}
+
+function drawKbCursor(){
+  if(!kb) return;
+  const x=PAD+kb.c*CELL, y=PAD+kb.r*CELL;
+  ctx.save();
+  ctx.strokeStyle='#C9A227'; ctx.lineWidth=3; ctx.setLineDash([6,4]);
+  rr(x+2, y+2, CELL-4, CELL-4, 10); ctx.stroke();
+  ctx.restore();
+}
+function draw(){
+  const S=CELL*C+PAD*2;
+  ctx.clearRect(0,0,S,S);
+  for(let r=0;r<R;r++) for(let c=0;c<C;c++){
+    const x=PAD+c*CELL, y=PAD+r*CELL, cell=grid[r][c];
+    ctx.fillStyle = (r+c)%2 ? 'rgba(255,255,255,.38)' : 'rgba(255,255,255,.52)';
+    rr(x+1,y+1,CELL-2,CELL-2,8); ctx.fill();
+    if(!cell) continue;
+    const inset=CELL*0.10, w=CELL-inset*2;
+    if(isCon(cell)){
+      if(window.LirichSprites){
+        /* a light tile with an orange hazard edge: still clearly "not like the others" */
+        ctx.save(); ctx.shadowColor='rgba(30,50,90,.25)'; ctx.shadowBlur=4; ctx.shadowOffsetY=2;
+        ctx.fillStyle='#FFF1E4'; rr(x+inset,y+inset,w,w,10); ctx.fill(); ctx.restore();
+        ctx.save(); ctx.setLineDash([5,3]); ctx.strokeStyle='#E8772E'; ctx.lineWidth=2.4; rr(x+inset+1,y+inset+1,w-2,w-2,9); ctx.stroke(); ctx.restore();
+        LirichSprites.draw(ctx, CONTAM[cell.c].k, x+inset+w*0.06, y+inset+w*0.04, w*0.88);
+        ctx.fillStyle='#E8772E'; ctx.beginPath(); ctx.arc(x+inset+w*0.84, y+inset+w*0.16, w*0.12, 0, 7); ctx.fill();
+        ctx.fillStyle='#fff'; ctx.font='900 '+Math.max(7,w*0.17)+'px Nunito,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('!', x+inset+w*0.84, y+inset+w*0.17);
+      } else conTile(CONTAM[cell.c].k, x+inset, y+inset, w);
+      continue;
+    }
+    if(cell.sp==='sortline'){                       // the special attack tile
+      const g=ctx.createLinearGradient(x+inset,y+inset,x+inset+w,y+inset+w);
+      g.addColorStop(0,'#3E86D8'); g.addColorStop(.3,'#4FA37A'); g.addColorStop(.6,'#C08A4A');
+      g.addColorStop(1,'#8C6BB1');
+      ctx.fillStyle=g; rr(x+inset,y+inset,w,w,9); ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; rr(x+inset,y+inset,w,w,9); ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.95)';
+      for(let i=0;i<3;i++){ ctx.beginPath();
+        ctx.arc(x+CELL/2, y+CELL/2+(i-1)*CELL*0.20, CELL*0.055, 0, 7); ctx.fill(); }
+      if(sel && sel.r===r && sel.c===c){ ctx.strokeStyle='#fff'; ctx.lineWidth=3;
+        rr(x+inset-2,y+inset-2,w+4,w+4,11); ctx.stroke(); }
+      continue;
+    }
+    const T=TYPES[cell.t];
+    if(window.LirichSprites){
+      /* white glossy tile tinted toward its stream colour, so colour still carries the stream */
+      ctx.save(); ctx.shadowColor='rgba(30,50,90,.28)'; ctx.shadowBlur=4; ctx.shadowOffsetY=2;
+      const tg=ctx.createLinearGradient(0,y+inset,0,y+inset+w);
+      tg.addColorStop(0,'#FFFFFF'); tg.addColorStop(1,T.col+'40');
+      ctx.fillStyle=tg; rr(x+inset,y+inset,w,w,10); ctx.fill(); ctx.restore();
+      ctx.fillStyle=T.col; rr(x+inset+w*0.18,y+inset+w*0.9,w*0.64,w*0.06,w*0.03); ctx.fill();
+      LirichSprites.draw(ctx, T.k, x+inset+w*0.05, y+inset+w*0.02, w*0.9);
+    } else { ctx.fillStyle=T.col; rr(x+inset,y+inset,w,w,9); ctx.fill(); glyph(T.k, x+CELL/2, y+CELL/2, CELL); }
+    if(cell.sp==='baler'){                          // bale straps show the direction
+      ctx.strokeStyle='#FFD98A'; ctx.lineWidth=3; rr(x+inset,y+inset,w,w,9); ctx.stroke();
+      ctx.fillStyle='rgba(255,217,138,.92)';
+      if(cell.dir==='v'){ ctx.fillRect(x+CELL*0.40, y+inset, CELL*0.08, w);
+                          ctx.fillRect(x+CELL*0.54, y+inset, CELL*0.08, w); }
+      else              { ctx.fillRect(x+inset, y+CELL*0.40, w, CELL*0.08);
+                          ctx.fillRect(x+inset, y+CELL*0.54, w, CELL*0.08); }
+    } else if(cell.sp==='compact'){                 // corner jaws
+      ctx.strokeStyle='#FFD98A'; ctx.lineWidth=3.2; const q=CELL*0.24, o=inset+2;
+      [[0,0,1,1],[1,0,-1,1],[0,1,1,-1],[1,1,-1,-1]].forEach(k=>{
+        const px=x+o+k[0]*(w-4), py=y+o+k[1]*(w-4);
+        ctx.beginPath(); ctx.moveTo(px+k[2]*q,py); ctx.lineTo(px,py); ctx.lineTo(px,py+k[3]*q); ctx.stroke(); });
+    }
+    if(sel && sel.r===r && sel.c===c){
+      ctx.strokeStyle='#7BC42C'; ctx.lineWidth=3.5; rr(x+inset-2,y+inset-2,w+4,w+4,12); ctx.stroke();
+    }
+  }
+  drawKbCursor();
+}
+
+/* ---- INPUT ------------------------------------------------------------------------- */
+function cellAt(ev){
+  const b=cv.getBoundingClientRect();
+  const px=(ev.clientX-b.left)*(cv.width/DPR)/b.width, py=(ev.clientY-b.top)*(cv.height/DPR)/b.height;
+  const c=Math.floor((px-PAD)/CELL), r=Math.floor((py-PAD)/CELL);
+  if(r<0||c<0||r>=R||c>=C) return null; return {r,c};
+}
+function trySwap(a,b){
+  if(isCon(grid[a.r][a.c]) || isCon(grid[b.r][b.c])){ toast('Contamination cannot be swapped — clear it with a match alongside.',2600); return; }
+  if(!grid[a.r][a.c] || !grid[b.r][b.c]) return;
+  if(Math.abs(a.r-b.r)+Math.abs(a.c-b.c)!==1) return;
+  if(combo(a,b)) return;                       // special + special, or sorting line + anything
+  busy=true;
+  const t=grid[a.r][a.c]; grid[a.r][a.c]=grid[b.r][b.c]; grid[b.r][b.c]=t;
+  if(!findMatches().length){
+    const t2=grid[a.r][a.c]; grid[a.r][a.c]=grid[b.r][b.c]; grid[b.r][b.c]=t2;
+    draw(); busy=false; toast('That swap makes no match.',1500); return;
+  }
+  swapAt = b;                                   // spawn the booster where the player swapped to
+  moves--; updHUD(); draw();
+  setTimeout(()=>resolve(checkEnd),150);
+}
+let down=null;
+cv.addEventListener('pointerdown',e=>{ if(busy) return; e.preventDefault(); down=cellAt(e);
+  if(down){ sel=down; draw(); } });
+cv.addEventListener('pointerup',e=>{ if(busy||!down) return; e.preventDefault();
+  const up=cellAt(e);
+  if(up && (up.r!==down.r||up.c!==down.c)) { trySwap(down,up); sel=null; }
+  else if(up && sel && (sel.r!==up.r||sel.c!==up.c)) { trySwap(sel,up); sel=null; }
+  down=null; draw(); });
+cv.addEventListener('pointercancel',()=>{ down=null; sel=null; draw(); });
+
+/* ---- KEYBOARD ---------------------------------------------------------------------
+   The board was pointer-only. On a school Chromebook that excludes anyone who cannot
+   use a trackpad accurately, which is not a small group, and it is the one input a
+   canvas game has to add deliberately because the browser gives it nothing for free.
+
+   Arrow keys move a cursor. Enter or space picks a tile up; a second Enter on a
+   neighbouring tile swaps them. Escape puts it down again. The cursor is drawn in the
+   same gold as the challenge banner so it cannot be confused with the selection.    */
+let kb = null;                                  // {r,c} keyboard cursor
+function kbVisible(){ return ['ovStart','ovIntro','ovEnd','ovFin']
+  .every(id => $(id).classList.contains('hide')); }
+addEventListener('keydown', e => {
+  if(!kbVisible() || busy) return;
+  const K = e.key;
+  const step = {ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1],
+                w:[-1,0], s:[1,0], a:[0,-1], d:[0,1]}[K];
+  if(step){
+    e.preventDefault();
+    if(!kb) kb = {r:R-1, c:0};
+    else { kb = {r: Math.max(0, Math.min(R-1, kb.r+step[0])),
+                 c: Math.max(0, Math.min(C-1, kb.c+step[1]))}; }
+    draw(); return;
+  }
+  if(K==='Enter' || K===' ' || K==='Spacebar'){
+    e.preventDefault();
+    if(!kb){ kb = {r:R-1, c:0}; draw(); return; }
+    if(!sel){ sel = {r:kb.r, c:kb.c}; draw(); return; }
+    if(sel.r===kb.r && sel.c===kb.c){ sel=null; draw(); return; }
+    if(Math.abs(sel.r-kb.r)+Math.abs(sel.c-kb.c)===1){ const from=sel; sel=null; trySwap(from, kb); }
+    else { sel = {r:kb.r, c:kb.c}; }
+    draw(); return;
+  }
+  if(K==='Escape'){ sel=null; draw(); }
+});
+
+/* ---- FLOW -------------------------------------------------------------------------- */
+function updHUD(){
+  $('sKg').textContent = Math.round(kg)+' kg';
+  $('sCo').textContent = Math.round(co2)+' kg';
+  $('sMv').textContent = moves;
+  $('mvBox').classList.toggle('warn', moves<=5);
+  const L=LEVELS[lv];
+  const pk = L.goalKg ? Math.min(1, kg/L.goalKg) : 1;
+  const pc = L.goalC  ? Math.min(1, contamCleared/L.goalC) : 1;
+  $('goalfill').style.width = Math.round(Math.min(pk,pc)*100)+'%';
+  const bits=[];
+  if(L.goalKg) bits.push(Math.round(Math.min(kg,L.goalKg))+' / '+L.goalKg+' kg diverted');
+  if(L.goalC)  bits.push(Math.min(contamCleared,L.goalC)+' / '+L.goalC+' contamination cleared');
+  $('goaltxt').textContent = bits.join('   ·   ');
+}
+function goalMet(){ const L=LEVELS[lv];
+  return (!L.goalKg || kg>=L.goalKg) && (!L.goalC || contamCleared>=L.goalC); }
+
+function checkEnd(){
+  if(goalMet()) return endLevel(true);
+  if(moves<=0){
+    if(!contUsed && window.LirichWallet){
+      contUsed=true; busy=true;
+      return LirichWallet.offerContinue({ title:'Out of moves', what:'5 more moves',
+        use:()=>{ moves+=5; busy=false; updHUD(); },
+        decline:()=>endLevel(false) });
+    }
+    return endLevel(false);
+  }
+}
+function startLevel(){
+  const L=LEVELS[lv]; contUsed=false;
+  moves=L.moves; kg=0; co2=0; contamCleared=0; sel=null;
+  newBoard(L.seed);
+  $('lvlLabel').innerHTML='LEVEL<b>'+(lv+1)+'</b>';
+  $('inTag').textContent='Level '+(lv+1)+' of '+LEVELS.length;
+  try { const got=(LirichLearn.store().games.sortit||{stars:{}}).stars;
+    $('inPath').innerHTML=LEVELS.map((L,k)=>'<div class="stop'+(k===lv?' now':k<lv||got[k]?' done':'')+'"><div class="dot">'+(k+1)+'</div><div class="st">'
+      +'★'.repeat(got[k]||0)+'</div></div>').join('');
+  } catch(e) {}
+  seenType={};
+  $('inTitle').textContent=L.t; $('inSub').textContent=L.s;
+  const g=[]; if(L.goalKg) g.push('divert '+L.goalKg+' kg');
+  if(L.goalC) g.push('clear '+L.goalC+' pieces of contamination');
+  $('inGoal').textContent = g.join(' and ') + ', within ' + L.moves + ' moves.';
+  updHUD(); fit();
+  show('ovIntro');
+}
+/* Stars: one for clearing the level, more for clearing it with moves to spare. The greedy
+   bot finishes with about half its moves left, so three stars is reachable but takes care. */
+function starsFor(win){ if(!win) return 0; if(contUsed && moves<=5) return 1; const f=moves/LEVELS[lv].moves; return f>=0.4?3 : f>=0.2?2 : 1; }
+function endLevel(win){
+  busy=true; totKg+=kg; totCo+=co2;
+  try {
+    const st=starsFor(win);
+    if(win){ LirichLearn.level('sortit', lv, st, kg); LirichLearn.sfx('win'); }
+    else LirichLearn.sfx('bad');
+    setTimeout(()=>LirichLearn.stamp($('ovEnd').querySelector('.card'), win?st:-1), 0);
+  } catch(e) {}
+  $('enTag').textContent = win ? 'Level complete' : 'Out of moves';
+  $('enTitle').textContent = win ? (className ? className+' — nice sorting' : 'Nice sorting')
+                                 : 'The line jammed';
+  $('enKg').textContent=Math.round(kg)+' kg'; $('enCo').textContent=Math.round(co2)+' kg';
+  $('enFact').innerHTML = LEVELS[lv].fact;
+  $('btnNext').style.display = win ? 'block':'none';
+  $('btnRetry').style.display = win ? 'none':'block';
+  $('btnNext').textContent = (lv >= LEVELS.length-1) ? 'See the results' : 'Next level';
+  show('ovEnd');
+}
+function show(id){ ['ovStart','ovIntro','ovEnd','ovFin'].forEach(k=>$(k).classList.add('hide')); if(id) $(id).classList.remove('hide'); }
+
+$('btnStart').onclick=()=>{ className=($('classCode').value||'').trim().slice(0,12);
+  lv=0; totKg=0; totCo=0; startLevel(); };
+$('btnGo').onclick=()=>{ show(null); busy=false; fit(); };
+$('btnRetry').onclick=()=>{ totKg-=kg; totCo-=co2; startLevel(); };
+$('btnNext').onclick=()=>{
+  if(lv >= LEVELS.length-1){
+    $('fiKg').textContent=Math.round(totKg)+' kg'; $('fiCo').textContent=Math.round(totCo)+' kg';
+    /* shared score layer — the whole run, every level, is the score; not one level */
+    try { LirichLearn.run('sortit', totKg, true); LirichLearn.fx.confetti(); } catch(e) {}
+    try { LirichScores.finish('sortit', totKg, $('ovFin').querySelector('.card')); } catch(e) {}
+    show('ovFin'); return;
+  }
+  lv++; startLevel();
+};
+$('btnAgain').onclick=()=>{ lv=0; totKg=0; totCo=0; startLevel(); };
+
+/* ---- LEGEND ------------------------------------------------------------------------ */
+TYPES.forEach(T=>{
+  const d=document.createElement('div'); d.className='lg';
+  d.innerHTML='<span class="sw" style="background:'+T.col+'"></span>'+T.name+' → '+T.stream;
+  $('legend').appendChild(d);
+});
+
+addEventListener('resize', fit);
+newBoard(0); fit(); show('ovStart');
+
+/* ---- PWA --------------------------------------------------------------------------- */
+/* Installable from the inline manifest above. For full offline support, place sw.js next
+   to this file when hosting and this registers it. Silently does nothing from file://.  */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script></body></html>

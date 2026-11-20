@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Beta feedback — Lirich Learn</title><meta name="theme-color" content="#0B1630">
+<link rel="stylesheet" href="lirich-learn.css">
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#EDF1F7;color:#13213F}body{font-family:Nunito,system-ui,sans-serif}.wrap{max-width:820px;margin:auto;padding:20px 18px 55px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.top a{font-weight:900;color:#75400F}.top button{border:0;border-radius:10px;padding:9px 13px;background:#13274B;color:#fff;font:900 13px Nunito;cursor:pointer}
+h1{font-size:38px;line-height:1;margin:25px 0 7px}.lede{color:#52617A;line-height:1.5}.note{padding:12px 14px;background:#E8F3EC;color:#1D5A37;border-radius:12px;font-size:13px}
+form{margin-top:16px}.card{background:#fff;border-radius:15px;padding:17px;margin:11px 0;border-top:4px solid #D6A93A}.card h2{font-size:19px;margin:0 0 10px}label,legend{font-weight:800;font-size:14px}fieldset{border:0;padding:0;margin:0}.games{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.games label,.scale label{font-weight:700;background:#F3F5F9;border-radius:9px;padding:8px}.scale{display:flex;gap:7px;flex-wrap:wrap}.scale label{min-width:44px;text-align:center}
+textarea,input[type=text]{width:100%;border:1px solid #AEB9CB;border-radius:9px;padding:10px;font:inherit;margin-top:6px}textarea{min-height:82px;resize:vertical}.q{margin:13px 0}.q>span{display:block;font-weight:900;margin-bottom:5px}.small{font-size:12px;color:#68758C}
+@media(max-width:570px){.games{grid-template-columns:1fr}}@media print{body{background:#fff}.wrap{padding:0}.top button,.top a,.note{display:none}.card{box-shadow:none;border:1px solid #999;break-inside:avoid;margin:7px 0;padding:11px}h1{font-size:27px;margin-top:5px}.lede{font-size:12px}.q{margin:8px 0}textarea{min-height:55px}}
+</style></head><body><main class="wrap">
+<div class="top"><a href="index.html">Back to Lirich Learn</a><button type="button" onclick="print()">Print or save as PDF</button></div>
+<h1>Beta playtest</h1><p class="lede">One sheet for observing a session. Do not write a learner's name, mobile number or other identifying details.</p>
+<p class="note"><b>Nothing on this form is transmitted.</b> It stays on this page unless a supervising adult prints or saves it. Refreshing the page clears typed responses.</p>
+<form>
+ <section class="card"><h2>Session</h2><div class="q"><span>Player group</span><div class="scale"><label><input type="radio" name="group"> Under 10</label><label><input type="radio" name="group"> 10–12</label><label><input type="radio" name="group"> 13–17</label><label><input type="radio" name="group"> Adult</label></div></div><div class="q"><label>Device type <input type="text" placeholder="For example: school Chromebook or iPhone"></label></div></section>
+ <section class="card"><h2>Games tried</h2><div class="games" id="games"></div></section>
+ <section class="card"><h2>Learner response</h2>
+  <div class="q"><span>I understood what to do</span><div class="scale" data-scale="understood"></div></div>
+  <div class="q"><span>I learned something about recycling or resource recovery</span><div class="scale" data-scale="learned"></div></div>
+  <div class="q"><span>I would play another mission</span><div class="scale" data-scale="again"></div></div>
+  <p class="small">1 = strongly disagree · 5 = strongly agree</p>
+  <div class="q"><label>Write or say one thing you learned<textarea></textarea></label></div>
+ </section>
+ <section class="card"><h2>Observer notes</h2><div class="q"><label>Where did the learner pause, guess or ask for help?<textarea></textarea></label></div><div class="q"><label>Any safety, factual, accessibility or technical concern?<textarea></textarea></label></div><div class="q"><label>What should Lirich keep or improve?<textarea></textarea></label></div></section>
+</form>
+</main><script>
+const names=['Bin or Not?','On Route','Spot the Contaminant','Sort It!','Pick Line','Build the Line','Upgrade the Stream','Load the Container','Plant Builder','Zero Waste City','Dispatch'];
+document.getElementById('games').innerHTML=names.map(n=>'<label><input type="checkbox"> '+n+'</label>').join('');
+document.querySelectorAll('[data-scale]').forEach(row=>{const name=row.dataset.scale;row.innerHTML=[1,2,3,4,5].map(n=>'<label><input type="radio" name="'+name+'" value="'+n+'"> '+n+'</label>').join('')});
+</script></body></html>

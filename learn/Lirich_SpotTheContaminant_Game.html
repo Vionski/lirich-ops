@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Spot the Contaminant — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Spot It">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:600px;height:100%;max-height:980px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ .rt b.low{color:var(--bad)}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ #stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;min-height:0}
+ canvas{touch-action:manipulation;border-radius:12px;max-width:100%;max-height:100%;
+   box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:crosshair}
+ #act{display:flex;gap:8px;padding:8px 12px 6px;flex:0 0 auto}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:14px;
+   font-weight:600;cursor:pointer;flex:1}
+ .btn.ghost{background:rgba(255,255,255,.10);border:1px solid rgba(202,220,252,.25)}
+ .btn:disabled{opacity:.45;cursor:default}
+ #found{display:flex;flex-wrap:wrap;gap:5px;padding:0 12px 6px;flex:0 0 auto;min-height:22px}
+ .pill{font-size:10px;background:rgba(63,164,107,.20);border:1px solid rgba(63,164,107,.5);
+   color:#9FE0BC;border-radius:999px;padding:2px 9px}
+ footer{padding:0 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .toast{position:absolute;left:12px;right:12px;bottom:96px;background:#fff;color:#22303F;border-radius:12px;
+   padding:12px 14px;box-shadow:0 12px 30px rgba(0,0,0,.45);z-index:8;font-size:12.5px;line-height:1.5}
+ .toast.hide{display:none}
+ .toast b{display:block;font-family:Georgia,serif;font-size:15px;color:var(--navy);margin-bottom:3px}
+ .toast.bad{background:#FFF1F3}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:430px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .card .btn{width:100%;margin-top:10px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:18px;color:var(--navy);font-variant-numeric:tabular-nums}
+ ul.miss{margin:10px 0 0;padding-left:18px;font-size:12.5px;line-height:1.6;color:#3D4A5A}
+ .pill{font-size:11.5px;font-weight:800;padding:3px 10px}
+ .toast b{font-family:Nunito,sans-serif;font-weight:900;font-size:16px}
+ .toast{border-radius:16px;border-left:5px solid #2F9A5E}
+ .toast.bad{border-left-color:#C0455F}
+ .rt b.low{animation:tick .5s infinite alternate}
+ @keyframes tick{to{transform:scale(1.12)}}
+ @media (prefers-reduced-motion: reduce){.rt b.low{animation:none}}
+ .loads{display:flex;gap:6px;justify-content:center;margin:2px 0 10px}
+ .loads span{width:34px;height:8px;border-radius:4px;background:#E3E7EF}
+ .loads span.done{background:#D6A93A}.loads span.now{background:#E8772E}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Spot the Contaminant</b></div><div class="spacer"></div>
+  <div class="rt">TIME<b id="hTime">—</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Load</span><b id="hLoad">1</b></div>
+  <div class="stat"><span>Found</span><b id="hFound">0/0</b></div>
+  <div class="stat"><span>Kept out</span><b id="hKg">0 kg</b></div>
+</div>
+<div id="stage"><canvas id="cv" width="540" height="600"></canvas></div>
+<div id="found"></div>
+<div id="act">
+  <button class="btn ghost" id="btnHint">Hint</button>
+  <button class="btn" id="btnDone">I've found them all</button>
+</div>
+
+<div class="toast hide" id="toast"></div>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">Four loads on the tipping floor</div><h1>Spot the Contaminant</h1>
+  <p>A truck has just tipped its load. Tap everything that must never go into the shredder,
+     like gas cylinders and batteries, before the clock runs out.</p>
+  <div class="fact"><b>Careful:</b> tapping something harmless costs 8 seconds.</div>
+  <button class="btn" id="btnStart">Tip the first load</button>
+  <p class="mini" style="font-size:11px;margin-top:10px">One battery in a shredder can start a plant fire, so this
+     check happens before anything moves. No accounts and nothing personal is saved. Your stars stay on this device.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="loads" id="eLoads" aria-hidden="true"></div>
+  <div class="tag" id="eTag">Load cleared</div><h1 id="eTitle">—</h1>
+  <p id="eBody"></p>
+  <div class="row2"><div class="cell"><span>Found</span><b id="eFound">—</b></div>
+    <div class="cell"><span>Kept out</span><b id="eKg">—</b></div></div>
+  <ul class="miss" id="eMiss"></ul>
+  <div class="fact" id="eFact"></div>
+  <button class="btn" id="btnNext">—</button>
+</div></div>
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script src="spot-photos.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Spot the Contaminant — Lirich Learn.  Game 3 of the basket.
+
+   ⚠ ARTWORK IS A PLACEHOLDER. The roadmap is explicit that the real asset here is
+   photographs of Lirich's own tipping floor — nobody else can make this game. The scene
+   below is drawn vector art standing in until those photographs exist. The swap is
+   built (21 Oct 2026 — before that date this comment promised it, but no code did it):
+   put the photo and its hotspots in spot-photos.js, in PERCENT of the image, using the
+   marking tool spot-hotspots.html. A load with a photo plays on it; one without, or one
+   whose photo fails to load, keeps the drawn floor. See "photo mode" below.
+
+   ⚠ POINTER ONLY, AND ON PURPOSE. Every other game in the basket can be played from the
+   keyboard. This one cannot, and the reason is that the fair keyboard equivalent would
+   change the game: tabbing between the drawn items would put a focus ring on each hazard
+   in turn, which is the answer. A genuine keyboard version means presenting the load as a
+   LIST to choose from, which is a different exercise — closer to Bin or Not? than to an
+   inspection. Recorded here rather than left as an oversight; anyone running a session
+   where a pupil cannot use a pointer should give them Bin or Not? instead.
+
+   Every hazard listed is a real prohibited-in-general-waste item. The reason text
+   describes the physical hazard. Routing is described as "a licensed toxic industrial
+   waste collector" — it does not assert any approval or compliance status.
+   ===================================================================================== */
+
+/* --------- HAZARDS: things that must not be in a general waste load --------- */
+const HAZ = [
+ {k:'lpg',   n:'LPG cylinder',        kg:14,
+  why:'A pressurised gas cylinder in a shredder is an explosion, not a jam. Cylinders go back to the gas supplier or to a licensed toxic industrial waste collector — never into a skip.'},
+ {k:'liion', n:'Lithium battery pack',kg:1.2,
+  why:'Crushed lithium cells go into thermal runaway and burn at temperatures water will not put out. Battery fires are now among the most-reported causes of fires at waste and recycling facilities.'},
+ {k:'carbat',n:'Lead-acid battery',   kg:17,
+  why:'Lead and sulphuric acid. It is toxic waste, and it is also worth money at a licensed recycler — there is no reason for it to be in the skip.'},
+ {k:'aero',  n:'Aerosol cans',        kg:0.9,
+  why:'Pressurised and usually flammable. A handful of aerosols in a bale is a sequence of small explosions once the bale is disturbed.'},
+ {k:'paint', n:'Solvent paint tin',   kg:6,
+  why:'Flammable liquid, and it contaminates everything it leaks onto. Liquid waste of any kind belongs with a licensed toxic industrial waste collector.'},
+ {k:'tube',  n:'Fluorescent tubes',   kg:0.6,
+  why:'Mercury vapour. A broken tube releases it into the air of the hall, onto the floor, and into whatever it was packed with.'},
+ {k:'sharps',n:'Clinical sharps bin', kg:3,
+  why:'Biohazard, and a direct injury risk to the pickers on the line. Clinical waste has its own licensed route and never enters a general load.'},
+ {k:'ext',   n:'Fire extinguisher',   kg:9,
+  why:'Another pressure vessel. Even a discharged one holds enough pressure to become a projectile in a shredder.'},
+ {k:'oil',   n:'Waste oil drum',      kg:25,
+  why:'Used oil is a listed hazardous waste. It also soaks into paper and timber and destroys the value of everything around it.'},
+ {k:'asb',   n:'Suspect asbestos board', kg:12,
+  why:'Fibre-cement sheet of this age must be assumed to contain asbestos until proven otherwise. It is never handled on an open floor and never shredded.'}
+];
+/* --------- DECOYS: legitimate material that belongs in the load --------- */
+const OK = [
+ {k:'card', n:'Cardboard'}, {k:'pallet', n:'Timber pallet'}, {k:'film', n:'Baled film'},
+ {k:'steel', n:'Scrap steel'}, {k:'timber', n:'Timber offcuts'}, {k:'drum', n:'Empty plastic drum'},
+ {k:'chair', n:'Office chair'}, {k:'reel', n:'Cable reel'}, {k:'crate', n:'Plastic crate'},
+ {k:'mat', n:'Mattress'}, {k:'pipe', n:'PVC pipe'}, {k:'bag', n:'Bagged waste'}
+];
+/* --------- LOADS: how many hazards, how much clutter, how long --------- */
+const SCENES = [
+ {t:'A builder’s skip',       haz:3, decoys:16, secs:60,
+  fact:'<b>Three items, one skip.</b> That is a normal day. The point of the tipping floor inspection is that it happens before anything moves — once a load is on the belt it is already too late to pick a cylinder out of it.'},
+ {t:'A factory clear-out',      haz:5, decoys:22, secs:70,
+  fact:'<b>Clear-outs are the dangerous loads.</b> Nobody sorts a store room they are emptying under time pressure. The hazards in a decommissioning load are not hidden deliberately — they are simply not thought about.'},
+ {t:'A mixed commercial load',  haz:7, decoys:28, secs:80,
+  fact:'<b>Why the driver matters more than the sorter.</b> The cheapest place to catch any of this is at the customer’s yard, before it is loaded. Every one of these caught at the gate is a fire that never starts.'},
+ {t:'A school science block',   haz:9, decoys:32, secs:90,
+  fact:'<b>The loads that look harmless are the ones to slow down for.</b> A school clearing a science block sends out fluorescent tubes, solvent, sharps and often fibre-cement board from a building of a certain age — all of it mixed in with furniture nobody would think twice about. Nothing here was hidden. It was simply nobody’s job to look, which is the same reason it reaches a tipping floor.'}
+];
+/* SCENE CALIBRATION — see tests/spotbot.mjs. A bot that finds every hazard clears all four
+   scenes, which is what proves the fairness rule still works: a hazard whose centre is
+   buried under a later-drawn item is promoted so it can be tapped at all. At 41 items the
+   grid is 6 x 7 and the overlap is heavy, so that rule earns its place here more than in
+   the earlier scenes. Add a scene and run the bot: an unreachable hazard is a scene that
+   cannot be finished, and there is nothing on screen to say so. */
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+const W=540, H=600;
+let scene=0, items=[], foundN=0, hazN=0, kg=0, totalKg=0, tLeft=0, timer=null, live=false, hintUntil=0, hintIdx=-1;
+let contUsed=false;   // one Continue per load — lirich-wallet.js
+
+/* ------------------------------------------------------------------ drawing kit ---- */
+function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r);
+  cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+function fill(c){ cx.fillStyle=c; cx.fill(); }
+function box(x,y,w,h,c,r){ rr(x,y,w,h,r||2); fill(c); }
+function cyl(x,y,w,h,c,cap){
+  rr(x,y,w,h,w*0.28); fill(c);
+  cx.globalAlpha=.20; box(x+w*0.16,y+h*0.06,w*0.18,h*0.88,'#fff',3); cx.globalAlpha=1;
+  if(cap) box(x+w*0.30,y-h*0.12,w*0.40,h*0.14,cap,2);
+}
+const ART = {
+ /* ---- hazards ---- */
+ lpg:(x,y,s)=>{ cyl(x+s*.24,y+s*.20,s*.52,s*.72,'#B03A3A','#8C93A0');
+   box(x+s*.42,y+s*.10,s*.16,s*.12,'#8C93A0',2); box(x+s*.30,y+s*.86,s*.40,s*.08,'#7A2B2B',2); },
+ liion:(x,y,s)=>{ box(x+s*.16,y+s*.34,s*.68,s*.36,'#2E3B52',4);
+   box(x+s*.22,y+s*.40,s*.24,s*.10,'#4E86C8',2); box(x+s*.52,y+s*.40,s*.24,s*.10,'#4E86C8',2);
+   box(x+s*.20,y+s*.28,s*.10,s*.08,'#C9A227',1); box(x+s*.70,y+s*.28,s*.10,s*.08,'#8C93A0',1); },
+ carbat:(x,y,s)=>{ box(x+s*.14,y+s*.32,s*.72,s*.42,'#1C222E',3);
+   box(x+s*.14,y+s*.32,s*.72,s*.08,'#39404D',2);
+   box(x+s*.24,y+s*.24,s*.10,s*.10,'#C0455F',1); box(x+s*.66,y+s*.24,s*.10,s*.10,'#39404D',1); },
+ aero:(x,y,s)=>{ cyl(x+s*.30,y+s*.24,s*.24,s*.60,'#C6CBD3','#3FA46B');
+   cyl(x+s*.56,y+s*.30,s*.22,s*.54,'#B9C0C9','#C0455F'); },
+ paint:(x,y,s)=>{ cyl(x+s*.20,y+s*.40,s*.58,s*.42,'#D8DCE2');
+   box(x+s*.20,y+s*.40,s*.58,s*.08,'#8C93A0',2);
+   cx.strokeStyle='#8C93A0'; cx.lineWidth=Math.max(1,s*.03);
+   cx.beginPath(); cx.arc(x+s*.49,y+s*.40,s*.26,Math.PI,0); cx.stroke();
+   box(x+s*.30,y+s*.58,s*.38,s*.14,'#B85042',1); },
+ tube:(x,y,s)=>{ box(x+s*.06,y+s*.44,s*.86,s*.10,'#EEF2F9',5);
+   box(x+s*.06,y+s*.44,s*.06,s*.10,'#8C93A0',2); box(x+s*.86,y+s*.44,s*.06,s*.10,'#8C93A0',2);
+   box(x+s*.10,y+s*.58,s*.80,s*.07,'#E4E9F2',4); },
+ sharps:(x,y,s)=>{ box(x+s*.24,y+s*.34,s*.52,s*.48,'#D7B531',3);
+   box(x+s*.20,y+s*.28,s*.60,s*.10,'#B99A20',2);
+   box(x+s*.40,y+s*.46,s*.20,s*.24,'#8A4B12',1); },
+ ext:(x,y,s)=>{ cyl(x+s*.32,y+s*.26,s*.34,s*.62,'#C0392B','#1C222E');
+   cx.strokeStyle='#1C222E'; cx.lineWidth=Math.max(1.2,s*.045);
+   cx.beginPath(); cx.moveTo(x+s*.66,y+s*.30); cx.quadraticCurveTo(x+s*.86,y+s*.46,x+s*.72,y+s*.66); cx.stroke();
+   box(x+s*.36,y+s*.50,s*.26,s*.12,'#EFE7DA',1); },
+ oil:(x,y,s)=>{ cyl(x+s*.22,y+s*.22,s*.56,s*.68,'#2F5D3A');
+   box(x+s*.22,y+s*.36,s*.56,s*.05,'#25482D',1); box(x+s*.22,y+s*.70,s*.56,s*.05,'#25482D',1);
+   cx.globalAlpha=.55; box(x+s*.30,y+s*.86,s*.42,s*.09,'#141A22',4); cx.globalAlpha=1; },
+ asb:(x,y,s)=>{ box(x+s*.08,y+s*.34,s*.84,s*.40,'#B9BDB4',1);
+   cx.strokeStyle='rgba(0,0,0,.22)'; cx.lineWidth=Math.max(1,s*.025);
+   for(let i=1;i<5;i++){ cx.beginPath(); cx.moveTo(x+s*.08,y+s*(.34+i*.08)); cx.lineTo(x+s*.92,y+s*(.34+i*.08)); cx.stroke(); }
+   box(x+s*.08,y+s*.74,s*.84,s*.05,'#9AA093',1); },
+ /* ---- decoys ---- */
+ card:(x,y,s)=>{ box(x+s*.12,y+s*.30,s*.76,s*.50,'#B98A52',2);
+   cx.strokeStyle='#7C5C33'; cx.lineWidth=Math.max(1,s*.03);
+   cx.beginPath(); cx.moveTo(x+s*.34,y+s*.30); cx.lineTo(x+s*.34,y+s*.80);
+   cx.moveTo(x+s*.66,y+s*.30); cx.lineTo(x+s*.66,y+s*.80); cx.stroke(); },
+ pallet:(x,y,s)=>{ box(x+s*.06,y+s*.44,s*.88,s*.30,'#A6813F',1);
+   cx.fillStyle='#8A6A3E';
+   for(let i=0;i<4;i++) cx.fillRect(x+s*(.10+i*.22), y+s*.44, s*.05, s*.30); },
+ film:(x,y,s)=>{ box(x+s*.14,y+s*.32,s*.72,s*.46,'#4E8C6A',3); cx.globalAlpha=.35;
+   box(x+s*.20,y+s*.36,s*.60,s*.10,'#DFF3E6',2); cx.globalAlpha=1;
+   cx.strokeStyle='#2F6047'; cx.lineWidth=Math.max(1,s*.035);
+   cx.beginPath(); cx.moveTo(x+s*.32,y+s*.32); cx.lineTo(x+s*.32,y+s*.78);
+   cx.moveTo(x+s*.68,y+s*.32); cx.lineTo(x+s*.68,y+s*.78); cx.stroke(); },
+ steel:(x,y,s)=>{ cx.fillStyle='#8C93A0'; cx.beginPath();
+   cx.moveTo(x+s*.10,y+s*.76); cx.lineTo(x+s*.30,y+s*.36); cx.lineTo(x+s*.50,y+s*.66);
+   cx.lineTo(x+s*.70,y+s*.32); cx.lineTo(x+s*.90,y+s*.76); cx.closePath(); cx.fill();
+   box(x+s*.20,y+s*.60,s*.60,s*.06,'#6E747F',1); },
+ timber:(x,y,s)=>{ box(x+s*.10,y+s*.52,s*.80,s*.11,'#A6813F',2);
+   box(x+s*.16,y+s*.66,s*.66,s*.11,'#8A6A3E',2); box(x+s*.24,y+s*.38,s*.52,s*.11,'#B08A46',2); },
+ drum:(x,y,s)=>{ cyl(x+s*.24,y+s*.24,s*.52,s*.66,'#3E6FA8');
+   box(x+s*.24,y+s*.38,s*.52,s*.05,'#2F5580',1); box(x+s*.24,y+s*.70,s*.52,s*.05,'#2F5580',1); },
+ chair:(x,y,s)=>{ box(x+s*.28,y+s*.24,s*.34,s*.34,'#39404D',3);
+   box(x+s*.24,y+s*.56,s*.46,s*.10,'#4A5261',3);
+   cx.strokeStyle='#6E747F'; cx.lineWidth=Math.max(1.2,s*.04);
+   cx.beginPath(); cx.moveTo(x+s*.46,y+s*.66); cx.lineTo(x+s*.46,y+s*.80);
+   cx.moveTo(x+s*.30,y+s*.86); cx.lineTo(x+s*.62,y+s*.86); cx.stroke(); },
+ reel:(x,y,s)=>{ cx.fillStyle='#8A6A3E'; cx.beginPath(); cx.arc(x+s*.50,y+s*.56,s*.30,0,7); cx.fill();
+   cx.fillStyle='#5E4A2C'; cx.beginPath(); cx.arc(x+s*.50,y+s*.56,s*.12,0,7); cx.fill(); },
+ crate:(x,y,s)=>{ box(x+s*.18,y+s*.36,s*.64,s*.42,'#3B7E64',2);
+   cx.strokeStyle='rgba(255,255,255,.30)'; cx.lineWidth=Math.max(1,s*.03);
+   for(let i=1;i<4;i++){ cx.beginPath(); cx.moveTo(x+s*(.18+i*.16),y+s*.36);
+     cx.lineTo(x+s*(.18+i*.16),y+s*.78); cx.stroke(); } },
+ mat:(x,y,s)=>{ box(x+s*.06,y+s*.42,s*.88,s*.28,'#D6D2C4',6);
+   cx.strokeStyle='#B3AE9E'; cx.lineWidth=Math.max(1,s*.025);
+   for(let i=1;i<5;i++){ cx.beginPath(); cx.moveTo(x+s*(.06+i*.176),y+s*.42);
+     cx.lineTo(x+s*(.06+i*.176),y+s*.70); cx.stroke(); } },
+ pipe:(x,y,s)=>{ box(x+s*.06,y+s*.48,s*.86,s*.16,'#C9CDD4',7);
+   cx.fillStyle='#9AA0A9'; cx.beginPath(); cx.ellipse(x+s*.90,y+s*.56,s*.05,s*.08,0,0,7); cx.fill(); },
+ bag:(x,y,s)=>{ cx.fillStyle='#39404D'; cx.beginPath();
+   cx.moveTo(x+s*.30,y+s*.30); cx.quadraticCurveTo(x+s*.06,y+s*.84,x+s*.50,y+s*.84);
+   cx.quadraticCurveTo(x+s*.94,y+s*.84,x+s*.70,y+s*.30); cx.closePath(); cx.fill();
+   box(x+s*.40,y+s*.22,s*.20,s*.10,'#2A303B',2); }
+};
+
+/* ---- shuffling, and why it is not one line -----------------------------------------
+   These scenes used to be shuffled with  arr.sort(() => Math.random() - 0.5).
+   That is wrong twice over, and the second reason is the one that matters here:
+
+     1. It is biased. A comparator that answers inconsistently does not produce a
+        uniform permutation. Common, and the smaller problem.
+     2. ⚠ IT IS ENGINE-DEPENDENT. The sequence of comparisons a sort performs is up to
+        the JavaScript engine — Chrome, Safari and Firefox do not all use the same
+        algorithm. Feed three engines the identical stream of random numbers and they
+        can still produce three different orders.
+
+   That second point breaks the one promise challenge mode makes: that every player
+   faces the same scene. Two pupils on the same seeded link, one on an Android tablet
+   and one on an iPad, could have been given different tipping floors — and the scores
+   would have looked comparable. Fisher-Yates consumes the random stream in a fixed
+   order and therefore produces the same permutation everywhere.                     */
+function shuf(a){
+  for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+
+/* -------------------------------------------------------------------- the scene ---- */
+/* ---------------------------------------------------------------- photo mode ----
+   21 Oct 2026. The comment at the top of this file has said since August that a SCENE
+   could take a photograph and hotspots. Nothing implemented it. This does. Photographs and
+   hotspots live in spot-photos.js, not here, so they can be added without editing the
+   game. Photo mode uses no randomness, and a load whose photo is missing or fails to load
+   plays on the drawn floor instead. */
+const PHOTOS=[];
+(function(){
+  const cfg = Array.isArray(window.LIRICH_SPOT_PHOTOS) ? window.LIRICH_SPOT_PHOTOS : [];
+  cfg.forEach((c,i)=>{
+    if(!c || !c.photo || !Array.isArray(c.hotspots) || i>=SCENES.length) return;
+    const hs = c.hotspots.filter(h=>HAZ.some(d=>d.k===h.k) && h.w>0 && h.h>0);
+    if(hs.length!==c.hotspots.length) console.warn('spot-photos.js: load '+(i+1)+' has a hotspot with an unknown key or no size; it was left out');
+    const img=new Image(), P={img, ok:false, hotspots:hs};
+    img.onload=()=>{ P.ok = img.naturalWidth>0 && hs.length>0; };
+    img.onerror=()=>{ P.ok=false; console.warn('spot-photos.js: could not load '+c.photo+'; load '+(i+1)+' uses the drawn floor'); };
+    img.src=c.photo; PHOTOS[i]=P;
+  });
+})();
+let photoMode=false, PR=null, flashes=[], lastMiss=0;
+function photoRect(img){
+  const top=22, ah=H-top-6, sc=Math.min(W/img.naturalWidth, ah/img.naturalHeight);
+  const w=img.naturalWidth*sc, h=img.naturalHeight*sc;
+  return {x:(W-w)/2, y:top+(ah-h)/2, w, h};
+}
+function layoutPhoto(P){
+  PR=photoRect(P.img);
+  items = P.hotspots.map(h=>{
+    const def=HAZ.find(d=>d.k===h.k);
+    const rw=h.w/100*PR.w, rh=h.h/100*PR.h, cxp=PR.x+h.x/100*PR.w, cyp=PR.y+h.y/100*PR.h, s=Math.max(rw,rh);
+    return {haz:true, def, photo:true, rx:cxp-rw/2, ry:cyp-rh/2, rw, rh, x:cxp-s/2, y:cyp-s/2, s, done:false, wrong:0};
+  });
+  hazN=items.length;
+}
+function drawPhoto(){
+  const P=PHOTOS[scene];
+  cx.fillStyle='#13274B'; cx.fillRect(0,0,W,H);
+  cx.drawImage(P.img, PR.x, PR.y, PR.w, PR.h);
+  cx.fillStyle='rgba(242,210,122,.9)'; cx.font='700 9.5px system-ui'; cx.textAlign='left';
+  cx.fillText('TIPPING FLOOR — '+SCENES[scene].t.toUpperCase(), 12, 15);
+  items.forEach((it,i)=>{
+    if(it.done){
+      cx.strokeStyle='#2F9A5E'; cx.lineWidth=3; rr(it.rx,it.ry,it.rw,it.rh,8); cx.stroke();
+      cx.fillStyle='rgba(47,154,94,.18)'; rr(it.rx,it.ry,it.rw,it.rh,8); cx.fill();
+      const r=Math.max(9, Math.min(it.rw,it.rh)*.18), mx=it.rx+it.rw/2, my=it.ry+it.rh/2;
+      cx.fillStyle='#2F9A5E'; cx.beginPath(); cx.arc(mx,my,r,0,7); cx.fill();
+      cx.fillStyle='#fff'; cx.font='900 '+Math.round(r*1.2)+'px system-ui'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('✓', mx, my+1); cx.textBaseline='alphabetic';
+    }
+    if(hintIdx===i && performance.now()<hintUntil){
+      const p=(Math.sin(performance.now()/140)+1)/2;
+      cx.strokeStyle='rgba(242,210,122,'+(0.35+p*0.6)+')'; cx.lineWidth=4;
+      rr(it.rx-5,it.ry-5,it.rw+10,it.rh+10,10); cx.stroke();
+    }
+  });
+  flashes = flashes.filter(f=>{ f.a-=0.03; if(f.a<=0) return false;
+    cx.strokeStyle='rgba(192,69,95,'+f.a+')'; cx.lineWidth=3; cx.beginPath(); cx.arc(f.x,f.y,18+(1-f.a)*14,0,7); cx.stroke(); return true; });
+  if(live) requestAnimationFrame(draw);
+}
+
+function layout(){
+  const P=PHOTOS[scene];
+  photoMode = !!(P && P.ok);
+  if(photoMode){ layoutPhoto(P); return; }
+  const S=SCENES[scene];
+  const list=[];
+  const hz = shuf(HAZ.slice()).slice(0,S.haz);
+  hz.forEach(h=>list.push({haz:true, def:h}));
+  // decoys drawn without replacement first, so the floor looks like a real mixed load
+  const pool=[]; while(pool.length<S.decoys) pool.push.apply(pool, shuf(OK.slice()));
+  pool.slice(0,S.decoys).forEach(d=>list.push({haz:false, def:d}));
+  shuf(list);
+
+  // jittered grid, sized to spill past the cell so the pile overlaps like a tipped load
+  // cells kept roughly square whatever the item count, so the floor never reads as a shelf
+  const cols=Math.max(4, Math.min(8, Math.round(Math.sqrt(list.length*W/(H-26)))));
+  const rows=Math.ceil(list.length/cols);
+  const cw=W/cols, chh=(H-26)/rows;
+  const cells=[]; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) cells.push([c,r]);
+  shuf(cells);
+
+  items = list.map((it,i)=>{
+    const [c,r]=cells[i];
+    const s = Math.min(cw,chh)*(0.88+Math.random()*0.24);
+    const x = Math.max(-4, Math.min(W-s+4, c*cw - (s-cw)/2 + (Math.random()-0.5)*cw*0.28));
+    const y = Math.max(20, Math.min(H-s*0.98, 22 + r*chh - (s-chh)/2 + (Math.random()-0.5)*chh*0.24));
+    return Object.assign(it, {x, y, s, done:false, wrong:0});
+  });
+  items.sort((a,b)=>(a.y+a.s)-(b.y+b.s));   // back-to-front, so overlaps read as depth
+
+  /* Fairness rule: a hazard whose centre is buried under a later-drawn item cannot be
+     tapped at all. Promote only those to the top of the draw order. With this much
+     overlap it fires rarely, so it is not a tell. */
+  const covers=(a,px,py)=>px>=a.x && px<=a.x+a.s && py>=a.y+a.s*0.10 && py<=a.y+a.s*0.96;
+  for(let i=0;i<items.length;i++){
+    const it=items[i]; if(!it.haz) continue;
+    const px=it.x+it.s/2, py=it.y+it.s/2;
+    let buried=false;
+    for(let j=i+1;j<items.length;j++) if(covers(items[j],px,py)){ buried=true; break; }
+    if(buried){ items.splice(i,1); items.push(it); i--; }
+  }
+  hazN = items.filter(i=>i.haz).length;
+}
+/* 21 Oct 2026: the load is drawn with the shared glossy pictures (lirich-sprites.js,
+   keys f_*) on a concrete floor. Item positions, sizes and tap areas are unchanged, and
+   nothing here calls Math.random, so the seeded challenge board is unchanged too. If
+   lirich-sprites.js fails to load, the original flat drawings below are used. */
+const SPR = { lpg:'f_lpg', liion:'f_liion', carbat:'f_carbat', aero:'f_aero', paint:'f_paint', tube:'f_tube',
+  sharps:'f_sharps', ext:'f_ext', oil:'f_oil', asb:'f_asb', card:'card', pallet:'f_pallet', film:'f_film',
+  steel:'scrap', timber:'timber', drum:'f_drum', chair:'f_chair', reel:'f_reel', crate:'f_crate', mat:'f_mat',
+  pipe:'f_pipe', bag:'bag' };
+const useSpr = () => !!(window.LirichSprites && LirichSprites.keys.indexOf('f_lpg')>=0);
+function drawItem(it){
+  if(useSpr()){ LirichSprites.draw(cx, SPR[it.def.k]||'bag', it.x, it.y, it.s); return; }
+  cx.globalAlpha*=.22; cx.fillStyle='#0B1119';
+  cx.beginPath(); cx.ellipse(it.x+it.s*.5, it.y+it.s*.88, it.s*.36, it.s*.09, 0,0,7); cx.fill();
+  cx.globalAlpha/=.22;
+  (ART[it.def.k]||ART.bag)(it.x,it.y,it.s);
+}
+let floorCv=null;
+function floor(){
+  if(floorCv) return floorCv;
+  const f=document.createElement('canvas'); f.width=W; f.height=H; const q=f.getContext('2d');
+  const g=q.createLinearGradient(0,0,0,H); g.addColorStop(0,'#A3A7AC'); g.addColorStop(1,'#7C8187');
+  q.fillStyle=g; q.fillRect(0,0,W,H);
+  q.strokeStyle='rgba(60,64,70,.28)'; q.lineWidth=1.2;                    // slab joints
+  for(let x=0;x<=W;x+=135){ q.beginPath(); q.moveTo(x,0); q.lineTo(x,H); q.stroke(); }
+  for(let y=0;y<=H;y+=150){ q.beginPath(); q.moveTo(0,y); q.lineTo(W,y); q.stroke(); }
+  let h=7;                                                                // fixed pattern, no Math.random
+  const nx=()=>{ h=(h*16807)%2147483647; return h/2147483647; };
+  for(let i=0;i<26;i++){ q.fillStyle='rgba(55,48,36,'+(0.05+nx()*0.09)+')';
+    q.beginPath(); q.ellipse(nx()*W, nx()*H, 12+nx()*40, 6+nx()*20, nx()*3, 0, 7); q.fill(); }
+  for(let i=0;i<500;i++){ q.fillStyle=nx()<.5?'rgba(255,255,255,.10)':'rgba(0,0,0,.08)'; q.fillRect(nx()*W, nx()*H, 1.6, 1.6); }
+  q.fillStyle='#E8B923'; q.fillRect(0,H-12,W,12);                          // painted safety line
+  q.fillStyle='#1B1B1B'; for(let x=-20;x<W;x+=28){ q.beginPath(); q.moveTo(x,H); q.lineTo(x+12,H-12); q.lineTo(x+24,H-12); q.lineTo(x+12,H); q.fill(); }
+  return (floorCv=f);
+}
+function draw(){
+  if(photoMode) return drawPhoto();
+  if(useSpr()) cx.drawImage(floor(),0,0);
+  else {
+    const g=cx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#2A3346'); g.addColorStop(1,'#1A2131');
+    cx.fillStyle=g; cx.fillRect(0,0,W,H);
+    cx.strokeStyle='rgba(255,255,255,.045)'; cx.lineWidth=1;
+    for(let x=0;x<W;x+=45){ cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,H); cx.stroke(); }
+    for(let y=0;y<H;y+=45){ cx.beginPath(); cx.moveTo(0,y); cx.lineTo(W,y); cx.stroke(); }
+  }
+  cx.fillStyle=useSpr()?'rgba(19,33,63,.55)':'rgba(202,220,252,.40)'; cx.font='700 9.5px system-ui'; cx.textAlign='left';
+  cx.fillText('TIPPING FLOOR — '+SCENES[scene].t.toUpperCase(), 12, 15);
+
+  items.forEach((it,i)=>{
+    if(it.done){
+      cx.globalAlpha=.30;
+      drawItem(it);
+      cx.globalAlpha=1;
+      cx.strokeStyle='#2F9A5E'; cx.lineWidth=3;
+      rr(it.x+it.s*.06,it.y+it.s*.14,it.s*.88,it.s*.78,8); cx.stroke();
+      cx.fillStyle='#2F9A5E'; cx.beginPath(); cx.arc(it.x+it.s*.5, it.y+it.s*.55, Math.max(8,it.s*.16), 0, 7); cx.fill();
+      cx.fillStyle='#fff'; cx.font='900 '+Math.max(11,Math.round(it.s*.2))+'px system-ui'; cx.textAlign='center'; cx.textBaseline='middle';
+      cx.fillText('✓', it.x+it.s*.5, it.y+it.s*.56); cx.textBaseline='alphabetic';
+      return;
+    }
+    drawItem(it);
+    if(it.wrong>0){
+      cx.strokeStyle='rgba(192,69,95,'+Math.min(1,it.wrong)+')'; cx.lineWidth=2.5;
+      rr(it.x+it.s*.06,it.y+it.s*.14,it.s*.88,it.s*.78,8); cx.stroke();
+      it.wrong-=0.02;
+    }
+    if(hintIdx===i && performance.now()<hintUntil){
+      const p=(Math.sin(performance.now()/140)+1)/2;
+      cx.strokeStyle='rgba(201,162,39,'+(0.35+p*0.55)+')'; cx.lineWidth=3;
+      rr(it.x-4,it.y+it.s*.06,it.s+8,it.s*.94,10); cx.stroke();
+    }
+  });
+  if(live) requestAnimationFrame(draw);
+}
+
+/* ---------------------------------------------------------------------- gameplay ---- */
+function hit(px,py){
+  if(photoMode){
+    /* tap areas are checked 15% larger than marked, so a near-miss on a small item counts */
+    for(let i=items.length-1;i>=0;i--){
+      const it=items[i], mx=it.rw*.075, my=it.rh*.075;
+      if(px>=it.rx-mx && px<=it.rx+it.rw+mx && py>=it.ry-my && py<=it.ry+it.rh+my) return i;
+    }
+    return (PR && px>=PR.x && px<=PR.x+PR.w && py>=PR.y && py<=PR.y+PR.h) ? -2 : -1;   // -2: on the load, not a hazard
+  }
+  for(let i=items.length-1;i>=0;i--){
+    const it=items[i];
+    if(px>=it.x && px<=it.x+it.s && py>=it.y+it.s*0.10 && py<=it.y+it.s*0.96) return i;
+  }
+  return -1;
+}
+cv.addEventListener('click', e=>{
+  if(!live) return;
+  const r=cv.getBoundingClientRect();
+  const px=(e.clientX-r.left)*(W/r.width), py=(e.clientY-r.top)*(H/r.height);
+  const i=hit(px,py);
+  if(i===-2){
+    /* photo mode: the rest of the load is harmless material, and tapping it costs time just
+       as tapping a drawn harmless item does. A short cooldown stops a double tap costing twice. */
+    const now=performance.now(); if(now-lastMiss<700) return; lastMiss=now;
+    tLeft=Math.max(0,tLeft-8); flashes.push({x:px,y:py,a:1});
+    try { LirichLearn.fx.shake(cv); LirichLearn.fx.pop('−8 s',e.clientX,e.clientY-30,'#FF9DB0'); LirichLearn.sfx('bad'); } catch(err) {}
+    toast('Nothing dangerous there', 'That part of the load is fine — and the guess cost eight seconds.', true);
+    upd(); return;
+  }
+  if(i<0) return;
+  const it=items[i];
+  if(it.done) return;
+  if(it.haz){
+    it.done=true; foundN++; kg+=it.def.kg; addPill(it.def.n);
+    try { LirichLearn.fx.burst(e.clientX,e.clientY,'#2F9A5E',18); LirichLearn.fx.pop('+'+it.def.kg+' kg kept out',e.clientX,e.clientY-30);
+      LirichLearn.sfx('good'); LirichLearn.learn(it.def.n,true,{cat:'hazard',rule:it.def.why}); } catch(err) {}
+    toast(it.def.n, it.def.why, false);
+    upd();
+    if(foundN>=hazN) setTimeout(()=>endScene(true), 700);
+  } else {
+    it.wrong=1; tLeft=Math.max(0,tLeft-8);
+    try { LirichLearn.fx.shake(cv); LirichLearn.fx.pop('−8 s',e.clientX,e.clientY-30,'#FF9DB0'); LirichLearn.sfx('bad'); } catch(err) {}
+    toast(it.def.n, 'Nothing wrong with it. It belongs in this load — and that guess cost eight seconds.', true);
+    upd();
+  }
+});
+function toast(title, body, bad){
+  const t=$('toast'); t.className='toast'+(bad?' bad':'');
+  t.innerHTML='<b>'+title+'</b>'+body;
+  clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.add('hide'), bad?2600:5200);
+}
+function addPill(n){
+  const d=document.createElement('span'); d.className='pill'; d.textContent=n; $('found').appendChild(d);
+}
+function upd(){
+  $('hLoad').textContent=(scene+1)+' / '+SCENES.length;
+  $('hFound').textContent=foundN+'/'+hazN;
+  $('hKg').textContent=Math.round(totalKg+kg)+' kg';
+  const m=Math.floor(tLeft/60), s=Math.floor(tLeft%60);
+  $('hTime').textContent=m+':'+String(s).padStart(2,'0');
+  $('hTime').classList.toggle('low', tLeft<=15);
+}
+function startScene(i){
+  scene=i; foundN=0; kg=0; hintIdx=-1; hintUntil=0;
+  $('found').innerHTML=''; $('toast').classList.add('hide');
+  layout(); tLeft=SCENES[i].secs; live=true; contUsed=false; upd(); draw();
+  runTimer();
+}
+/* one Continue per load (lirich-wallet.js, 21 Nov 2026): +20 seconds, and a continued
+   load earns one star at most. contUsed is declared with the other state at the top. */
+function runTimer(){
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    tLeft-=1; upd();
+    if(tLeft<=0){ timeUp(); }
+  }, 1000);
+}
+function timeUp(){
+  if(!contUsed && window.LirichWallet && items.some(i=>i.haz && !i.done)){
+    contUsed=true; clearInterval(timer); live=false;
+    LirichWallet.offerContinue({ title:'Time is up', what:'20 more seconds',
+      use:()=>{ tLeft=20; live=true; upd(); draw(); runTimer(); },
+      decline:()=>{ live=true; endScene(false); } });
+    return;
+  }
+  endScene(false);
+}
+function endScene(cleared){
+  if(!live) return;
+  live=false; clearInterval(timer); $('toast').classList.add('hide');
+  totalKg+=kg;
+  const S=SCENES[scene];
+  const missed=items.filter(i=>i.haz && !i.done);
+  $('eTag').textContent = cleared ? 'Load cleared' : (missed.length ? 'Missed items' : 'Time');
+  $('eTitle').textContent = cleared ? 'Nothing dangerous got through'
+    : missed.length>=3 ? 'That load would have started a fire'
+    : 'Most of it, not all of it';
+  $('eBody').textContent = cleared
+    ? 'Every prohibited item in the load was pulled before it moved.'
+    : photoMode ? missed.length+' dangerous item'+(missed.length===1?'':'s')+' went down the line.'
+    : missed.length+' item'+(missed.length===1?'':'s')+' went down the line with '+
+      Math.round((items.length-missed.length)/items.length*100)+'% of the load correctly cleared.';
+  $('eFound').textContent = foundN+' of '+hazN;
+  $('eKg').textContent = Math.round(kg)+' kg';
+  const ul=$('eMiss'); ul.innerHTML='';
+  missed.forEach(m=>{ const li=document.createElement('li');
+    li.innerHTML='<b>'+m.def.n+'</b> — '+m.def.why; ul.appendChild(li); });
+  $('eFact').innerHTML=S.fact;
+  const last = scene>=SCENES.length-1;
+  $('btnNext').textContent = cleared ? (last?'Play it again':'Next load') : 'Tip it again';
+  $('btnNext').dataset.next = cleared ? (last?'0':String(scene+1)) : String(scene);
+  $('ovEnd').classList.remove('hide');
+  /* stars: clearing the load earns one; time left earns the rest */
+  try {
+    const f=tLeft/S.secs, st = cleared ? (contUsed ? 1 : f>=0.5?3 : f>=0.25?2 : 1) : -1;
+    if(cleared){ LirichLearn.level('spot', scene, st, kg); LirichLearn.sfx('win'); } else LirichLearn.sfx('bad');
+    LirichLearn.stamp($('ovEnd').querySelector('.card'), st);
+    if(cleared && last) LirichLearn.run('spot', totalKg, true);
+    $('eLoads').innerHTML=SCENES.map((x,k)=>'<span class="'+(k<scene||(k===scene&&cleared)?'done':k===scene?'now':'')+'"></span>').join('');
+  } catch(e) {}
+  /* shared score layer — records the run and offers a team name */
+  try { LirichScores.finish('spot', kg, $('ovEnd').querySelector('.card')); } catch(e) {}
+}
+$('btnHint').onclick=()=>{
+  if(!live) return;
+  const rem=items.map((it,i)=>[it,i]).filter(([it])=>it.haz && !it.done);
+  if(!rem.length) return;
+  hintIdx=rem[Math.floor(Math.random()*rem.length)][1];
+  hintUntil=performance.now()+2200;
+  tLeft=Math.max(0,tLeft-10); upd();
+  toast('Hint used','Ten seconds off the clock. On a real floor the hint is the waste transfer note — you read what the load is supposed to contain before you look at it.', true);
+};
+$('btnDone').onclick=()=>{ if(live) endScene(foundN>=hazN); };
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); totalKg=0; startScene(0); };
+$('btnNext').onclick=()=>{ $('ovEnd').classList.add('hide');
+  const n=parseInt($('btnNext').dataset.next,10);
+  if(n===0 && scene>=SCENES.length-1) totalKg=0;
+  startScene(n); };
+layout(); draw();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

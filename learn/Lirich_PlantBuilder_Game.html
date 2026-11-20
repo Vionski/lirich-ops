@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Plant Builder — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Plant Builder">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;overscroll-behavior:none;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:560px;height:100%;max-height:980px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 6px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:16px;font-variant-numeric:tabular-nums}
+ #yard{flex:0 0 auto;padding:2px 12px 4px}
+ canvas{width:100%;height:120px;border-radius:12px;background:rgba(255,255,255,.05);display:block}
+ #tapwrap{padding:8px 12px 6px;flex:0 0 auto}
+ #tap{width:100%;background:var(--orange);border:0;color:#fff;border-radius:14px;padding:16px;
+   font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(224,124,46,.28)}
+ #tap:active{transform:translateY(2px)}
+ #tap small{display:block;font-size:10.5px;font-weight:400;opacity:.85;margin-top:2px}
+ #shop{flex:1 1 auto;overflow-y:auto;padding:2px 12px 8px;min-height:0}
+ .m{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.055);
+   border:1px solid rgba(202,220,252,.16);border-radius:12px;padding:9px 11px;margin-bottom:7px;
+   cursor:pointer;text-align:left;width:100%;color:#fff;font-family:inherit}
+ .m:disabled{opacity:.42;cursor:default}
+ .m .mi{width:40px;height:40px;flex:0 0 auto;background:#fff;border-radius:9px;border-left:5px solid transparent}
+ .m .dot{width:10px;height:34px;border-radius:3px;flex:0 0 auto}
+ .m .txt{flex:1;min-width:0}
+ .m .txt b{display:block;font-size:13.5px}
+ .m .txt small{display:block;font-size:10.5px;color:var(--ink2);line-height:1.35}
+ .m .buy{text-align:right;flex:0 0 auto}
+ .m .buy b{display:block;font-size:13px;color:var(--gold);font-variant-numeric:tabular-nums}
+ .m .buy small{font-size:10px;color:var(--ink2)}
+ .m.locked{opacity:.32}
+ .m.own{border-color:rgba(63,164,107,.45)}
+ footer{padding:0 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:420px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:24px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .fact{background:#FFF6EA;border-left:4px solid var(--orange);padding:11px 13px;border-radius:0 8px 8px 0;
+   margin:12px 0;font-size:13px;line-height:1.55;color:#3D4A5A}
+ .fact b{color:#8A4B12}
+ .card .btn{width:100%;margin-top:10px;background:var(--orange);border:0;color:#fff;padding:13px;
+   font-size:15px;font-weight:600;border-radius:10px;cursor:pointer}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Plant Builder</b></div><div class="spacer"></div>
+  <div class="rt">PROCESSED<b id="hT">0 t</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Cash</span><b id="hCash">S$0</b></div>
+  <div class="stat"><span>Throughput</span><b id="hRate">0 kg/s</b></div>
+  <div class="stat"><span>Recovery value</span><b id="hVal">—</b></div>
+</div>
+<div id="yard"><canvas id="cv" width="1040" height="240"></canvas></div>
+<div id="tapwrap"><button id="tap">Work the grapple<small id="tapSub">+2 t a grab</small></button></div>
+<div id="shop"></div>
+<footer>One second here is one hour of plant time. Cash comes from gate fees and material sales
+  together — sorting kit moves more tonnes <i>and</i> makes each tonne worth more.</footer>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">A build-it game</div><h1>Plant Builder</h1>
+  <p>You start the way every waste company starts: one machine, one operator, and a floor.</p>
+  <div class="fact"><b>This is the investment case as a game.</b> Every machine costs roughly what
+     it costs in real life, and buying them in the wrong order is exactly as expensive as it sounds.
+     The shredder is the S$1M decision.</div>
+  <p style="font-size:12.5px;color:#5B6472">Tap to work the grapple. Buy kit. Watch what each piece
+     does to throughput and to the value of a tonne. Figures are illustrative.</p>
+  <button class="btn" id="btnStart">Open the yard</button>
+  <p style="font-size:11px;color:#5B6472;margin-top:10px">No accounts, no login, no data collected.
+     Nothing is saved — closing the page starts a new plant.</p>
+</div></div>
+
+<div class="ov hide" id="ovMile"><div class="card">
+  <div class="tag" id="mTag">Milestone</div><h1 id="mTitle">—</h1>
+  <p id="mBody"></p>
+  <div class="fact" id="mFact"></div>
+  <button class="btn" id="btnGo">Back to the yard</button>
+</div></div>
+</div>
+<!-- The shared rules file loads first in every game in the basket, even where the game
+     defines no sorting items of its own. It carries the stream palette, the readable-ink
+     helper and the one factors-status flag that every footer disclaimer reads, so a game
+     that skips it is a game whose disclaimer can drift from the others. -->
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+"use strict";
+/* =====================================================================================
+   Plant Builder — Lirich Learn.  Game 7 of the basket.
+
+   ⚠ ALL FIGURES ARE ILLUSTRATIVE. Capex figures are order-of-magnitude only and are here
+   to make the staging argument legible — cheap enabling kit first, the shredder in the
+   middle, the RDF line last. They are not Lirich quotations and must not be quoted as
+   costs. Gate value (S$/tonne) is likewise a teaching number.
+
+   The point of the game: sorting kit does two things at once. It raises throughput AND it
+   raises what a tonne is worth. A plant that only buys throughput is a plant that moves a
+   lot of low-value material.
+   ===================================================================================== */
+
+/* TIME COMPRESSION: one second on this clock is one hour of plant time. Throughput is
+   therefore quoted in tonnes per hour and paid out once a second. Without that the capex
+   figures and the tonnages could not both stay recognisable. */
+const BASE_VALUE = 150;        // S$ per tonne: gate fee plus material sale, blended, illustrative
+const TAP_T      = 2;          // one grapple cycle
+const START_CASH = 45000;      // the first loan — no waste company starts at zero
+
+/* cost is S$ thousand; rate is kg/s; val is the uplift to what a tonne is worth */
+const KIT = [
+ {k:'loader', n:'Wheel loader',       c:'#4E86C8', cost:60,   rate:8,   val:0.00, at:0,
+  d:'Feeds the line instead of a man with a shovel.'},
+ {k:'bag',    n:'Bag opener',         c:'#8C93A0', cost:40,   rate:5,   val:0.04, at:0,
+  d:'Nothing downstream can see material that is still in a sack.'},
+ {k:'trom',   n:'Trommel screen',     c:'#C08A4A', cost:120,  rate:15,  val:0.10, at:300,
+  d:'Fines out at the front. Everything behind it runs cleaner.'},
+ {k:'mag',    n:'Overband magnet',    c:'#8C6BB1', cost:70,   rate:10,  val:0.08, at:600,
+  d:'Steel off the belt, sold by the tonne, and no jams.'},
+ {k:'baler',  n:'Baler',              c:'#B87D22', cost:180,  rate:20,  val:0.25, at:1200,
+  d:'Does not create material. Multiplies what a container can carry.'},
+ {k:'wb',     n:'Weighbridge + dMRV', c:'#3FA46B', cost:90,   rate:0,   val:0.30, at:2500,
+  d:'No extra tonnes at all. Every tonne becomes evidence — and evidence is what a corporate client is actually buying.'},
+ {k:'eddy',   n:'Eddy current',       c:'#54A98C', cost:150,  rate:18,  val:0.10, at:5000,
+  d:'Aluminium off the belt. Only works with the magnet ahead of it.'},
+ {k:'nir',    n:'Optical (NIR) sorter',c:'#C9A227',cost:230,  rate:25,  val:0.18, at:9000,
+  d:'Sorts plastics by polymer at belt speed. Needs the trommel to see anything.'},
+ {k:'shred',  n:'Shredder',           c:'#E07C2E', cost:1000, rate:60,  val:0.15, at:16000,
+  d:'The S$1M decision. Everything before it is preparation; everything after it depends on it.'},
+ {k:'robot',  n:'Robotic picker',     c:'#C0455F', cost:300,  rate:30,  val:0.12, at:30000,
+  d:'About 70 picks a minute, and it does not slow down after lunch.'},
+ {k:'rdf',    n:'RDF production line',c:'#8A6A3E', cost:2000, rate:120, val:0.35, at:60000,
+  d:'Stage 2. The light fraction stops being residue and becomes a product with a calorific spec.'}
+];
+/* cumulative tonnes -> a card that explains what just changed */
+const MILES = [
+ {t:100,  ti:'One hundred tonnes',      tg:'Milestone',
+  b:'Everything so far has been muscle. A hundred tonnes moved by grapple is a fortnight of work for one operator.',
+  f:'<b>Manual handling does not scale, and it is not cheap.</b> The first machine you buy is never about the machine — it is about getting a person out of the path of the material.'},
+ {t:1000, ti:'A thousand tonnes',       tg:'Milestone',
+  b:'At this point the plant has a shape: something feeds it, something screens it, something takes metal out.',
+  f:'<b>This is where a baler pays for itself.</b> Not by recovering more, but by cutting the number of containers the same tonnage needs. Freight is priced by the box, not by the tonne.'},
+ {t:10000,ti:'Ten thousand tonnes',     tg:'Milestone',
+  b:'The plant now recovers several streams and each of them has a buyer.',
+  f:'<b>The weighbridge and the dMRV record are worth more than they look.</b> They add no throughput at all. What they add is the ability to tell a client, with evidence, what happened to their waste — which is the part a corporate sustainability report cannot buy anywhere else.'},
+ {t:50000,ti:'Fifty thousand tonnes',   tg:'Stage 2',
+  b:'The residue left after every recovery step is still the largest single stream leaving the site.',
+  f:'<b>That residue is the whole argument for RDF.</b> Turning the light fraction into a fuel with a specification is what moves it from a disposal cost to a product — and it is the reason the shredder was worth a million dollars.'},
+ {t:200000,ti:'Two hundred thousand tonnes', tg:'The long view',
+  b:'The plant is now doing what it was designed to do, continuously.',
+  f:'<b>The scarce thing at this scale is not capacity — it is clean input.</b> Every recovery figure the plant reports is capped by what arrives at the gate. Which is why the education work, the route separation and the contamination checks are not marketing. They are the feedstock strategy.'}
+];
+
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cx=cv.getContext('2d');
+let cash=START_CASH, tTotal=0, owned={}, running=false, last=0, mileIdx=0, pop=[];
+
+KIT.forEach(k=>owned[k.k]=0);
+
+function costOf(k){ return Math.round(k.cost*1000*Math.pow(1.55, owned[k.k])); }   // S$ absolute
+function rate(){ return KIT.reduce((a,k)=>a+k.rate*owned[k.k], 0); }               // tonnes/hour
+function valPerT(){ return BASE_VALUE*(1+KIT.reduce((a,k)=>a+k.val*owned[k.k],0)); }
+
+function fmtT(v){ return v>=1e6 ? (v/1e6).toFixed(2)+' Mt' : v>=1000 ? (v/1000).toFixed(1)+' kt'
+  : v>=10 ? Math.round(v)+' t' : v.toFixed(1)+' t'; }
+function fmtS(v){ return v>=1e6 ? 'S$'+(v/1e6).toFixed(2)+'M' : v>=1000 ? 'S$'+(v/1000).toFixed(0)+'k' : 'S$'+Math.round(v); }
+
+/* --------------------------------------------------------------------- the loop ---- */
+function tick(now){
+  if(!running) return;
+  const dt=Math.min(200, now-last); last=now;
+  const add = rate()*dt/1000;      // t/hour paid out per real second
+  if(add>0) gain(add);
+  drawYard();
+  hud();
+  checkMiles();
+  requestAnimationFrame(tick);
+}
+function gain(t){ tTotal+=t; cash += t*valPerT(); }
+function checkMiles(){
+  while(mileIdx<MILES.length && tTotal >= MILES[mileIdx].t){
+    const m=MILES[mileIdx++];
+    $('mTag').textContent=m.tg; $('mTitle').textContent=m.ti;
+    $('mBody').textContent=m.b; $('mFact').innerHTML=m.f;
+    $('ovMile').classList.remove('hide');
+  /* shared score layer — records the run and offers a team name */
+  try { LirichLearn.run('plantbuilder', tTotal, true); } catch(e) {}
+  try { LirichScores.finish('plantbuilder', tTotal, $('ovMile').querySelector('.card')||$('ovMile')); } catch(e) {}
+    running=false;
+    return;
+  }
+}
+
+/* -------------------------------------------------------------------- the yard ---- */
+function drawYard(){
+  const W=cv.width, H=cv.height;
+  cx.clearRect(0,0,W,H);
+  const off=(performance.now()*0.05)%36;
+  /* 21 Oct 2026: the shared sorting-hall scene and belt when lirich-sprites.js is loaded */
+  const SC = window.LirichSprites && LirichSprites.scene;
+  if(SC){ SC.hall(cx,W,H); SC.belt(cx,0,H-34,W,22,off); }
+  else {
+  cx.fillStyle='rgba(255,255,255,.03)'; cx.fillRect(0,0,W,H);
+  // ground
+  cx.fillStyle='#232F45'; cx.fillRect(0,H-38,W,38);
+  cx.strokeStyle='rgba(255,255,255,.07)'; cx.lineWidth=2;
+  for(let x=-36;x<W+36;x+=36){ cx.beginPath(); cx.moveTo(x-off,H-38); cx.lineTo(x-off-14,H); cx.stroke(); }
+  }
+  // owned machines, in build order
+  let x=16;
+  if(window.LirichSprites){
+    /* 10 Oct 2026: each kind of kit is drawn once, as itself, on a pad in its own colour, with
+       a count when more than one is owned. Before this it was one plain block per machine,
+       and the row ran off the canvas after about fourteen purchases. */
+    const n=KIT.filter(k=>owned[k.k]>0).length, S=Math.max(84, Math.min(150, Math.floor((W-32)/Math.max(1,n))-8)), step=S+8;   // few machines draw large, a full yard still fits
+    KIT.forEach(k=>{
+      if(!owned[k.k]) return;
+      const y=H-38-S-10;
+      cx.fillStyle='rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(x+S/2, H-36, S*0.46, 7, 0, 0, 7); cx.fill();
+      cx.fillStyle='rgba(255,255,255,.96)'; cx.beginPath(); cx.roundRect ? cx.roundRect(x, y, S, S+6, 12) : cx.rect(x, y, S, S+6); cx.fill();
+      cx.fillStyle=k.c; cx.fillRect(x+6, y+S, S-12, 6);
+      LirichSprites.draw(cx, 'm_'+k.k, x+3, y+1, S-6);
+      if(owned[k.k]>1){
+        cx.fillStyle='#E8772E'; cx.beginPath(); cx.arc(x+S-10, y+12, 17, 0, 7); cx.fill();
+        cx.fillStyle='#13213F'; cx.font='900 17px Nunito,system-ui'; cx.textAlign='center'; cx.fillText('×'+owned[k.k], x+S-10, y+18);
+      }
+      x+=step;
+    });
+  } else KIT.forEach(k=>{
+    for(let i=0;i<owned[k.k];i++){
+      const h=52+Math.min(150, k.rate*2.4), w=58;
+      if(x>W-70) return;
+      cx.fillStyle=k.c; cx.globalAlpha=.9;
+      cx.fillRect(x, H-38-h, w, h); cx.globalAlpha=1;
+      cx.fillStyle='rgba(255,255,255,.16)'; cx.fillRect(x, H-38-h, w, 8);
+      x+=w+10;
+    }
+  });
+  if(x===16){
+    cx.fillStyle=SC?'rgba(19,33,63,.45)':'rgba(202,220,252,.35)'; cx.font='700 22px system-ui'; cx.textAlign='left';
+    cx.fillText('an empty floor', 20, H-56);
+  }
+  // floating +kg pops
+  pop = pop.filter(p=>{ p.y-=1.6; p.a-=0.018;
+    cx.globalAlpha=Math.max(0,p.a); cx.fillStyle=(window.LirichSprites&&LirichSprites.scene)?'#1F7A4D':'#9FE0BC'; cx.font='700 22px system-ui'; cx.textAlign='center';
+    cx.fillText(p.t, p.x, p.y); cx.globalAlpha=1; return p.a>0; });
+}
+
+/* ------------------------------------------------------------------------- shop ---- */
+function buildShop(){
+  const s=$('shop'); s.innerHTML='';
+  KIT.forEach(k=>{
+    const b=document.createElement('button');
+    b.className='m'; b.dataset.k=k.k;
+    b.innerHTML=(window.LirichSprites ? '<canvas class="mi" width="80" height="80" style="border-color:'+k.c+'" aria-hidden="true"></canvas>'
+                                      : '<span class="dot" style="background:'+k.c+'"></span>')+
+      '<span class="txt"><b></b><small>'+k.d+'</small></span>'+
+      '<span class="buy"><b></b><small></small></span>';
+    const ic=b.querySelector('.mi');
+    if(ic){ try{ LirichSprites.draw(ic.getContext('2d'), 'm_'+k.k, 0, 0, 80); }catch(e){} }
+    b.onclick=()=>buy(k);
+    s.appendChild(b);
+  });
+}
+function buy(k){
+  /* Accept either the kit object or its key. Passing the key by mistake used to write
+     owned['undefined'] and set cash to NaN, which silently broke the whole run with no
+     error — the yard simply stopped earning. One line, and a class of bug is gone. */
+  if(typeof k === 'string') k = KIT.find(x=>x.k===k);
+  if(!k) return;
+  const c=costOf(k);
+  if(cash<c || tTotal<k.at) return;
+  cash-=c; owned[k.k]++;
+  hud();
+}
+function hud(){
+  $('hT').textContent=fmtT(tTotal);
+  $('hCash').textContent=fmtS(cash);
+  $('hRate').textContent=Math.round(rate())+' t/h';
+  $('hVal').textContent='S$'+Math.round(valPerT())+'/t';
+  $('tapSub').textContent='+'+TAP_T+' t a grab · worth '+fmtS(TAP_T*valPerT());
+  KIT.forEach(k=>{
+    const b=document.querySelector('.m[data-k="'+k.k+'"]'); if(!b) return;
+    const lock = tTotal < k.at;
+    b.classList.toggle('locked', lock);
+    b.classList.toggle('own', owned[k.k]>0);
+    b.disabled = lock || cash<costOf(k);
+    b.querySelector('.txt b').textContent = k.n + (owned[k.k]? ' ×'+owned[k.k] : '');
+    b.querySelector('.buy b').textContent = lock ? 'locked' : fmtS(costOf(k));
+    b.querySelector('.buy small').textContent = lock
+      ? 'at '+fmtT(k.at)
+      : (k.rate? '+'+k.rate+' t/h ' : '')+(k.val? '+'+Math.round(k.val*100)+'% value' : '');
+  });
+}
+$('tap').onclick=()=>{
+  if(!running) return;
+  gain(TAP_T); hud();
+  pop.push({x:cv.width*(0.3+Math.random()*0.4), y:cv.height-70, a:1, t:'+'+TAP_T+' t'});
+};
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); running=true; last=performance.now();
+  requestAnimationFrame(tick); };
+$('btnGo').onclick=()=>{ $('ovMile').classList.add('hide'); running=true; last=performance.now();
+  requestAnimationFrame(tick); };
+buildShop(); hud(); drawYard();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

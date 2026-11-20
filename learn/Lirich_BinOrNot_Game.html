@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bin or Not? — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Bin or Not?">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:520px;height:100%;max-height:940px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);
+   border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ #main{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;padding:0 16px;min-height:0}
+ .item{background:#fff;color:#22303F;border-radius:16px;padding:26px 20px;text-align:center;
+   box-shadow:0 14px 36px rgba(0,0,0,.4)}
+ .item .ic{font-size:0;margin-bottom:10px}
+ .item h2{font-family:Georgia,serif;font-size:26px;margin:6px 0 4px;color:var(--navy);line-height:1.25}
+ .item p{font-size:12.5px;color:#5B6472;margin:0}
+ #ans{margin-top:14px;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.55;display:none}
+ #ans.on{display:block}
+ #ans.ok{background:rgba(63,164,107,.16);border:1px solid rgba(63,164,107,.5)}
+ #ans.no{background:rgba(192,69,95,.16);border:1px solid rgba(192,69,95,.55)}
+ #ans b{display:block;font-size:15px;margin-bottom:4px}
+ #btns{display:flex;gap:10px;padding:12px 16px 14px;flex:0 0 auto}
+ .b{flex:1;border:0;border-radius:12px;padding:16px 8px;font-size:15px;font-weight:600;cursor:pointer;color:#fff}
+ .b1{background:#4E86C8}.b2{background:#6B7688}
+ #next{width:100%;background:var(--orange);color:#fff;border:0;border-radius:12px;padding:15px;
+   font-size:15px;font-weight:600;cursor:pointer;display:none}
+ #next.on{display:block}
+ footer{padding:4px 14px 10px;font-size:9.5px;color:#7C8AA3;line-height:1.45;flex:0 0 auto}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;
+   justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:400px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;
+   font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;
+   font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:19px;color:var(--navy);font-variant-numeric:tabular-nums}
+ .miss{text-align:left;margin-top:10px;font-size:12px;color:#3D4A5A;line-height:1.5}
+ .miss li{margin-bottom:5px}
+ /* round feel */
+ .item{border-radius:22px;padding:24px 20px 22px;position:relative}
+ .item h2{font-family:Nunito,sans-serif;font-weight:900;font-size:28px;letter-spacing:-.015em}
+ .item p{font-size:14px;font-weight:700;color:#56627C}
+ .item.enter{animation:bonIn .32s cubic-bezier(.2,1.25,.4,1)}
+ @keyframes bonIn{0%{transform:translateY(24px) rotate(-2deg) scale(.94);opacity:0}100%{transform:none;opacity:1}}
+ .item.ok{box-shadow:0 0 0 4px #2F9A5E,0 14px 36px rgba(0,0,0,.4)}
+ .item.no{box-shadow:0 0 0 4px #C0455F,0 14px 36px rgba(0,0,0,.4)}
+ .item .verdict{position:absolute;top:12px;right:12px;font-weight:900;font-size:13px;border-radius:999px;padding:4px 11px;color:#fff;display:none}
+ .item.ok .verdict{display:block;background:#2F9A5E}.item.no .verdict{display:block;background:#C0455F}
+ #ans{font-size:14.5px;background:rgba(255,255,255,.06)}
+ #ans b{font-weight:900;font-size:16px}
+ .b{font-size:17px;padding:18px 8px}
+ .b1{background:#3F78BD;box-shadow:0 4px 0 #26507F}.b2{background:#5D6880;box-shadow:0 4px 0 #3B4458}
+ .b .k{display:block;font-size:11px;font-weight:700;opacity:.75;margin-top:2px}
+ #hSt.hot{color:#F2D27A;text-shadow:0 0 12px rgba(242,210,122,.6)}
+ #prog{display:flex;gap:4px;padding:0 14px 6px}
+ #prog i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}
+ #prog i.ok{background:#2F9A5E}#prog i.no{background:#C0455F}#prog i.now{background:#D6A93A}
+ .daily{display:flex;align-items:center;gap:10px;background:#F3F6FC;border-radius:14px;padding:10px 12px;margin-top:12px;font-size:13.5px;color:#2E3B57}
+ .daily b{font-size:22px;font-weight:900;color:#13213F}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Bin or Not?</b></div><div class="spacer"></div>
+  <div class="rt">ITEM<b id="hN">1/12</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Correct</span><b id="hOk">0</b></div>
+  <div class="stat"><span>Streak</span><b id="hSt">0</b></div>
+  <div class="stat"><span>Diverted</span><b id="hKg">0 kg</b></div>
+</div>
+<div id="prog" aria-hidden="true"></div>
+<div id="main">
+  <div class="item" id="card"><span class="verdict" id="verdict"></span><div class="ic"><canvas id="ic" width="150" height="110"></canvas></div>
+    <h2 id="qName">—</h2><p id="qHint">Does this go in the blue recycling bin?</p></div>
+  <div id="ans"></div>
+</div>
+<div id="btns">
+  <button class="b b1" id="bYes">Blue bin<span class="k">← key</span></button>
+  <button class="b b2" id="bNo">Not the blue bin<span class="k">key →</span></button>
+</div>
+<div style="padding:0 16px 12px"><button id="next">Next item</button></div>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">One minute, every day</div><h1>Bin or Not?</h1>
+  <p>Twelve everyday things. Blue recycling bin, or not? Most grown-ups get about half.</p>
+  <div class="daily" id="dailyBox"><b id="dStreak">0</b><span id="dTxt">days in a row. Play today to start a streak.</span></div>
+  <button class="btn" id="btnStart">Start</button>
+  <p class="mini" style="font-size:11px;margin-top:10px">Every answer comes from NEA's list of what is recyclable and what is not.
+     Weights are for scoring only. No accounts and nothing personal is saved — your stars and cards stay on this device.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Round complete</div><h1 id="eTitle">—</h1>
+  <div class="row2"><div class="cell"><span>Correct</span><b id="eOk">—</b></div>
+    <div class="cell"><span>Diverted</span><b id="eKg">—</b></div></div>
+  <div id="eMiss"></div>
+  <button class="btn" id="btnAgain">Play another twelve</button>
+</div></div>
+</div>
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-rng.js"></script>
+<script src="lirich-challenge.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+if (!window.LirichRules) {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.innerHTML =
+      '<div style="font:16px/1.6 system-ui,sans-serif;max-width:34em;margin:12vh auto;padding:0 6vw;color:#2B3B55">' +
+      '<h1 style="font-size:1.3em">Missing file</h1>' +
+      '<p><b>lirich-rules.js</b> is not in this folder. Every Lirich Learn game reads its sorting ' +
+      'rules from that one file, so it will not run without it.</p>' +
+      '<p>Copy <b>lirich-rules.js</b> next to this game and reload.</p></div>';
+  });
+  throw new Error('lirich-rules.js not loaded');
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================================
+   Bin or Not? — Lirich Learn.  Game 1 of the basket.
+   EVERY ruling below is from NEA's published "List of items that are recyclable and not".
+   Do not add an item without checking it against the current list.
+   ===================================================================================== */
+/* Every ruling comes from lirich-rules.js — the one file the basket shares.
+   Add or correct an item there and it changes here and in every other game at once. */
+const ITEMS = LirichRules.views.binOrNotItems();
+
+const N = 12;
+let deck=[], i=0, ok=0, streak=0, best=0, kg=0, answered=false, misses=[], marks=[];
+const $=id=>document.getElementById(id);
+const ic=$('ic'), g=ic.getContext('2d');
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function draw(kind){
+  const W=150,H=110; g.clearRect(0,0,W,H);
+  g.save(); g.translate(W/2,H/2); g.lineWidth=3.4; g.lineJoin='round'; g.lineCap='round';
+  g.strokeStyle='#2B3B55'; g.fillStyle='#E7EDF6';
+  const P=(pts,close)=>{ g.beginPath(); pts.forEach((p,k)=>k?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));
+    if(close!==false)g.closePath(); g.fill(); g.stroke(); };
+  if(kind==='bottle') P([[-11,-38],[11,-38],[11,-20],[20,-6],[20,38],[-20,38],[-20,-6],[-11,-20]]);
+  else if(kind==='can'){ g.beginPath(); g.ellipse(0,-30,19,7,0,0,7); g.fill(); g.stroke();
+    P([[-19,-30],[19,-30],[19,30],[-19,30]]); g.beginPath(); g.ellipse(0,30,19,7,0,0,7); g.fill(); g.stroke(); }
+  else if(kind==='box'){ P([[-30,-22],[30,-22],[30,30],[-30,30]]);
+    g.beginPath(); g.moveTo(-30,-6); g.lineTo(30,-6); g.moveTo(0,-22); g.lineTo(0,-6); g.stroke(); }
+  else if(kind==='paper'){ P([[-24,-34],[24,-34],[24,34],[-24,34]]);
+    g.beginPath(); for(let k=-20;k<=16;k+=12){ g.moveTo(-15,k); g.lineTo(15,k);} g.stroke(); }
+  else if(kind==='cup'){ P([[-20,-28],[20,-28],[13,32],[-13,32]]);
+    g.beginPath(); g.moveTo(-21,-22); g.lineTo(21,-22); g.stroke(); }
+  else if(kind==='film'){ g.beginPath(); g.moveTo(-30,20);
+    for(let x=-30;x<=30;x+=10) g.quadraticCurveTo(x+5,-6,x+10,20); g.lineTo(30,-26);
+    for(let x=30;x>=-30;x-=10) g.quadraticCurveTo(x-5,-52,x-10,-26); g.closePath(); g.fill(); g.stroke(); }
+  else if(kind==='glass'){ P([[-16,-32],[16,-32],[20,20],[8,34],[-8,34],[-20,20]]);
+    g.beginPath(); g.moveTo(-17,-6); g.lineTo(17,-6); g.stroke(); }
+  else { g.beginPath(); g.arc(0,0,30,0,7); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(-13,0); g.lineTo(13,0); g.moveTo(0,-13); g.lineTo(0,13); g.stroke(); }
+  g.restore();
+}
+
+function show(){
+  answered=false;
+  const it=deck[i];
+  $('qName').textContent=it.n;
+  const sk = window.LirichSprites && LirichSprites.forItem(it.n, it.g);
+  if(sk){ g.clearRect(0,0,150,110); LirichSprites.draw(g, sk, 25, 0, 108); } else draw(it.g);
+  const cd=$('card'); cd.className='item'; void cd.offsetWidth; cd.classList.add('enter');
+  $('prog').innerHTML=Array.from({length:N},(_,k)=>'<i class="'+(k<marks.length?marks[k]:(k===i?'now':''))+'"></i>').join('');
+  $('ans').className=''; $('ans').innerHTML='';
+  $('next').classList.remove('on');
+  $('bYes').disabled=false; $('bNo').disabled=false;
+  $('bYes').style.opacity=1; $('bNo').style.opacity=1;
+  $('hN').textContent=(i+1)+'/'+N;
+}
+function answer(said){
+  if(answered) return; answered=true;
+  const it=deck[i], right = (said===1)===(it.y===1);
+  const gain = it.w*(1+(streak+(right?1:0))*0.15);
+  if(right){ ok++; streak++; best=Math.max(best,streak); kg += gain; }
+  else { streak=0; misses.push(it); }
+  marks.push(right?'ok':'no');
+  /* feedback and the Recyclopedia — a card unlocks the first time an item is ruled right */
+  const cd=$('card'); cd.classList.remove('enter'); cd.classList.add(right?'ok':'no');
+  $('verdict').textContent = right ? (streak>=3 ? streak+' in a row' : 'Correct') : 'Not quite';
+  try {
+    const c=LirichLearn.centre(cd);
+    if(right){ LirichLearn.fx.burst(c.x,c.y,it.y?'#4E86C8':'#D6A93A',14+Math.min(streak,8)*2);
+      LirichLearn.fx.pop('+'+(Math.round(gain*100)/100)+' kg',c.x,c.y-40); LirichLearn.sfx('good'); }
+    else { LirichLearn.fx.shake(cd); LirichLearn.sfx('bad'); }
+    LirichLearn.learn(it.n, right, {cat:'item', rule:it.r});
+  } catch(e) {}
+  $('hSt').classList.toggle('hot', streak>=3);
+  const a=$('ans');
+  a.className='on '+(right?'ok':'no');
+  a.innerHTML='<b>'+(right?'Correct':'Not quite')+' — '+(it.y?'blue bin':'not the blue bin')+'</b>'+it.r;
+  $('hOk').textContent=ok; $('hSt').textContent=streak;
+  $('hKg').textContent=(Math.round(kg*100)/100).toFixed(2)+' kg';
+  $('bYes').disabled=true; $('bNo').disabled=true;
+  $('bYes').style.opacity=.45; $('bNo').style.opacity=.45;
+  $('next').textContent = (i>=N-1)?'See how you did':'Next item';
+  $('next').classList.add('on');
+}
+function nextItem(){
+  if(i>=N-1) return finish();
+  i++; show();
+}
+function finish(){
+  $('eTag').textContent = ok===N?'Perfect round':'Round complete';
+  $('eTitle').textContent = ok===N ? 'Twelve out of twelve'
+    : ok>=9 ? 'Good — better than most' : ok>=6 ? 'About average' : 'Worth another go';
+  $('eOk').textContent=ok+'/'+N;
+  $('eKg').textContent=(Math.round(kg*100)/100).toFixed(2)+' kg';
+  $('eMiss').innerHTML = misses.length
+    ? '<div class="miss"><b>The ones that caught you:</b><ul>'
+      + misses.slice(0,5).map(m=>'<li><b>'+m.n+'</b> — '+m.r+'</li>').join('') + '</ul></div>'
+    : '<div class="miss">Nothing caught you out. Try again — the deck is bigger than twelve.</div>';
+  $('ovEnd').classList.remove('hide');
+  try {
+    const stars = ok===N?3 : ok>=10?2 : ok>=7?1 : 0;
+    LirichLearn.level('binornot', 0, stars);
+    LirichLearn.run('binornot', kg);
+    const d = LirichLearn.daily();
+    LirichLearn.stamp($('ovEnd').querySelector('.card'), stars);
+    $('eTag').textContent = d>1 ? d+' days in a row' : 'Day 1 of your streak';
+  } catch(e) {}
+  /* shared score layer: records the run, offers a team name, shows the board status */
+  try { LirichScores.finish('binornot', kg, $('ovEnd').querySelector('.card')); } catch(e) {}
+}
+/* Build the round by drawing HALF from each answer, rather than shuffling the whole
+   74-item pool and hoping. Measured before the change: a random draw of twelve gave
+   between 2 and 10 recyclable items. Two reasons:
+     1. A round that happens to be ten "no" items teaches badly and reads as a trick.
+     2. Every round now has the same shape, which is what makes two rounds comparable
+        — and comparability is the entire premise of a shared leaderboard.
+   This also removes the old "if every item has the same answer, call start() again"
+   retry. That retry did terminate, including under challenge mode — the seeded
+   generator advances on every call, so the second draw differs from the first — but a
+   correctness argument that depends on how the RNG is wired is a fragile one to leave
+   in a file that other people will edit. A draw that cannot produce a bad round needs
+   no retry to reason about.
+   If either half of the pool is ever too small, take what there is and fill from the
+   rest, so a shrunken rules file degrades instead of breaking.                       */
+function drawRound(){
+  var yes = shuffle(ITEMS.filter(function(d){ return d.y; }));
+  var no  = shuffle(ITEMS.filter(function(d){ return !d.y; }));
+  var half = Math.floor(N/2);
+  var take = yes.slice(0, Math.min(half, yes.length)).concat(no.slice(0, Math.min(N-half, no.length)));
+  if(take.length < N){
+    var used = {}; take.forEach(function(d){ used[d.n]=1; });
+    var rest = shuffle(ITEMS.filter(function(d){ return !used[d.n]; }));
+    take = take.concat(rest.slice(0, N-take.length));
+  }
+  return shuffle(take);
+}
+function start(){
+  deck=drawRound();
+  i=0; ok=0; streak=0; kg=0; misses=[]; marks=[];
+  $('hOk').textContent=0; $('hSt').textContent=0; $('hKg').textContent='0 kg';
+  show();
+}
+$('bYes').onclick=()=>answer(1); $('bNo').onclick=()=>answer(0);
+$('next').onclick=nextItem;
+try { const st=LirichLearn.store().streak, t=LirichLearn.today();
+  $('dStreak').textContent = st.n||0;
+  $('dTxt').textContent = st.last===t ? (st.n===1?'day so far. Come back tomorrow to make it two.':'days in a row, and today is done.')
+    : st.n ? 'days in a row. Play today to keep it going.' : 'days so far. Play today to start a streak.';
+} catch(e) {}
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); start(); };
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); start(); };
+addEventListener('keydown',e=>{ if(e.key==='ArrowLeft')answer(1); if(e.key==='ArrowRight')answer(0);
+  if(e.key==='Enter'&&answered)nextItem(); });
+start();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

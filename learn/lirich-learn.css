@@ -1,0 +1,167 @@
+/* =====================================================================================
+   lirich-learn.css — Lirich Learn brand layer. Added 4 Oct 2026.
+   Loaded AFTER each game's own <style>, so it restyles without touching game logic.
+   Brand: Lirich gold on harbour navy, the orange rule, "Enrichment of Resources".
+   Type: Cinzel (brand moments only) + Nunito (everything a child reads).
+   Fonts ship in ./assets — the basket must make zero external requests.
+   ===================================================================================== */
+@font-face{font-family:Nunito;font-weight:400;font-display:swap;src:url(assets/nunito-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:Nunito;font-weight:700;font-display:swap;src:url(assets/nunito-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:Nunito;font-weight:800;font-display:swap;src:url(assets/nunito-latin-800-normal.woff2) format('woff2')}
+@font-face{font-family:Nunito;font-weight:900;font-display:swap;src:url(assets/nunito-latin-900-normal.woff2) format('woff2')}
+@font-face{font-family:Cinzel;font-weight:700;font-display:swap;src:url(assets/cinzel-latin-700-normal.woff2) format('woff2')}
+
+:root{
+  --ll-night:#0B1630; --ll-navy:#13274B; --ll-navy2:#1B3360; --ll-gold:#D6A93A; --ll-gold-hi:#F2D27A;
+  --ll-orange:#E8772E; --ll-orange-lo:#B95514; --ll-ink:#13213F; --ll-mut:#56627C; --ll-chalk:#fff;
+  --ll-good:#2F9A5E; --ll-bad:#C0455F;
+  /* existing game tokens, re-pointed at the brand */
+  --navy:var(--ll-ink); --navy2:var(--ll-night); --gold:var(--ll-gold); --orange:var(--ll-orange);
+  --ice:#C9D6EE;
+}
+html,body{font-family:Nunito,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--ll-night)}
+#app{
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(214,169,58,.16), transparent 60%),
+    linear-gradient(180deg,var(--ll-navy) 0%,#10213F 55%,var(--ll-night) 100%);
+}
+
+/* ---- header: the Lirich mark is the way home ---------------------------------------- */
+header{align-items:center}
+.brand{font-family:Nunito,sans-serif;letter-spacing:0;color:var(--ll-gold);display:flex;align-items:center;gap:9px;font-size:12px}
+.brand b{font-family:Nunito,sans-serif;font-weight:900;font-size:19px;letter-spacing:-.01em;color:#fff;display:block}
+.ll-home{display:flex;flex-direction:column;align-items:center;text-decoration:none;color:var(--ll-gold);
+  border-right:1px solid rgba(214,169,58,.35);padding-right:10px;line-height:1}
+.ll-home img{height:22px;width:auto;display:block}
+.ll-home span{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:8.5px;letter-spacing:.32em;margin-top:2px;padding-left:.32em}
+.ll-home:focus-visible{outline:2px solid var(--ll-gold-hi);outline-offset:3px;border-radius:4px}
+
+/* ---- HUD ---------------------------------------------------------------------------- */
+.stat{background:rgba(255,255,255,.06);border:1px solid rgba(214,169,58,.20);border-radius:14px}
+.stat span{letter-spacing:.02em;text-transform:none;font-weight:700;font-size:11px;color:#B8C6E2}
+.stat b{font-weight:900;font-size:19px}
+.lvl,.rt{letter-spacing:.02em}
+.lvl b,.rt b{font-weight:900}
+
+/* ---- overlays and cards ------------------------------------------------------------- */
+.ov{background:rgba(7,14,30,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  flex-direction:column;justify-content:flex-start}
+.ov>:first-child{margin-top:auto}.ov>:last-child{margin-bottom:auto}
+.card{border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px rgba(214,169,58,.25);
+  border-top:5px solid var(--ll-orange);color:var(--ll-ink)}
+.card h1,.card h2{font-family:Nunito,sans-serif;font-weight:900;letter-spacing:-.015em;color:var(--ll-ink)}
+.card h1{font-size:28px}
+.card p{color:#3A4763}
+.tag,.card .tag{background:#FFF4DA;color:#7A5A12;text-transform:none;letter-spacing:.01em;font-weight:800;font-size:12px}
+.fact{background:#F3F6FC;border-left:4px solid var(--ll-gold);border-radius:0 12px 12px 0;color:#2E3B57}
+.fact b{color:var(--ll-ink)}
+.mini{color:var(--ll-mut)}
+
+/* buttons: chunky and pressable — the thing a child taps most */
+.btn,.b,#next{font-family:Nunito,sans-serif;font-weight:900;font-size:16px;border-radius:14px;
+  box-shadow:0 4px 0 rgba(0,0,0,.28);transition:transform .06s,box-shadow .06s}
+.btn,#next{background:var(--ll-orange);box-shadow:0 4px 0 var(--ll-orange-lo)}
+.btn.alt{background:var(--ll-navy2);box-shadow:0 4px 0 #0A1630}
+.btn.ghost{box-shadow:none}
+.btn:active,.b:active,#next:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.btn:focus-visible,.b:focus-visible,#next:focus-visible,input:focus-visible{outline:3px solid var(--ll-gold-hi);outline-offset:2px}
+input[type=text]{font-family:Nunito,sans-serif;border-radius:12px}
+
+/* ---- the weighbridge ticket: every result is printed the way Lirich weighs a load ---- */
+.row2{position:relative;background:#FBFBF7;border:1px solid #E3E0D2;border-radius:6px;padding:26px 12px 12px;
+  gap:0;margin-top:14px;
+  background-image:radial-gradient(circle at 8px 0,transparent 6px,#FBFBF7 6.5px);
+  background-size:16px 100%;}
+.row2::before{content:"Weighbridge ticket";position:absolute;left:12px;top:8px;
+  font-size:10.5px;font-weight:800;color:#8C8670;letter-spacing:.02em}
+.row2 .cell{background:none;border-radius:0;padding:4px 10px;border-left:1px dashed #D6D1BD}
+.row2 .cell:first-child{border-left:0}
+.row2 .cell span{text-transform:none;letter-spacing:0;font-weight:700;font-size:11.5px;color:#7B7764}
+.row2 .cell b{font-weight:900;font-size:22px;color:var(--ll-ink);white-space:nowrap}
+
+/* ---- star stamp --------------------------------------------------------------------- */
+.ll-stamp{display:flex;align-items:center;justify-content:center;gap:6px;margin:6px 0 2px}
+.ll-star{font-size:40px;line-height:1;color:#E4E7EE;-webkit-text-stroke:1.5px #C9CFDC}
+.ll-star.on{color:var(--ll-gold);-webkit-text-stroke:1.5px #A57E1C;animation:ll-stamp .42s cubic-bezier(.2,1.6,.4,1) both;animation-delay:var(--d)}
+.ll-star:nth-child(2){font-size:50px;transform:translateY(-6px)}
+.ll-star.on:nth-child(2){animation-name:ll-stamp2}
+.ll-stamp em{display:none}
+@keyframes ll-stamp{0%{transform:scale(2.4);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes ll-stamp2{0%{transform:translateY(-6px) scale(2.4);opacity:0}100%{transform:translateY(-6px) scale(1);opacity:1}}
+
+/* ---- feedback ----------------------------------------------------------------------- */
+.ll-fx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50}
+.ll-pop{position:fixed;z-index:51;pointer-events:none;transform:translate(-50%,-50%);
+  font-family:Nunito,sans-serif;font-weight:900;font-size:17px;color:var(--ll-gold-hi);background:var(--ll-ink);
+  border:1px solid rgba(214,169,58,.6);border-radius:999px;padding:3px 11px;
+  box-shadow:0 6px 16px rgba(0,0,0,.35);animation:ll-pop 1s ease-out forwards;white-space:nowrap}
+@keyframes ll-pop{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-190%) scale(1)}}
+.ll-shake{animation:ll-shake .38s}
+@keyframes ll-shake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+.ll-toast{position:fixed;left:50%;top:14px;transform:translate(-50%,-140%);z-index:60;display:flex;align-items:center;gap:11px;
+  background:var(--ll-ink);color:#fff;border:1px solid rgba(214,169,58,.55);border-radius:16px;padding:9px 16px 9px 10px;
+  font-family:Nunito,sans-serif;font-weight:900;font-size:15px;box-shadow:0 14px 34px rgba(0,0,0,.45);
+  transition:transform .35s cubic-bezier(.2,1.3,.4,1);max-width:calc(100vw - 32px)}
+.ll-toast.on{transform:translate(-50%,0)}
+.ll-toast small{display:block;font-weight:700;font-size:11px;color:var(--ll-gold-hi)}
+.ll-card-ic{width:26px;height:34px;border-radius:5px;flex:0 0 auto;
+  background:linear-gradient(160deg,var(--ll-gold-hi),var(--ll-gold) 55%,#A57E1C);box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
+.ll-rank-ic{font-size:26px;color:var(--ll-gold)}
+
+/* ---- post-game learning close ------------------------------------------------------- */
+.ll-debrief{margin:14px 0;padding:13px 14px;border-radius:14px;background:#FFF7E4;border:1px solid #E8D18D;
+  color:var(--ll-ink);text-align:left}
+.ll-debrief small{display:block;color:#7A5A12;font-weight:900;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase}
+.ll-debrief>b{display:block;font-size:17px;font-weight:900;margin:1px 0 4px}
+.ll-debrief p{font-size:12.5px!important;line-height:1.45!important;margin:0 0 9px!important;color:#3A4763!important}
+.ll-debrief strong{color:var(--ll-ink)}
+.ll-debrief .ll-reflect{border-top:1px solid #E8D18D;padding-top:8px;margin-top:8px!important}
+.ll-next{display:inline-flex;align-items:center;gap:5px;color:#8C4212;font-size:12.5px;font-weight:900;text-decoration:none;
+  border-bottom:2px solid rgba(232,119,46,.35)}
+.ll-next:focus-visible{outline:3px solid var(--ll-gold);outline-offset:3px;border-radius:3px}
+
+@media (prefers-reduced-motion: reduce){
+  .ll-star.on,.ll-pop,.ll-shake{animation:none!important}
+  .btn,.b,#next,.ll-toast{transition:none}
+}
+
+/* ---- credits: Continue offer, shop, grown-up check, balance chip (lirich-wallet.js, 21 Nov 2026) ---- */
+.lw-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:rgba(7,14,30,.78);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);overflow:auto}
+.lw-card{width:100%;max-width:380px;background:#fff;color:var(--ll-ink);border-radius:22px;padding:20px 18px 16px;
+  box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 0 1px rgba(214,169,58,.35);text-align:center;font-family:Nunito,system-ui,sans-serif;
+  animation:lw-in .22s ease-out}
+@keyframes lw-in{from{transform:translateY(14px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.lw-card h2{font-weight:900;font-size:24px;letter-spacing:-.015em;margin:8px 0 6px;color:var(--ll-ink)}
+.lw-card h3{font-weight:900;font-size:15px;margin:16px 0 6px;text-align:left}
+.lw-card h3 small{font-weight:700;color:var(--ll-mut);font-size:12px;margin-left:6px}
+.lw-card p{font-size:15px;line-height:1.45;color:#3A4763;margin:0 0 10px}
+.lw-tag{display:inline-block;background:#FFF4DA;color:#7A5A12;border-radius:999px;padding:3px 11px;font-weight:800;font-size:12px}
+.lw-coin{color:var(--ll-gold);margin-right:3px;font-size:.95em}
+.lw-bal{display:inline-block;background:#F1F4FA;border-radius:12px;padding:8px 14px;margin:2px 0 12px;font-weight:800;font-size:15px}
+.lw-big{font-weight:900;font-size:40px;line-height:1.1;margin:4px 0}
+.lw-sub{font-size:13.5px!important;color:var(--ll-mut)!important}
+.lw-btn{display:block;width:100%;border:0;border-radius:14px;padding:13px;margin-top:8px;cursor:pointer;
+  font:900 16px Nunito,system-ui,sans-serif;color:#fff;background:var(--ll-orange);box-shadow:0 4px 0 var(--ll-orange-lo)}
+.lw-btn.alt{background:var(--ll-navy2);box-shadow:0 4px 0 #0A1630}
+.lw-btn.ghost{background:none;color:var(--ll-mut);box-shadow:none;font-weight:800;font-size:14px}
+.lw-btn:disabled{opacity:.4;cursor:default}
+.lw-btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.lw-btn:focus-visible,.lw-pack:focus-visible,.lw-chip:focus-visible,.lw-q input:focus-visible{outline:3px solid var(--ll-gold-hi);outline-offset:2px}
+.lw-short{color:var(--ll-bad)!important;font-weight:700;font-size:14px!important;margin-top:8px!important}
+.lw-soon{background:#F1F4FA;border-radius:12px;padding:9px 11px;font-size:13px!important;text-align:left}
+.lw-earn{list-style:none;padding:0;margin:0;text-align:left}
+.lw-earn li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #E6EAF2;font-size:14px}
+.lw-earn li b{color:var(--ll-good);white-space:nowrap}
+.lw-packs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.lw-pack{position:relative;border:2px solid #E6EAF2;background:#fff;border-radius:14px;padding:14px 4px 10px;cursor:pointer;
+  font-family:Nunito,system-ui,sans-serif;color:var(--ll-ink);display:flex;flex-direction:column;align-items:center;gap:2px}
+.lw-pack i{position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--ll-orange);color:#fff;font-style:normal;
+  font-weight:900;font-size:10px;border-radius:999px;padding:2px 7px;white-space:nowrap}
+.lw-pc{font-weight:900;font-size:19px}.lw-pl{font-size:12px;color:var(--ll-mut);font-weight:700}.lw-pack b{font-size:14px}
+.lw-q{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900;font-size:24px;margin:6px 0 4px}
+.lw-q input{width:96px;font:900 24px Nunito,system-ui,sans-serif;text-align:center;padding:6px;border:2px solid #C9D3E4;border-radius:12px}
+.lw-chip{display:inline-flex;align-items:center;gap:2px;border:1px solid rgba(214,169,58,.45);background:rgba(255,255,255,.06);
+  color:#fff;border-radius:999px;padding:6px 12px;font:800 14px Nunito,system-ui,sans-serif;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.lw-card{animation:none}}
