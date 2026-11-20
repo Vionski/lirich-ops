@@ -2,7 +2,7 @@
    Place next to the game files when hosting over HTTPS.
    Does nothing at all when the folder is opened from disk, which is intended:
    from a USB stick the games already work without it. */
-const CACHE = 'lirich-learn-v29';
+const CACHE = 'lirich-learn-v30';
 
 /* The shared modules must be cached. Every game reads its sorting rules from
    lirich-rules.js and its scoring from lirich-scores.js, so a cached game with an

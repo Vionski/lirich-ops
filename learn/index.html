@@ -54,6 +54,8 @@
  .rank .kg{font-weight:800;font-size:13px;color:#E7ECF7}
  .bar{height:9px;border-radius:5px;background:rgba(255,255,255,.12);margin:9px 0 5px;overflow:hidden}
  .bar i{display:block;height:100%;background:linear-gradient(90deg,#E8772E,#D6A93A);border-radius:5px;width:0;transition:width .8s}
+ .rank .lbl{display:block;width:max-content;margin-top:9px;font-weight:900;font-size:13px;color:#F2D27A;text-decoration:none}
+ .rank .lbl:focus-visible{outline:3px solid #F2D27A;outline-offset:2px;border-radius:4px}
  .rank .nx{font-size:12px;color:#B8C6E2;font-weight:700}
 
  /* a clear first choice for a learner who has never seen the twelve-game catalogue */
@@ -220,6 +222,7 @@
     <span class="kg" id="rkKg">0 stars mastered · 0 kg diverted</span>
     <div class="bar"><i id="rkBar"></i></div>
     <span class="nx" id="rkNx">Earn 3 stars to become a Bin Checker</span>
+    <a class="lbl" href="leaderboard.html">Players and schools leaderboard <span aria-hidden="true">→</span></a>
   </div>
 </section>
 
@@ -366,7 +369,7 @@
 <footer>
   <span class="tl">ENRICHMENT OF RESOURCES</span>
   <span>Lirich Resources Pte Ltd · 23 Gul Drive, Singapore</span>
-  <a href="leaderboard.html">Team board</a>
+  <a href="leaderboard.html">Leaderboard</a>
   <a href="staff.html">Staff and teacher page</a>
   <a href="beta-guide.html">Privacy, safety and accessibility</a>
   <a href="beta-feedback.html">Beta feedback sheet</a>
