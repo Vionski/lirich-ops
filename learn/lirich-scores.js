@@ -94,6 +94,10 @@
   var GAMES = {
     sortit:        { name: 'Sort It!',             unit: 'kg', cap: 2000,    realtime: false, deterministic: true  },
     binornot:      { name: 'Bin or Not?',          unit: 'kg', cap: 1000,    realtime: false, deterministic: true  },
+    /* added 21 Nov 2026. A perfect round keeps 0.33–1.65 kg from the bin depending on the
+       deck (20,000 simulated perfect rounds); the cap is three times the best. Random
+       deck, so not deterministic and not for a scored competition. */
+    threer:        { name: 'Reduce, Reuse or Recycle?', unit: 'kg', cap: 5, realtime: false, deterministic: false },
     buildtheline:  { name: 'Build the Line',       unit: 'kg', cap: 5000,    realtime: false, deterministic: true  },
     spot:          { name: 'Spot the Contaminant', unit: 'kg', cap: 3000,    realtime: false, deterministic: true  },
     /* A weighed-out run stops at the 28 t payload plus whatever the last piece added —
@@ -231,6 +235,7 @@
      MEASURED for each game (tests/capaudit.mjs table, 21 Nov 2026), so a good run is about
      100 and a perfect one about 150:
          sortit 650 kg best -> 450      binornot 8 kg -> 5.5        buildtheline 960 -> 650
+         threer: a perfect round's median 0.975 kg (simulated decks) -> 0.65
          spot 192 -> 130                loadcontainer 28,825 -> 20,000
          upgrade median 35,629 -> 35,000 (best 154,793 hits the cap)
          zerowastecity measured playthrough 21.4 Mt -> 21,000,000 t
@@ -241,7 +246,7 @@
          pickline ~27 kg a minute flawless -> 50 (about 2 good minutes), endless likewise
      If a game changes, re-measure its best run and move its REF with it.          */
   var REF = {
-    sortit: 450, binornot: 5.5, buildtheline: 650, spot: 130, loadcontainer: 20000, upgrade: 35000,
+    sortit: 450, binornot: 5.5, threer: 0.65, buildtheline: 650, spot: 130, loadcontainer: 20000, upgrade: 35000,
     zerowastecity: 21000000, onroute: 2000, pickline: 50, plantbuilder: 130000, dispatch: 100
   };
   var POINTS_MAX = 150;

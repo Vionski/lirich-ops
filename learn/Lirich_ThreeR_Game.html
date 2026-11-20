@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reduce, Reuse or Recycle? — Lirich Learn</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png"><link rel="icon" href="assets/icon-192.png">
+<meta name="theme-color" content="#1B2A4A"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="3R Choice">
+<style>
+ :root{--navy:#1B2A4A;--navy2:#10192E;--gold:#C9A227;--orange:#E07C2E;--ice:#CADCFC;
+   --ink2:#AEBCD4;--good:#3FA46B;--bad:#C0455F;--mid:#C98A12;
+   --r1:#2F9A5E;--r1lo:#1E6E41;--r2:#3F78BD;--r2lo:#26507F;--r3:#E8772E;--r3lo:#B95514}
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ html,body{margin:0;height:100%;background:var(--navy2);color:#fff;
+   font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+ body{display:flex;align-items:center;justify-content:center}
+ #app{width:100%;max-width:520px;height:100%;max-height:940px;display:flex;flex-direction:column;
+   background:linear-gradient(180deg,#1B2A4A,#16223C 60%,#10192E);position:relative;overflow:hidden}
+ header{padding:10px 14px 4px;display:flex;align-items:flex-end;flex:0 0 auto}
+ .brand{font-family:Georgia,serif;letter-spacing:.14em;font-size:11px;color:var(--gold)}
+ .brand b{display:block;font-size:16px;letter-spacing:.04em;color:#fff;font-weight:600}
+ .spacer{flex:1}.rt{text-align:right;font-size:10px;letter-spacing:.08em;color:var(--ice)}
+ .rt b{display:block;font-size:20px;color:#fff;font-variant-numeric:tabular-nums;line-height:1}
+ #hud{display:flex;gap:8px;padding:6px 14px 8px;flex:0 0 auto}
+ .stat{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(202,220,252,.18);border-radius:10px;padding:7px 9px}
+ .stat span{display:block;font-size:9.5px;letter-spacing:.07em;color:var(--ice);text-transform:uppercase}
+ .stat b{font-size:17px;font-variant-numeric:tabular-nums}
+ #prog{display:flex;gap:4px;padding:0 14px 6px}
+ #prog i{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}
+ #prog i.ok{background:#2F9A5E}#prog i.mid{background:#C98A12}#prog i.no{background:#C0455F}#prog i.now{background:#D6A93A}
+ #main{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;padding:0 16px;min-height:0;overflow-y:auto}
+ .item{background:#fff;color:#22303F;border-radius:22px;padding:18px 18px 18px;text-align:center;position:relative;
+   box-shadow:0 14px 36px rgba(0,0,0,.4)}
+ .item.enter{animation:trIn .32s cubic-bezier(.2,1.25,.4,1)}
+ @keyframes trIn{0%{transform:translateY(24px) rotate(-2deg) scale(.94);opacity:0}100%{transform:none;opacity:1}}
+ .item.ok{box-shadow:0 0 0 4px #2F9A5E,0 14px 36px rgba(0,0,0,.4)}
+ .item.mid{box-shadow:0 0 0 4px #C98A12,0 14px 36px rgba(0,0,0,.4)}
+ .item.no{box-shadow:0 0 0 4px #C0455F,0 14px 36px rgba(0,0,0,.4)}
+ .item .verdict{position:absolute;top:12px;right:12px;font-weight:900;font-size:13px;border-radius:999px;padding:4px 11px;color:#fff;display:none}
+ .item.ok .verdict{display:block;background:#2F9A5E}.item.mid .verdict{display:block;background:#C98A12}.item.no .verdict{display:block;background:#C0455F}
+ .item canvas{display:block;margin:0 auto 6px}
+ .item .what{font-size:12px;font-weight:800;color:#7A5A12;background:#FFF4DA;border-radius:999px;padding:3px 10px;display:inline-block}
+ .item h2{font-family:Nunito,sans-serif;font-weight:900;font-size:22px;letter-spacing:-.01em;margin:8px 0 2px;color:var(--navy);line-height:1.25}
+ .item p{font-size:14px;font-weight:700;color:#56627C;margin:4px 0 0}
+ #ans{margin-top:12px;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;display:none;background:rgba(255,255,255,.06)}
+ #ans.on{display:block}
+ #ans.ok{border:1px solid rgba(63,164,107,.6)}#ans.mid{border:1px solid rgba(201,138,18,.7)}#ans.no{border:1px solid rgba(192,69,95,.6)}
+ #ans b{display:block;font-weight:900;font-size:16px;margin-bottom:3px}
+ #ans .rule{display:block;margin-top:6px;font-size:13px;color:#C9D6EE}
+ #btns{display:flex;gap:8px;padding:12px 16px 10px;flex:0 0 auto}
+ .b{flex:1;border:0;border-radius:14px;padding:14px 4px 12px;cursor:pointer;color:#fff;font:900 16px Nunito,system-ui,sans-serif}
+ .b i{display:block;font-style:normal;font-size:22px;line-height:1;margin-bottom:3px}
+ .b small{display:block;font-size:10.5px;font-weight:700;opacity:.85;margin-top:2px}
+ .b1{background:var(--r1);box-shadow:0 4px 0 var(--r1lo)}.b2{background:var(--r2);box-shadow:0 4px 0 var(--r2lo)}.b3{background:var(--r3);box-shadow:0 4px 0 var(--r3lo)}
+ .b:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+ .b:disabled{opacity:.45;cursor:default}
+ .b:focus-visible,#next:focus-visible{outline:3px solid #F2D27A;outline-offset:2px}
+ #next{width:100%;background:var(--orange);color:#fff;border:0;border-radius:12px;padding:15px;font-size:15px;font-weight:600;cursor:pointer;display:none}
+ #next.on{display:block}
+ .ov{position:absolute;inset:0;background:rgba(9,14,26,.94);display:flex;align-items:center;justify-content:center;padding:22px;z-index:9;overflow-y:auto}
+ .ov.hide{display:none}
+ .card{background:#fff;color:#22303F;border-radius:16px;padding:20px;max-width:400px;width:100%}
+ .card h1{font-family:Georgia,serif;margin:0 0 6px;font-size:25px;color:var(--navy)}
+ .card p{font-size:13.5px;line-height:1.55;color:#3D4A5A;margin:8px 0}
+ .tag{display:inline-block;background:#EEF2F9;color:var(--navy);border-radius:999px;padding:3px 11px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+ .btn{background:var(--orange);color:#fff;border:0;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:10px}
+ .ladder{display:flex;flex-direction:column;gap:6px;margin:12px 0 4px;text-align:left}
+ .ladder div{display:block;border-radius:12px;padding:8px 12px;color:#fff;font-weight:900;font-size:15px}
+ .ladder div span{display:block;font-weight:700;font-size:12.5px;opacity:.95}
+ .ladder .l1{background:var(--r1)}.ladder .l2{background:var(--r2)}.ladder .l3{background:var(--r3)}
+ .row2{display:flex;gap:10px;margin-top:12px}
+ .row2 .cell{flex:1;background:#F2F5FA;border-radius:10px;padding:10px}
+ .row2 .cell span{display:block;font-size:9.5px;letter-spacing:.06em;color:#5B6472;text-transform:uppercase}
+ .row2 .cell b{font-size:19px;color:var(--navy);font-variant-numeric:tabular-nums}
+ .miss{text-align:left;margin-top:10px;font-size:12.5px;color:#3D4A5A;line-height:1.5}
+ .miss li{margin-bottom:5px}
+ @media (max-height:700px){.item h2{font-size:19px}.b{padding:11px 4px 9px}.b i{font-size:18px}}
+</style>
+<link rel="stylesheet" href="lirich-learn.css"></head>
+<body><div id="app">
+<header><div class="brand"><a class="ll-home" href="index.html" title="All Lirich Learn games"><img src="assets/lirich-mark.png" alt="Lirich Learn home"><span>LEARN</span></a><b>Reduce, Reuse or Recycle?</b></div><div class="spacer"></div>
+  <div class="rt">CARD<b id="hN">1/10</b></div></header>
+<div id="hud">
+  <div class="stat"><span>Best choices</span><b id="hOk">0</b></div>
+  <div class="stat"><span>Streak</span><b id="hSt">0</b></div>
+  <div class="stat"><span>Kept from the bin</span><b id="hKg">0 kg</b></div>
+</div>
+<div id="prog" aria-hidden="true"></div>
+<div id="main">
+  <div class="item" id="card"><span class="verdict" id="verdict"></span>
+    <canvas id="ic" width="150" height="96" aria-hidden="true"></canvas>
+    <div class="what" id="qItem">—</div>
+    <h2 id="qText">—</h2><p>What is the best thing to do?</p></div>
+  <div id="ans" role="status"></div>
+</div>
+<div id="btns">
+  <button class="b b1" id="bRd" data-c="reduce"><i aria-hidden="true">↓</i>Reduce<small>use less</small></button>
+  <button class="b b2" id="bRu" data-c="reuse"><i aria-hidden="true">↻</i>Reuse<small>use again</small></button>
+  <button class="b b3" id="bRc" data-c="recycle"><i aria-hidden="true">♻</i>Recycle<small>right bin</small></button>
+</div>
+<div style="padding:0 16px 12px"><button id="next">Next card</button></div>
+
+<div class="ov" id="ovStart"><div class="card">
+  <div class="tag">The 3Rs</div><h1>Reduce, Reuse or Recycle?</h1>
+  <p>Ten everyday moments. For each one, pick the <b>best</b> thing to do. The order matters:</p>
+  <div class="ladder">
+    <div class="l1">1 · Reduce <span>The best waste is the waste never made.</span></div>
+    <div class="l2">2 · Reuse <span>Use it again before it becomes waste.</span></div>
+    <div class="l3">3 · Recycle <span>Clean, in the right bin, when it is finished.</span></div>
+  </div>
+  <p>The best choice scores in full. A good choice that is lower on the ladder scores half.</p>
+  <button class="btn" id="btnStart">Start</button>
+  <p style="font-size:11px;margin-top:10px">What can go in the blue bin comes from NEA's list of items that are recyclable and not.
+     Weights are for scoring only. Nothing personal is saved.</p>
+</div></div>
+
+<div class="ov hide" id="ovEnd"><div class="card">
+  <div class="tag" id="eTag">Round complete</div><h1 id="eTitle">—</h1>
+  <div class="row2"><div class="cell"><span>Best choices</span><b id="eOk">—</b></div>
+    <div class="cell"><span>Kept from the bin</span><b id="eKg">—</b></div></div>
+  <div id="eMiss"></div>
+  <button class="btn" id="btnAgain">Play another ten</button>
+</div></div>
+</div>
+<script src="lirich-rules.js"></script>
+<script src="lirich-schools.js"></script>
+<script src="lirich-scores.js"></script>
+<script src="lirich-learn.js"></script>
+<script src="lirich-wallet.js"></script>
+<script src="lirich-sprites.js"></script>
+<script>
+if (!window.LirichRules) {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.innerHTML =
+      '<div style="font:16px/1.6 system-ui,sans-serif;max-width:34em;margin:12vh auto;padding:0 6vw;color:#2B3B55">' +
+      '<h1 style="font-size:1.3em">Missing file</h1><p><b>lirich-rules.js</b> is not in this folder. Copy it next to this game and reload.</p></div>';
+  });
+  throw new Error('lirich-rules.js not loaded');
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================================
+   Reduce, Reuse or Recycle? — Lirich Learn. Game 12. Added 21 Nov 2026.
+
+   WHY THIS GAME EXISTS
+   The other eleven games teach recycling and recovery. The 3Rs put reduce and reuse
+   FIRST, and the grant research (Lirich_Learn_Grant_Alignment_21Nov2026.md) flagged
+   that gap. This game teaches the order of the ladder: reduce, then reuse, then recycle.
+
+   WHERE THE FACTS COME FROM
+   - Every statement about what may go in the blue bin is the item's own rule text from
+     lirich-rules.js (NEA's published list) — shown verbatim as "The rule". This file adds
+     no recyclability ruling of its own.
+   - The reduce and reuse advice is ordinary practice (refuse what you do not need, use
+     things again, pass things on). No statistic is quoted.
+   - Masses are the item masses in lirich-rules.js, which that file flags as demonstration
+     figures for scoring, not measurements.
+
+   SCORING
+   best choice = the item's mass kept from the bin, and 1 toward the stars
+   also-good choice (lower on the ladder but still right) = half the mass, half a star point
+   anything else = nothing, and the explanation says why
+   ===================================================================================== */
+const R = LirichRules;
+/* best: the right rung. also: a lower rung that is still a good thing to do (half credit).
+   An "also" of recycle is only ever set where the rules file says the item IS recyclable. */
+const CARDS = [
+  { item:'PET bottle',        q:'You buy a bottled drink every school day.',           best:'reduce',  also:'recycle',
+    why:'Bring a refillable bottle from home. The greenest bottle is the one that never needed making.' },
+  { item:'Jam jar',           q:'The jam is finished and the jar is clean.',            best:'reuse',   also:'recycle',
+    why:'A clean jar can hold pencils, buttons or leftovers for years before it ever needs recycling.' },
+  { item:'Plastic bag',       q:'You have a clean plastic bag from the supermarket.',   best:'reuse',   also:'recycle',
+    why:'Use it again on the next shopping trip or as a bin liner. Better still next time: bring your own bag.' },
+  { item:'Plastic cutlery',   q:'Ordering takeaway lunch. The shop asks: "Cutlery?"',  best:'reduce',  also:'recycle',
+    why:'Say "no, thanks" and use a spoon from home. Cutlery you never take is waste that never happens.' },
+  { item:'Cardboard box',     q:'A delivery box arrives, clean and still strong.',      best:'reuse',   also:'recycle',
+    why:'Use it to store things or to send a parcel. When it is worn out, flatten it for the blue bin.' },
+  { item:'Old T-shirt',       q:'Your T-shirt is too small, but it is still good.',     best:'reuse',   also:null,
+    why:'Give it to someone it fits, or donate it. Clothes are not a blue-bin item.' },
+  { item:'Newspaper',         q:'Everyone at home has read today\'s newspaper.',        best:'recycle', also:'reuse',
+    why:'Printed paper is one of the easiest things to recycle. Flatten it and put it in the blue bin.' },
+  { item:'Drink can',         q:'You have finished a canned drink.',                    best:'recycle', also:null,
+    why:'An empty can cannot really be used again, but aluminium recycles well. Empty it into the blue bin.' },
+  { item:'Food can',          q:'The baked beans are finished.',                        best:'recycle', also:null,
+    why:'Empty and rinse the can, then it goes in the blue bin.' },
+  { item:'Beverage carton',   q:'You finish a packet drink at recess.',                 best:'recycle', also:'reduce',
+    why:'Drink cartons are recyclable once empty and rinsed. A refillable bottle would have been even better.' },
+  { item:'Detergent bottle',  q:'The detergent bottle at home is empty.',               best:'recycle', also:'reduce',
+    why:'Empty it and put it in the blue bin. Next time, a bigger bottle or a refill pack means less packaging.' },
+  { item:'Food waste',        q:'There is rice left over again — too much was cooked.', best:'reduce',  also:null,
+    why:'Cook and take only what will be eaten. Food waste does not go in the blue bin.' },
+  { item:'Paper receipt',     q:'The shop offers a printed receipt you do not need.',   best:'reduce',  also:'recycle',
+    why:'Say no, or ask for an e-receipt. A receipt that is never printed is never thrown away.' },
+  { item:'Mobile phone',      q:'You got a new phone. The old one still works.',        best:'reuse',   also:'recycle',
+    why:'Pass it to someone in the family or trade it in. When it is finally finished, it goes to an e-waste bin.' },
+  { item:'Bubble tea cup',    q:'You buy bubble tea on the way home.',                  best:'reduce',  also:'recycle',
+    why:'Bring your own tumbler. Some shops accept them. That is one cup and one straw fewer.' },
+  { item:'Gift wrapping paper', q:'You open a present wrapped in plain paper.',         best:'reuse',   also:'recycle',
+    why:'Fold it and keep it to wrap the next present.' },
+  { item:'Paper cup',         q:'Your class party is planning to use paper cups.',      best:'reduce',  also:null,
+    why:'Use washable cups instead. Paper cups are not recyclable in Singapore, so every one becomes rubbish.' },
+  { item:'Styrofoam box',     q:'The hawker is about to pack your food in a foam box.',  best:'reduce',  also:null,
+    why:'Bring your own container. Polystyrene foam is not recyclable, so the only way to win is not to take it.' }
+];
+const RUNG = { reduce:'Reduce', reuse:'Reuse', recycle:'Recycle' };
+/* attach each card to its rules-file entry: mass, NEA rule text, recyclable or not */
+CARDS.forEach(c => { const it = R.find(c.item); c.kg = it ? it.kg : 0.02; c.rule = it ? it.rule : ''; c.y = it ? it.ok : 0; c.g = it ? it.g : ''; });
+
+const N = 10;
+let deck=[], i=0, score=0, best=0, streak=0, bestRun=0, kg=0, answered=false, misses=[], marks=[];
+const $=id=>document.getElementById(id);
+const ic=$('ic'), g=ic.getContext('2d');
+function shuffle(a){ for(let k=a.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [a[k],a[j]]=[a[j],a[k]]; } return a; }
+
+/* three of each rung plus one more, so every round teaches all three */
+function drawRound(){
+  const by = r => shuffle(CARDS.filter(c => c.best === r));
+  let take = [].concat(by('reduce').slice(0,3), by('reuse').slice(0,3), by('recycle').slice(0,3));
+  const used = new Set(take); take.push(shuffle(CARDS.filter(c => !used.has(c)))[0]);
+  return shuffle(take);
+}
+function show(){
+  answered=false;
+  const c=deck[i];
+  $('qItem').textContent=c.item; $('qText').textContent=c.q;
+  g.clearRect(0,0,150,96);
+  const sk = window.LirichSprites && LirichSprites.forItem(c.item, c.g);
+  if(sk){ try { LirichSprites.draw(g, sk, 29, 0, 92); } catch(e) {} }
+  const cd=$('card'); cd.className='item'; void cd.offsetWidth; cd.classList.add('enter');
+  $('prog').innerHTML=Array.from({length:N},(_,k)=>'<i class="'+(k<marks.length?marks[k]:(k===i?'now':''))+'"></i>').join('');
+  $('ans').className=''; $('ans').innerHTML='';
+  $('next').classList.remove('on');
+  document.querySelectorAll('.b').forEach(b=>b.disabled=false);
+  $('hN').textContent=(i+1)+'/'+N;
+}
+function answer(choice){
+  if(answered) return; answered=true;
+  const c=deck[i];
+  const res = choice===c.best ? 'ok' : (c.also && choice===c.also ? 'mid' : 'no');
+  const gain = res==='ok' ? c.kg : res==='mid' ? c.kg/2 : 0;
+  kg += gain; score += res==='ok' ? 1 : res==='mid' ? 0.5 : 0;
+  if(res==='ok'){ best++; streak++; bestRun=Math.max(bestRun,streak); } else { streak=0; }
+  if(res!=='ok') misses.push({c, choice});
+  marks.push(res);
+  const cd=$('card'); cd.classList.remove('enter'); cd.classList.add(res);
+  $('verdict').textContent = res==='ok' ? (streak>=3 ? streak+' in a row' : 'Best choice') : res==='mid' ? 'Good — not the best' : 'Not this time';
+  try {
+    const p=LirichLearn.centre(cd);
+    if(gain){ LirichLearn.fx.burst(p.x,p.y,res==='ok'?'#2F9A5E':'#D6A93A',12+Math.min(streak,8)*2);
+      LirichLearn.fx.pop('+'+(Math.round(gain*1000)/1000)+' kg',p.x,p.y-40); LirichLearn.sfx('good'); }
+    else { LirichLearn.fx.shake(cd); LirichLearn.sfx('bad'); }
+    LirichLearn.learn(c.item, res!=='no', {cat:'item', rule:c.rule});
+  } catch(e) {}
+  const a=$('ans'); a.className='on '+res;
+  const head = res==='ok' ? 'Best choice: '+RUNG[c.best]
+             : res==='mid' ? RUNG[choice]+' is good. '+RUNG[c.best]+' is better.'
+             : 'Best choice: '+RUNG[c.best];
+  /* the blue-bin line is always the rules file's own wording */
+  const showRule = (choice==='recycle' || c.best==='recycle' || c.also==='recycle') && c.rule;
+  a.innerHTML='<b>'+head+'</b>'+c.why+(showRule?'<span class="rule"><strong>The bin rule:</strong> '+c.rule+'</span>':'');
+  $('hOk').textContent=best; $('hSt').textContent=streak;
+  $('hKg').textContent=(Math.round(kg*100)/100).toFixed(2)+' kg';
+  document.querySelectorAll('.b').forEach(b=>b.disabled=true);
+  $('next').textContent = (i>=N-1)?'See how you did':'Next card';
+  $('next').classList.add('on'); $('next').focus({preventScroll:true});
+}
+function nextCard(){ if(i>=N-1) return finish(); i++; show(); }
+function starsFor(s){ return s>=9 ? 3 : s>=7 ? 2 : s>=5 ? 1 : 0; }
+function finish(){
+  const stars = starsFor(score);
+  $('eTag').textContent = best===N ? 'Perfect round' : 'Round complete';
+  $('eTitle').textContent = best===N ? 'Ten best choices' : score>=7 ? 'You know the ladder' : score>=5 ? 'Getting there' : 'Worth another go';
+  $('eOk').textContent=best+'/'+N;
+  $('eKg').textContent=(Math.round(kg*100)/100).toFixed(2)+' kg';
+  $('eMiss').innerHTML = misses.length
+    ? '<div class="miss"><b>Worth remembering:</b><ul>' + misses.slice(0,5).map(m=>'<li><b>'+m.c.item+'</b> — best is <b>'+RUNG[m.c.best]+'</b>. '+m.c.why+'</li>').join('') + '</ul></div>'
+    : '<div class="miss">Every card on the top rung. Reduce first, then reuse, then recycle.</div>';
+  $('ovEnd').classList.remove('hide');
+  try {
+    LirichLearn.level('threer', 0, stars);
+    LirichLearn.run('threer', kg);
+    LirichLearn.stamp($('ovEnd').querySelector('.card'), stars);
+  } catch(e) {}
+  try { LirichScores.finish('threer', kg, $('ovEnd').querySelector('.card')); } catch(e) {}
+}
+function start(){
+  deck=drawRound(); i=0; score=0; best=0; streak=0; kg=0; misses=[]; marks=[];
+  $('hOk').textContent=0; $('hSt').textContent=0; $('hKg').textContent='0 kg';
+  show();
+}
+document.querySelectorAll('.b').forEach(b=>b.onclick=()=>answer(b.dataset.c));
+$('next').onclick=nextCard;
+$('btnStart').onclick=()=>{ $('ovStart').classList.add('hide'); start(); };
+$('btnAgain').onclick=()=>{ $('ovEnd').classList.add('hide'); start(); };
+addEventListener('keydown',e=>{
+  if(!$('ovStart').classList.contains('hide') || !$('ovEnd').classList.contains('hide')) return;
+  const k={'1':'reduce','2':'reuse','3':'recycle'}[e.key]; if(k) answer(k);
+  if(e.key==='Enter'&&answered){ e.preventDefault(); nextCard(); } });
+start();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))
+  addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>

@@ -51,6 +51,7 @@
   /* One learning close for every game. The score tells a player how they performed;
      this tells them why the skill matters and where it appears in Lirich's real work. */
   var DEBRIEFS = {
+    threer: { skill: 'The 3R ladder', real: 'Lirich handles what is left after reduce and reuse. The less that reaches a Lirich truck, the better the system is working — and what does arrive is worth more when it is clean.', check: 'Name one thing you could refuse or reuse this week instead of throwing away.', next: ['Now check the blue bin', 'Lirich_BinOrNot_Game.html'] },
     binornot: { skill: 'Source separation', real: 'Clean recycling starts before collection. One wrong item can contaminate material that could otherwise be recovered.', check: 'Name one item you will keep out of the blue recycling bin next time.', next: ['Continue to On Route', 'Lirich_OnRoute_Game.html'] },
     onroute: { skill: 'Clean collection', real: 'Collection crews protect each stream by matching the right bin, vehicle and route before anything reaches the yard.', check: 'What can happen to a clean load when the wrong bin is collected?', next: ['Inspect the load at the yard', 'Lirich_SpotTheContaminant_Game.html'] },
     spot: { skill: 'Hazard inspection', real: 'Incoming loads must be checked before processing. Batteries, cylinders and other hazards can injure people or damage equipment.', check: 'Which hazard would you stop first, and what could it harm?', next: ['Sort the safe material', 'Lirich_SortIt_Game.html'] },

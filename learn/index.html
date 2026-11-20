@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Lirich Learn">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png"><link rel="icon" href="assets/icon-192.png">
 <link rel="stylesheet" href="lirich-learn.css">
 <style>
  *{box-sizing:border-box}
@@ -56,7 +56,7 @@
  .bar i{display:block;height:100%;background:linear-gradient(90deg,#E8772E,#D6A93A);border-radius:5px;width:0;transition:width .8s}
  .rank .nx{font-size:12px;color:#B8C6E2;font-weight:700}
 
- /* a clear first choice for a learner who has never seen the eleven-game catalogue */
+ /* a clear first choice for a learner who has never seen the twelve-game catalogue */
  .start{margin:22px 0 12px;padding:18px;border-radius:22px;background:rgba(255,255,255,.045);border:1px solid rgba(214,169,58,.25)}
  .start h2{font:900 22px Nunito,sans-serif;margin:0 0 3px}.start>.sub{margin:0 0 13px;color:#B8C6E2;font-size:14px;line-height:1.45}
  .paths{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.path{display:flex;flex-direction:column;align-items:flex-start;min-height:148px;
@@ -232,9 +232,9 @@
 
 <section class="start" aria-labelledby="startH">
   <h2 id="startH">Choose your starting route</h2>
-  <p class="sub">New here? Follow one short route instead of choosing from all eleven missions.</p>
+  <p class="sub">New here? Follow one short route instead of choosing from all twelve missions.</p>
   <div class="paths">
-    <article class="path" style="--pc:#3F78BD"><small>Most learners · about 25 minutes</small><b>Explorer route</b><p>Make choices at the bin, on the truck, at the tipping floor and on the sorting line.</p><a class="go" id="exploreGo" href="Lirich_BinOrNot_Game.html">Start with Bin or Not?</a><span class="pg" id="explorePg">0 of 5 missions tried</span></article>
+    <article class="path" style="--pc:#3F78BD"><small>Most learners · about 30 minutes</small><b>Explorer route</b><p>Choose the best of the 3Rs, then make choices at the bin, on the truck, at the tipping floor and on the sorting line.</p><a class="go" id="exploreGo" href="Lirich_ThreeR_Game.html">Start with Reduce, Reuse or Recycle?</a><span class="pg" id="explorePg">0 of 6 missions tried</span></article>
     <article class="path" style="--pc:#D6A93A"><small>Older learners · open-ended</small><b>Operator route</b><p>Design processes, prepare shipments and balance investment across a recovery system.</p><a class="go" id="operatorGo" href="Lirich_BuildTheLine_Game.html">Start with Build the Line</a><span class="pg" id="operatorPg">0 of 5 missions tried</span></article>
     <article class="path" style="--pc:#E8772E"><small>Lirich staff and adult visitors</small><b>Operations route</b><p>Coordinate real operational pressures across vehicles, bins, sites and the Gul Drive floor.</p><a class="go" id="staffGo" href="Lirich_Dispatch_Game.html">Start Dispatch</a><span class="pg" id="staffPg">Advanced simulation</span></article>
   </div>
@@ -300,6 +300,12 @@
   <h3 id="mrH">The complete resource journey</h3>
   <p class="sub">Choose the part of the real waste chain you want to master. Explorer missions use everyday decisions; Operator missions add plant, money and system trade-offs.</p>
 
+  <div class="jstage">
+    <div class="jlabel"><b>0 · Before the bin</b><span>Reduce and reuse first. The best waste is the waste never made.</span></div>
+    <div class="mlist">
+      <a href="Lirich_ThreeR_Game.html"><b>Reduce, Reuse or Recycle?</b><span>Pick the best of the 3Rs for ten everyday moments.</span><span class="age">Explorer</span></a>
+    </div>
+  </div>
   <div class="jstage">
     <div class="jlabel"><b>1 · Collection</b><span>Keep useful material clean before it reaches the yard.</span></div>
     <div class="mlist">
@@ -408,15 +414,15 @@ function paint(){
   paintPaths(s);
 }
 function paintPaths(s){
-  const files={binornot:'Lirich_BinOrNot_Game.html',onroute:'Lirich_OnRoute_Game.html',spot:'Lirich_SpotTheContaminant_Game.html',sortit:'Lirich_SortIt_Game.html',pickline:'Lirich_PickLine_Game.html',buildtheline:'Lirich_BuildTheLine_Game.html',upgrade:'Lirich_UpgradeStream_Game.html',loadcontainer:'Lirich_LoadTheContainer_Game.html',plantbuilder:'Lirich_PlantBuilder_Game.html',zerowastecity:'Lirich_ZeroWasteCity_Game.html'};
-  const names={binornot:'Bin or Not?',onroute:'On Route',spot:'Spot the Contaminant',sortit:'Sort It!',pickline:'Pick Line',buildtheline:'Build the Line',upgrade:'Upgrade the Stream',loadcontainer:'Load the Container',plantbuilder:'Plant Builder',zerowastecity:'Zero Waste City'};
+  const files={threer:'Lirich_ThreeR_Game.html',binornot:'Lirich_BinOrNot_Game.html',onroute:'Lirich_OnRoute_Game.html',spot:'Lirich_SpotTheContaminant_Game.html',sortit:'Lirich_SortIt_Game.html',pickline:'Lirich_PickLine_Game.html',buildtheline:'Lirich_BuildTheLine_Game.html',upgrade:'Lirich_UpgradeStream_Game.html',loadcontainer:'Lirich_LoadTheContainer_Game.html',plantbuilder:'Lirich_PlantBuilder_Game.html',zerowastecity:'Lirich_ZeroWasteCity_Game.html'};
+  const names={threer:'Reduce, Reuse or Recycle?',binornot:'Bin or Not?',onroute:'On Route',spot:'Spot the Contaminant',sortit:'Sort It!',pickline:'Pick Line',buildtheline:'Build the Line',upgrade:'Upgrade the Stream',loadcontainer:'Load the Container',plantbuilder:'Plant Builder',zerowastecity:'Zero Waste City'};
   function route(ids,link,progress){
     const tried=ids.filter(id=>s.games[id]&&s.games[id].runs).length;
     const next=ids.find(id=>!(s.games[id]&&s.games[id].runs))||ids[ids.length-1];
     $(link).href=files[next]; $(link).textContent=(tried?'Continue with ':'Start with ')+names[next];
     $(progress).textContent=tried+' of '+ids.length+' missions tried';
   }
-  route(['binornot','onroute','spot','sortit','pickline'],'exploreGo','explorePg');
+  route(['threer','binornot','onroute','spot','sortit','pickline'],'exploreGo','explorePg');
   route(['buildtheline','upgrade','loadcontainer','plantbuilder','zerowastecity'],'operatorGo','operatorPg');
 }
 function placeTruck(i){
