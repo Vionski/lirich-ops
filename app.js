@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v94';
+const APP_BUILD = 'v95';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -217,6 +217,13 @@ const JOB_FLOW = {
       {k:'in', label:'\ud83d\udcf7 BIN IN \u2014 bin sent, nothing collected', hint:'optional \u00b7 sets Time Delivered', req:false},
       {k:'do', label:'\ud83d\udcf7 DO', hint:'optional', req:false}],
     bins:['in'], mark:'in', markLabel:'Time Delivered' },
+  /* 22 Nov 2026 (Michelle): Compactor had no flow of its own, so it fell back to Exchange and
+     showed TWO bin boxes - all six compactor trips in 30 days wrote the same number into both.
+     A compactor is serviced in place: there is no bin to hand over, so there is no bin box. */
+  Compactor:{ photos:[
+      {k:'out', label:'\ud83d\udcf7 COMPACTOR \u2014 serviced', hint:'optional \u00b7 sets Time Collect', req:false},
+      {k:'do', label:'\ud83d\udcf7 DO', hint:'optional', req:false}],
+    bins:[], mark:'out', markLabel:'Time Collect' },
   Load:     { photos:[
       {k:'in',  label:'📷 BIN IN — empty bin dropped for loading', hint:'optional · sets Time Start', req:false},
       {k:'out', label:'📷 BIN OUT — same bin picked up loaded', hint:'optional · sets Time End', req:false},
@@ -3003,6 +3010,28 @@ async function saveTripInner(final){
   const binOut = ((($('#tf-binout')||{}).value)||'').trim().toUpperCase();
   const binIn = ((($('#tf-binin')||{}).value)||'').trim().toUpperCase();
   const vehicleNo = ((($('#tf-vehicle')||{}).value)||'').trim().toUpperCase();
+  /* 22 Nov 2026 (Michelle): a job finished with no bin number is the single biggest hole in the
+     bin ledger - 44% of collections over 30 days carry none. The box has always been on the form
+     and has always been optional. It is now required to FINISH a job whose flow declares one, with
+     one deliberate way out: "no bin" plus a reason, which is written into the remarks instead of
+     being silently skipped. A hard block with no escape makes drivers type rubbish, which is worse
+     than a blank. Saving for later is never blocked - only Done.
+     Only a job type with its own entry in JOB_FLOW is checked. Anything unknown falls back to the
+     Exchange form, and guessing that an unrecognised job owes two bin numbers would block work
+     nobody has decided about yet. */
+  if(isDriver && final){
+    const binFlow = (job && JOB_FLOW[job.jobType]) || null;
+    const need = binFlow ? (binFlow.bins||[]).filter(k => !(k==='out' ? binOut : binIn)) : [];
+    if(need.length){
+      const which = need.map(k => k==='out' ? 'Bin Out' : 'Bin In').join(' and ');
+      const why = await lrPrompt(which + ' is missing.\n\nGo back and type the bin number on the '
+                + 'form, or write here why there is no bin (for example "compactor, no bin"):', '',
+                {okText:'No bin \u2014 save reason', cancelText:'Go back'});
+      if(why === null) return;
+      if(!String(why).trim()){ await lrInfo('Please type the bin number on the form, or give a reason.'); return; }
+      remarks = (remarks ? remarks + ' \u00b7 ' : '') + 'NO BIN: ' + String(why).trim();
+    }
+  }
   const wasteRead = isDriver ? readWasteChecks('tf') : null;
   const waste = wasteRead ? (wasteRead.display || (job?(job.waste||''):'')) : (job ? (job.waste||'') : '');
   const wasteTypes = wasteRead ? wasteRead.types : [];
