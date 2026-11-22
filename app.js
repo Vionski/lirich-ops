@@ -8,7 +8,7 @@
 
 /* bump alongside sw.js's CACHE string on every deploy — shown in Account so
    it's obvious at a glance whether a device is actually running the latest build */
-const APP_VERSION = 'v83';
+const APP_VERSION = 'v84';
 
 /* ---------------- storage adapter ---------------- */
 let STORAGE_FULL = false;
@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v95';
+const APP_BUILD = 'v96';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -448,7 +448,11 @@ const VESSEL_CATS = [
 ];
 
 /* ---------------- pricing engine ---------------- */
+/* Non-customer jobs (21 Nov 2026, lady boss / Sheryl): no trip fee for repair-bin trips (waste starts with
+   "Repair") dated 1 Nov 2026 onward. Mirrors jcNoPay in the operator console. */
+function tripNoPay(trip){ return String(trip.date||'') >= '2026-11-01' && /^\s*repair/i.test(String(trip.waste||'')); }
 function tripPay(trip){
+  if(tripNoPay(trip)) return 0;
   let p;
   if(trip.price != null && trip.price !== ''){
     /* new model: the operator's chosen job type sets the price (customer charge) */
@@ -464,6 +468,40 @@ function tripPay(trip){
   });
   p += Number(trip.otherFeeAmount)||0;
   return Math.round(p*100)/100;
+}
+/* v84 (20 Nov 2026, Michelle): the DRIVER ticks extra charges on the e-DO screen. A driver tick is a
+   CLAIM - kept in trip.surchargeClaims / trip.otherClaim and NOT paid until the office approves it in
+   the operator console (Job card). Office-set surcharges show ticked and locked. */
+function surClaimHTML(job, draft){
+  const locked = [...new Set([...((job && job.surcharges) || []), ...((draft && draft.surcharges) || [])])];
+  const claimed = (draft && draft.surchargeClaims) || [];
+  const oc = (draft && draft.otherClaim) || null;
+  const rej = ((draft && draft.claimLog) || []).filter(x => x && x.approve === false).map(x => x.claim);
+  return `<div class="edo-claims" id="tf-claims" style="margin:12px 0">
+    <label class="f">EXTRA CHARGES <span style="font-weight:600">(tick what applied on this job — the office approves before it is paid)</span></label>
+    ${SURCHARGES.map(sc => { const isOff = locked.includes(sc.id); const r = !isOff && rej.includes('sur:' + sc.id);
+      return `<label class="checkline"><input type="checkbox" data-sid="${sc.id}" ${isOff || claimed.includes(sc.id) ? 'checked' : ''} ${isOff ? 'disabled' : ''}> ${esc(sc.label)}
+        <span class="amt">+${money(sc.amt)}</span>${isOff ? ' <span class="muted">· set by office</span>' : (r ? ' <span class="muted">· not approved before</span>' : (claimed.includes(sc.id) ? ' <span class="muted">· waiting for office</span>' : ''))}</label>`; }).join('')}
+    <label class="checkline"><input type="checkbox" id="tfc-oth" onchange="(function(cb){var f=document.getElementById('tfc-oth-f');if(f)f.style.display=cb.checked?'':'none';})(this)" ${oc ? 'checked' : ''}> Others${oc ? ' <span class="muted">· waiting for office</span>' : ''}</label>
+    <div id="tfc-oth-f" class="grid2" style="${oc ? '' : 'display:none;'}margin:4px 0 8px">
+      <div><label class="f">REASON</label><input id="tfc-oth-r" maxlength="120" placeholder="What was the extra work?" value="${esc(oc ? oc.reason || '' : '')}"></div>
+      <div><label class="f">AMOUNT ($)</label><input id="tfc-oth-a" type="number" min="0.01" step="0.01" placeholder="0.00" value="${oc && Number(oc.amount) > 0 ? Number(oc.amount) : ''}"></div>
+    </div>
+  </div>`;
+}
+function readSurClaims(locked){
+  const box = $('#tf-claims'); if(!box) return {claims: [], other: null};
+  const claims = $$('#tf-claims input[data-sid]:checked').filter(i => !i.disabled).map(i => i.dataset.sid).filter(id => !(locked || []).includes(id));
+  let other = null;
+  const ocb = $('#tfc-oth');
+  if(ocb && ocb.checked){
+    const reason = (($('#tfc-oth-r') || {}).value || '').trim(), amount = Number((($('#tfc-oth-a') || {}).value) || '');
+    if(!reason) return {error: '⚠️ Add a reason for the Others charge'};
+    if(!Number.isFinite(amount) || amount <= 0) return {error: '⚠️ Enter an Others amount greater than $0'};
+    if(amount > 500) return {error: '⚠️ Others amount looks too high — check it with the office'};
+    other = {reason: reason.slice(0, 120), amount: Math.round(amount * 100) / 100, at: Date.now()};
+  }
+  return {claims, other};
 }
 function surchargeSummary(record){
   const labels = (record.surcharges||[]).map(id=>SURCHARGES.find(s=>s.id===id)?.label).filter(Boolean);
@@ -1122,6 +1160,7 @@ const NAVS = {
     {id:'fix',    ico:'🔧', label:'To fix'},
     {id:'card',   ico:'📋', label:'Job Card'},
     {id:'pay',    ico:'💵', label:'My Pay'},
+    {id:'leave',  ico:'🌴', label:'Leave'},  /* Michelle, 20 Nov 2026 */
   ],
 };
 function curTab(){ return S.tab[S.role.kind]; }
@@ -1268,6 +1307,7 @@ function render(){
     if(t==='myjobs') vMyJobs();
     else if(t==='fix') vFix();
     else if(t==='card') vJobCard();
+    else if(t==='leave') vLeave();
     else vMyPay();
   }
   /* operator preview banner — always on top while viewing a driver's app */
@@ -2038,7 +2078,11 @@ function jfJobTypeChanged(keepBin){
   if(want && !keepBin && sizeSel && [...sizeSel.options].some(o=>o.value===want)) sizeSel.value = want;
   const wrap = $('#jf-qtywrap');
   if(wrap){
-    const on = QTY_JOB_TYPES.includes(jt);
+    /* v84 (20 Nov 2026, Michelle/office): a DRIVER no longer sets a trip count on a Dump job - each
+       trip is its own job with its own DO and weight, so the NEA record and the pay always match
+       (18 Oct: one Dump typed as 5 trips carried 1 trip of NEA data and was later re-keyed as 4 more,
+       paying 9). The 660L bin count stays. The office (operator mode) keeps the box. */
+    const on = QTY_JOB_TYPES.includes(jt) && !(jt==='Dump' && S.role.kind==='driver');
     wrap.style.display = on ? 'block' : 'none';
     /* the box counts bins for 660L and trips for Dump - say which, so nobody guesses */
     const qlab = $('#jf-qtylabel');
@@ -2058,6 +2102,7 @@ function jfUnitPrice(){
 function jfQty(){
   const jt = $('#jf-jobtype') ? $('#jf-jobtype').value : '';
   if(!QTY_JOB_TYPES.includes(jt)) return 1;
+  if(jt==='Dump' && S.role.kind==='driver') return 1;   /* v84: one Dump job = one trip for drivers */
   return Math.max(1, Math.floor(Number(($('#jf-qty')||{}).value)||1));
 }
 function jfPriceHint(){
@@ -2428,6 +2473,7 @@ function openTripForm(opts){
           ${binInShot}${binOutShot}${restShots}
         </div>
 
+        ${surClaimHTML(job, draft)}
         ${flow.noDO ? '' : `
         <div class="edo-confirm">Checked &amp; confirmed by:</div>
         <div class="thumbs" id="tf-thumbs-signature"></div>
@@ -2950,7 +2996,7 @@ async function saveTripInner(final){
   const hasWeight = gross>0 && tare>0;
   const doNoInput = Number((($('#tf-dono')||{}).value)) || 0;
 
-  let doTypeV, typeId, surcharges, disposeTo, tonnage, distance, remarks;
+  let doTypeV, typeId, surcharges, disposeTo, tonnage, distance, remarks, surchargeClaims = [], otherClaim = null;
   let timeStart = '', timeEnd = '', tAccept = 0, tDO = 0, tBinOut = 0, tBinIn = 0, tEnd = 0;
   let timeInTyped = '', timeOutTyped = '', timeStartSrc = '', timeEndSrc = '';
   if(isDriver){
@@ -2962,6 +3008,9 @@ async function saveTripInner(final){
     doTypeV = (c && c.type==='vessel') ? 'vessel' : 'land';
     typeId = job ? job.task : (doTypeV==='vessel' ? 'psa' : 'col_m');
     surcharges = job ? (job.surcharges||[]) : []; /* surcharges are set by the office at job start */
+    { const lockedS = [...new Set([...surcharges, ...((draft && draft.surcharges) || [])])];
+      const cl = readSurClaims(lockedS); if(cl.error){ toast(cl.error); return; }
+      surchargeClaims = cl.claims; otherClaim = cl.other; }
     disposeTo = job ? (job.dumpTo||'') : '';
     tonnage = 0;
     distance = job ? (Number(job.distance)||0) : 0;
@@ -3070,6 +3119,7 @@ async function saveTripInner(final){
       timeInTyped, timeOutTyped, timeStartSrc, timeEndSrc,
       doNo: doNoInput, doType: doTypeV, waste, wasteTypes, wasteOther, vessel, remarks,
       sigName, sigPosition, photos: existingTripPhotos.concat(newPhotoRecords), final,
+      ...(isDriver ? {surchargeClaims, otherClaim} : {}),
     };
     const st = await api('updateTrip', {id: draft.id, patch});
     render();
@@ -3096,6 +3146,7 @@ async function saveTripInner(final){
     /* raw photo-capture timestamps (ms) — the office does wait/OT maths in Sheets */
     tAccept, tDO, tBinOut, tBinIn, tEnd, tWeight: 0,
     disposeTo, tonnage, tonnAdj: 0, distance, surcharges, remarks,
+    surchargeClaims, otherClaim,
     otherFeeReason: job ? (job.otherFeeReason||'') : '', otherFeeAmount: job ? (Number(job.otherFeeAmount)||0) : 0,
     doType: doTypeV, doNo: doNoInput,
     waste, wasteTypes, wasteOther, vessel, sigName, sigPosition,
@@ -4286,6 +4337,158 @@ function daysAgoStr(n){
   const d = new Date(); d.setDate(d.getDate()-n);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+/* ============================================================
+   DRIVER · LEAVE (Michelle, 20 Nov 2026 — v84)
+   AL / SL / HL applied for here; SL and HL need a photo of the MC / hospital document.
+   The office decides in the console (HR > Leave). Needs internet — a leave request is not
+   queued offline, so the driver knows straight away whether it reached the office.
+   ============================================================ */
+const LEAVE_T = {AL:'Annual leave (AL)', SL:'Sick leave / MC (SL)', HL:'Hospitalisation (HL)'};
+const LEAVE_ST = {'Pending':['#8a6209','#fdf3dd','Waiting for office'], 'Awaiting information':['#b4231f','#fde8e7','Office has a question'],
+  'Approved':['#1f7a3a','#e6f4ea','Approved'], 'Rejected':['#b4231f','#fde8e7','Not approved'], 'Cancelled':['#6e7691','#eef0f4','Cancelled']};
+let LEAVE = {code:null, data:null, loading:false, err:null};
+function leaveCode(){ return FLEET_CODE[S.role && S.role.driverId]; }
+async function fetchLeave(){
+  const code = leaveCode();
+  if(!code){ LEAVE = {code:null, data:null, loading:false, err:'Leave is for fleet drivers only.'}; return; }
+  if(!navigator.onLine){ LEAVE.err = 'You are offline - connect to see your leave.'; return; }
+  LEAVE.loading = true;
+  try{
+    const d = await (await fetch(dbGet('?leave=1&driver='+code))).json();
+    LEAVE = {code, data:d && !d.error ? d : null, loading:false, err:(d && d.error)||null};
+  }catch(e){ LEAVE = {code, data:null, loading:false, err:'Could not load leave - check internet.'}; }
+}
+function leaveDaysCount(from, to, half){
+  if(!from || !to || to < from) return 0;
+  if(half) return 0.5;
+  let n = 0; const d = new Date(from+'T00:00:00Z'), e = new Date(to+'T00:00:00Z');
+  for(; d <= e; d.setUTCDate(d.getUTCDate()+1)) if(d.getUTCDay()!==0) n++;
+  return n;
+}
+function vLeave(){
+  const code = leaveCode();
+  if(!LEAVE.data && !LEAVE.loading && !LEAVE.err){ fetchLeave().then(()=>{ if(curTab()==='leave') render(); }); }
+  const D = LEAVE.data;
+  const card = (k)=>{
+    const ent = D && D.entitlement ? D.entitlement[k.toLowerCase()] : null;
+    const tk = D ? (D.taken[k]||0) : 0, pd = D ? (D.pending[k]||0) : 0;
+    const left = ent==null ? null : Math.max(0, ent - tk);
+    return `<div class="kpi ${k==='AL'?'green':k==='SL'?'blue':'amber'}">
+      <div class="num">${left==null?'—':left}</div>
+      <div class="lbl">${k} DAYS LEFT${ent==null?' · NOT SET':' OF '+ent}</div>
+      <div class="lbl" style="opacity:.8">TAKEN ${tk}${pd?' · WAITING '+pd:''}</div></div>`;
+  };
+  const rows = (D && D.requests) || [];
+  $('#main').innerHTML = `
+    <div class="hero"><div class="lbl">MY LEAVE ${D?D.year:''}</div>
+      <div style="margin-top:8px"><button class="btn" onclick="openLeaveForm()" ${code?'':'disabled'}>＋ Apply for leave</button></div></div>
+    <div class="kpis">${card('AL')}${card('SL')}${card('HL')}</div>
+    ${LEAVE.loading ? '<div class="card muted">Loading…</div>' : ''}
+    ${LEAVE.err ? `<div class="card" style="background:#fde8e7">${esc(LEAVE.err)} <button class="btn slim" onclick="LEAVE.err=null;LEAVE.data=null;render()">Try again</button></div>` : ''}
+    <h2 style="margin:6px 2px 10px; font-size:16px">📅 My requests</h2>
+    ${rows.length ? rows.map(r=>{
+      const st = LEAVE_ST[r.status] || ['#333','#eee',r.status];
+      const dates = r.date_from===r.date_to ? fmtDate(r.date_from)+(r.half_day?' ('+r.half_day+')':'') : fmtDate(r.date_from)+' – '+fmtDate(r.date_to);
+      const open = r.status==='Pending' || r.status==='Awaiting information';
+      return `<div class="card">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <b>${esc(LEAVE_T[r.leave_type]||r.leave_type)}</b>
+          <span class="chip" style="background:${st[1]};color:${st[0]};font-weight:800">${esc(st[2])}</span>
+        </div>
+        <div class="sub" style="margin-top:4px">${esc(dates)} · ${r.days} day${r.days==1?'':'s'}${r.docs?' · 📎 '+r.docs:''} · ${esc(r.reference)}</div>
+        ${r.note ? `<div class="sub" style="margin-top:4px;white-space:pre-wrap">${esc(r.note)}</div>` : ''}
+        ${r.decision_note ? `<div style="margin-top:6px;padding:8px;border-radius:8px;background:${st[1]};color:${st[0]}"><b>Office:</b> ${esc(r.decision_note)}</div>` : ''}
+        ${open ? `<div style="display:flex;gap:8px;margin-top:8px">
+          ${r.status==='Awaiting information' ? `<button class="btn slim" onclick="openLeaveReply('${esc(r.reference)}')">✍️ Answer</button>` : ''}
+          <button class="btn slim ghost" onclick="cancelLeave('${esc(r.reference)}')">Cancel request</button></div>` : ''}
+      </div>`;}).join('') : (D ? '<div class="card muted">No leave requests yet.</div>' : '')}
+    <div class="muted" style="font-size:12px;margin:8px 2px">Sundays are not counted. Approved leave can only be cancelled by the office.</div>`;
+}
+function leaveDocInput(){
+  return `<label class="f">Photo of MC / hospital document <span id="lv-docreq" class="muted"></span></label>
+    <input type="file" accept="image/*" multiple id="lv-docs" onchange="document.getElementById('lv-docn').textContent=this.files.length?this.files.length+' photo(s) attached':''">
+    <div id="lv-docn" class="muted" style="font-size:12px"></div>`;
+}
+function openLeaveForm(){
+  const t0 = TODAY;
+  openSheet(`<h2>Apply for leave</h2>
+    <label class="f">Type</label>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+      ${Object.keys(LEAVE_T).map((k,i)=>`<label style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="radio" name="lv-type" value="${k}" ${i===0?'checked':''} onchange="leaveFormUpd()"> ${LEAVE_T[k]}</label>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px">
+      <div class="grow"><label class="f">From</label><input type="date" id="lv-from" value="${t0}" onchange="leaveFormUpd()"></div>
+      <div class="grow"><label class="f">To</label><input type="date" id="lv-to" value="${t0}" onchange="leaveFormUpd()"></div>
+    </div>
+    <div id="lv-halfwrap"><label class="f">Half day?</label>
+      <select id="lv-half" onchange="leaveFormUpd()"><option value="">No - full day</option><option value="AM">Morning (AM)</option><option value="PM">Afternoon (PM)</option></select></div>
+    <label class="f">Note (optional)</label><textarea id="lv-note" rows="2" maxlength="300" placeholder="e.g. clinic name, reason"></textarea>
+    ${leaveDocInput()}
+    <div id="lv-days" style="font-weight:800;margin:10px 0"></div>
+    <div id="lv-err" style="color:#b4231f;font-weight:700;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px"><button class="btn ghost" onclick="closeSheet()">Cancel</button><button class="btn grow" id="lv-send" onclick="submitLeave()">Send to office</button></div>`);
+  leaveFormUpd();
+}
+function leaveFormUpd(){
+  const t = (document.querySelector('input[name=lv-type]:checked')||{}).value;
+  const f = $('#lv-from').value, to = $('#lv-to').value;
+  if(to < f) $('#lv-to').value = f;
+  const same = $('#lv-from').value === $('#lv-to').value;
+  $('#lv-halfwrap').style.display = same ? '' : 'none'; if(!same) $('#lv-half').value = '';
+  $('#lv-docreq').textContent = (t==='SL'||t==='HL') ? '(required)' : '(not needed for AL)';
+  const n = leaveDaysCount($('#lv-from').value, $('#lv-to').value, $('#lv-half').value);
+  $('#lv-days').textContent = n ? n + ' day' + (n==1?'':'s') + ' (Sundays not counted)' : 'Those dates are all Sundays';
+}
+async function leaveFiles(input){
+  const out = [];
+  for(const f of Array.from((input && input.files) || []).slice(0,3)){
+    const raw = await new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
+    const small = await shrinkImage(raw, 1600, .8);
+    out.push({name:f.name||'mc.jpg', mime:'image/jpeg', b64:String(small).split(',')[1]});
+  }
+  return out;
+}
+async function submitLeave(){
+  const err = m=>{ $('#lv-err').textContent = m; };
+  const t = (document.querySelector('input[name=lv-type]:checked')||{}).value;
+  const from = $('#lv-from').value, to = $('#lv-to').value, half = $('#lv-half').value || null;
+  if(!t || !from || !to) return err('Pick the type and dates.');
+  if(!leaveDaysCount(from, to, half)) return err('Those dates are all Sundays.');
+  const inp = $('#lv-docs');
+  if((t==='SL'||t==='HL') && !(inp.files && inp.files.length)) return err('Attach a photo of the MC / hospital document.');
+  if(!navigator.onLine) return err('You are offline - connect and try again.');
+  const btn = $('#lv-send'); btn.disabled = true; btn.textContent = 'Sending…';
+  try{
+    const docs = await leaveFiles(inp);
+    const sid = (window.__lvSid = window.__lvSid || ('lv'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)));
+    const d = await api('leaveSubmit', {driver:leaveCode(), leave_type:t, date_from:from, date_to:to, half_day:half, note:$('#lv-note').value, docs, submission_id:sid});
+    window.__lvSid = null;
+    closeSheet(); toast('✅ Leave sent to the office ('+d.reference+')');
+    LEAVE.data = null; await fetchLeave(); render();
+  }catch(e){ btn.disabled = false; btn.textContent = 'Send to office'; err(String(e && e.message || e)); }
+}
+function openLeaveReply(ref){
+  openSheet(`<h2>Answer the office</h2><div class="muted" style="margin-bottom:8px">${esc(ref)}</div>
+    <label class="f">Your answer</label><textarea id="lv-note" rows="3" maxlength="300"></textarea>
+    ${leaveDocInput()}
+    <div id="lv-err" style="color:#b4231f;font-weight:700;margin:8px 0"></div>
+    <div style="display:flex;gap:8px"><button class="btn ghost" onclick="closeSheet()">Cancel</button><button class="btn grow" id="lv-send" onclick="replyLeave('${esc(ref)}')">Send</button></div>`);
+  $('#lv-docreq').textContent = '(if asked)';
+}
+async function replyLeave(ref){
+  const btn = $('#lv-send'); btn.disabled = true;
+  try{
+    const docs = await leaveFiles($('#lv-docs'));
+    await api('leaveReply', {driver:leaveCode(), reference:ref, note:$('#lv-note').value, docs});
+    closeSheet(); toast('✅ Sent to the office'); LEAVE.data = null; await fetchLeave(); render();
+  }catch(e){ btn.disabled = false; $('#lv-err').textContent = String(e && e.message || e); }
+}
+async function cancelLeave(ref){
+  if(!confirm('Cancel leave request '+ref+'?')) return;
+  try{ await api('leaveCancel', {driver:leaveCode(), reference:ref}); toast('Leave request cancelled'); LEAVE.data = null; await fetchLeave(); render(); }
+  catch(e){}
+}
+
 function vMyPay(){
   const d = driver(S.role.driverId);
   const all = driverTrips(d.id);
