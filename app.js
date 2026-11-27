@@ -149,7 +149,7 @@ function readExifDateMs(buf){
 /* real current date (device-local, so Singapore stays Singapore after midnight UTC) */
 /* Shown in the driver header so the running build is visible without dev tools.
    ⚠ KEEP IN STEP WITH sw.js CACHE on every deploy — that is the whole point of it. */
-const APP_BUILD = 'v96';
+const APP_BUILD = 'v97';
 const TODAY = (()=>{ const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 
@@ -2473,7 +2473,7 @@ function openTripForm(opts){
           ${binInShot}${binOutShot}${restShots}
         </div>
 
-        ${surClaimHTML(job, draft)}
+        ${S.role.kind==='operator' ? surClaimHTML(job, draft) : '' /* v97 27 Nov 2026 (Qris): drivers no longer see or tick extra charges */}
         ${flow.noDO ? '' : `
         <div class="edo-confirm">Checked &amp; confirmed by:</div>
         <div class="thumbs" id="tf-thumbs-signature"></div>
@@ -2530,10 +2530,10 @@ function openTripForm(opts){
       <div><label class="f">TONNAGE (t)</label><input type="number" id="tf-ton" step="0.1" min="0" placeholder="0.0"></div>
       <div><label class="f">DISTANCE (km)</label><input type="number" id="tf-dist" step="0.1" min="0" placeholder="0" value="${job&&job.distance?job.distance:''}" oninput="calcFormPay()"></div>
     </div>
-    <label class="f">SURCHARGES</label>
+    ${S.role.kind==='operator' ? `<label class="f">SURCHARGES</label>
     <div id="tf-sur">${SURCHARGES.map(s=>`
       <label class="checkline"><input type="checkbox" value="${s.id}" onchange="calcFormPay()"> ${esc(s.label)}
-        <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>
+        <span class="amt">+${money(s.amt)}</span></label>`).join('')}</div>` : ''}
     <label class="f">DELIVERY ORDER</label>
     <div class="seg" id="tf-dotype">
       <button class="${!cli || cli.type!=='vessel'?'on':''}" data-v="land" onclick="segPick(this,'#tf-dotype')">Company (land · DO no.)</button>
@@ -3227,7 +3227,7 @@ function openTripDetail(id){
       ${S.role.kind==='operator' && Number(t.otherFeeAmount)>0?`<div class="muted">➕ Others — ${esc(t.otherFeeReason||'')} · +${money(t.otherFeeAmount)}</div>`:''}
       ${tripTimesHTML(t)}
       ${t.disposeTo || t.tonnage || t.tonnAdj ? `<div class="muted">♻️ ${t.disposeTo?'Dispose to '+esc(t.disposeTo)+' · ':''}tonnage ${t.tonnage||0}${t.tonnAdj?` <b>${t.tonnAdj>0?'+':''}${t.tonnAdj}</b> = <b>${tonnTotal(t)} t</b> <span class="tag">ADJUSTED</span>`:' t'}</div>`:''}
-      ${t.surcharges.length?`<div class="muted">➕ ${t.surcharges.map(s=>esc(SURCHARGES.find(x=>x.id===s)?.label)).join(', ')}</div>`:''}
+      ${S.role.kind==='operator' && t.surcharges.length?`<div class="muted">➕ ${t.surcharges.map(s=>esc(SURCHARGES.find(x=>x.id===s)?.label)).join(', ')}</div>`:''}
       ${t.vessel?`<div class="muted">🚢 ${esc(t.vessel.name||'Vessel')} — ${VESSEL_CATS.map(v=>t.vessel[v.k]?v.label.slice(0,1)+':'+t.vessel[v.k]+'m³':'').filter(Boolean).join(' · ')||'no categories'}</div>`:''}
       ${t.weight?`<div class="muted">⚖️ Ticket ${esc(t.weight.ticket)} — gross ${t.weight.gross} / tare ${t.weight.tare}${t.weightAdj?` <b>${t.weightAdj>0?'+':''}${t.weightAdj}</b>`:''} = net <b>${weightNet(t)} kg</b>${t.weightAdj?' <span class="tag">ADJUSTED</span>':''}</div>`:''}
       ${t.remarks?`<div class="muted">📝 ${esc(t.remarks)}</div>`:''}
@@ -4517,14 +4517,14 @@ function vMyPay(){
           const c = client(t.clientId);
           return `<div class="item tap" onclick="openTripDetail(${t.id})">
             <div class="grow"><div class="title" style="font-size:12.5px">${esc(c?c.name:'?')} · ${doLabel(t)}</div>
-            <div class="sub">${esc(t.jobType || (ttype(t.typeId)||{}).label || '')}${(t.surcharges||[]).length?' · +'+t.surcharges.length+' charge(s)':''}</div></div>
+            <div class="sub">${esc(t.jobType || (ttype(t.typeId)||{}).label || '')}${S.role.kind==='operator' && (t.surcharges||[]).length?' · +'+t.surcharges.length+' charge(s)':''}</div></div>
             <div class="pay">${money(tripPay(t))}</div></div>`;
         }).join('')}
       </div>`).join('') || '<div class="card empty">No trips in the last 30 days.</div>'}
-    <div class="card">
+    ${S.role.kind==='operator' ? `<div class="card">
       <h2>💵 Extra charge rates</h2>
       <table class="jt"><tbody>${SURCHARGES.map(s=>`<tr><td>${esc(s.label)}</td><td style="text-align:right"><b>+${money(s.amt)}</b></td></tr>`).join('')}</tbody></table>
-    </div>`;
+    </div>` : ''}`;
 }
 
 /* ---------------- demo DO photo (so the archive isn't empty) ----------------
